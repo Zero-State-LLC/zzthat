@@ -11,7 +11,7 @@
   <a href="https://github.com/orgs/Zero-State-LLC/projects/25">Board</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthat/issues">Issues</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis">zzThis</a> ·
-  <a href="https://github.com/Zero-State-LLC/zzthis/blob/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/docs/SPEC.md">zzThis spec pin</a>
+  <a href="https://github.com/Zero-State-LLC/zzthis/blob/1e129da3bf197afc2aa8c989ec028d4656f4aaa6/docs/SPEC.md">zzThis spec pin</a>
 </p>
 
 <p align="center">
@@ -50,7 +50,7 @@ zzThat is a **specification**. The apps are not built. Recognition, the resolver
 
 ## Design tokens
 
-This repo does not publish its own colors, type, spacing, or icons. zzThat pins the zzthis `design/` tree with `scripts/pin-design.sh` and records the sha in `apps/DESIGN-PIN`. The rules and the current sha are in [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md). Token values are the generated Swift and Kotlin files from that pin, not a second palette.
+This repo does not publish its own colors, type, spacing, fonts, icons, or sentences. zzThat pins zzThis at one sha, recorded in `contracts/ZZTHIS-API-PIN`, and `scripts/sync-zzthis.sh` copies the design files, `copy.json`, the OpenAPI file, the test vectors, and the wordlist from that sha. The rules and the current sha are in [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md). Token values are the generated Swift and Kotlin files from that pin, not a second palette.
 
 ## Repository atlas
 
@@ -72,7 +72,7 @@ This repo does not publish its own colors, type, spacing, or icons. zzThat pins 
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to open a change |
 | [`README.md`](README.md) | This file |
 
-zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
+zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `1e129da3bf197afc2aa8c989ec028d4656f4aaa6`, recorded in `contracts/ZZTHIS-API-PIN`.
 
 | zzThis path | Role for these apps |
 |---|---|
@@ -82,7 +82,8 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
-| `design/` and `scripts/pin-design.sh` | Tokens, generated Swift and Kotlin, masters, UX patterns. Pin `497ea0d218ee0e7709c02ca4107846a062ff2ce2` |
+| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `1e129da3bf197afc2aa8c989ec028d4656f4aaa6` |
+| `specs/005-v1-api` and `docs/ONE-SHOT-BRIEF.md` | The `/v1` contract and the one-shot build brief |
 
 ## Architecture
 

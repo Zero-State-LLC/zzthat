@@ -1,7 +1,7 @@
 name: CI
 
-# Spec lint only. App tests wait for .github/workflows/apps-ci.yml,
-# which an implementation change adds after the test targets exist.
+# Spec lint and the pinned OpenAPI check. App tests wait for
+# .github/workflows/apps-ci.yml, which the build adds with the test targets.
 # The job id stays `build`, matching the zzThis required check name.
 
 on:
@@ -24,3 +24,8 @@ jobs:
           python-version: "3.12"
       - name: Lint specs
         run: python3 scripts/lint-specs.py
+      - name: Check the OpenAPI copy against the zzThis pin
+        run: |
+          pin="$(tr -d '[:space:]' < contracts/ZZTHIS-API-PIN)"
+          curl -fsSL "https://raw.githubusercontent.com/Zero-State-LLC/zzthis/${pin}/specs/005-v1-api/openapi.yaml" -o "$RUNNER_TEMP/openapi.yaml"
+          diff -u "$RUNNER_TEMP/openapi.yaml" contracts/zzthis-v1.openapi.yaml

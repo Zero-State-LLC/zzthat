@@ -23,13 +23,20 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#15](https://github.com/Zero-State-LLC/zzthat/issues/15) | ZQ15 | Listing text is the everyday-use sentences. Apple 12+ and Play Teen. Do not submit. |
 | [#16](https://github.com/Zero-State-LLC/zzthat/issues/16) | ZQ16 | A local draft is allowed if labeled "Not a code yet." It is not issued offline. |
 | [#17](https://github.com/Zero-State-LLC/zzthat/issues/17) | ZQ17 | Swift and SwiftUI. Kotlin and Jetpack Compose. |
-| [#18](https://github.com/Zero-State-LLC/zzthat/issues/18) | ZQ18 | OAuth 2.0 and OpenID Connect with PKCE. Apple and Google. 15-minute access tokens. Rotating refresh tokens. |
+| [#18](https://github.com/Zero-State-LLC/zzthat/issues/18) | ZQ18 | OAuth 2.0 and OpenID Connect with PKCE. Apple and Google. 15-minute access tokens. Rotating refresh tokens. Amended by ZQ22 (ID tokens and a server nonce). |
 | [#19](https://github.com/Zero-State-LLC/zzthat/issues/19) | ZQ19 | `/v1`, OpenAPI at `GET /v1/openapi.json`, header `X-ZZ-Contract: 1`. |
 | [#20](https://github.com/Zero-State-LLC/zzthat/issues/20) | ZQ20 | 429 plus `Retry-After`. Limits in spec.md DEP-010. |
 | [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) | ZQ21 | iOS 17 and later. Android 8.0, API 26, and later. |
+| (issue to file) | ZQ22 | Sign-in follows zzThis spec 005 FR-020: a server nonce, the platform's own provider sign-in, and an ID token. This amends ZQ18, whose code and PKCE exchange does not fit native Sign in with Apple or Android. Owner: Danny (zzThis Q66). Default: yes. |
+| (issue to file) | ZQ23 | Android offers Google only in v1, because Android has no Sign in with Apple library. An Apple account made on iPhone cannot sign in on Android. Owner: Michael (zzThis Q67). Default: yes. |
+| (issue to file) | ZQ24 | Bundle and application id `llc.zerostate.zzthat`, with `.local` and `.demo` suffixes for the other builds. An id cannot change after it is registered. Owner: Danny. Default: as written. |
+| (issue to file) | ZQ25 | Before store submission Michael supplies a square app icon and a support contact, and Danny publishes the privacy policy URL. Builds use a placeholder icon. Owner: Michael and Danny. Default: no submission without them. |
+| (issue to file) | ZQ26 | Offline reading lasts 360 seconds after the last online read, because the Q26 header allows 60 seconds plus 300 seconds stale. That is short for a lost-pet flyer read later offline. A longer offline time needs a server change by Danny. Owner: Michael. Default: keep 360 seconds. |
 
 Corrected the same day, after the first close: ZQ1 and ZQ2 name zzthis as the web client, the central server, and the marketing page the launch link uses. ZQ11 is reversed to server-chosen words.
 
-The app cache follows zzThis spec 005 FR-018 [DANNY 2026-10-04] (Q26): honor `Cache-Control`, which is `public, max-age=60, stale-while-revalidate=300` for an active reusable public unauthenticated resolve, and `no-store` otherwise. The v1 photo read returns `abstain` while Danny chooses the image model (Q18).
+The app cache follows zzThis spec 005 FR-018 [DANNY 2026-10-04] (Q26): honor `Cache-Control`, which is `public, max-age=60, stale-while-revalidate=300` for an active reusable public unauthenticated resolve, and `no-store` otherwise. FR-041 sets the app's 60 seconds online and 360 seconds offline (ZQ26). While Danny chooses the image model (Q18), `GET /v1` reports `photo_reads: false`, the photo read returns `not-ready`, and the apps do not offer the upload.
+
+ZQ22 to ZQ26 were added on 2026-10-04 with the zzThis pin `1e129da3bf197afc2aa8c989ec028d4656f4aaa6`, from the one-shot build review (zzThis `specs/analysis-2026-10-04.md`). They wait on the owners named, and the specs follow their defaults until then.
 
 Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.

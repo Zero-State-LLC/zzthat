@@ -1,26 +1,28 @@
 # Requirements checklist: 001-zzthat-apps
 
-Checked 2026-10-04 against this spec package, then again the same day after ZQ1 to ZQ21 were decided. The apps are not built. Rows below check the spec, not a binary.
+Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decided, and again after the one-shot deepening (ZQ22 to ZQ26, zzThis pin `1e129da3bf197afc2aa8c989ec028d4656f4aaa6`). The apps are not built. Rows below check the spec, not a binary.
 
 ## Completeness
 
 - [x] Spec has a `## Workflows` section naming workflows and the CI file to add later.
 - [x] Plan and tasks copy that workflow list and do not replace it.
 - [x] Each user story US1 to US6 has acceptance.
-- [x] Functional requirements have IDs FR-001 to FR-041, and each row has a source tag.
+- [x] Functional requirements have IDs FR-001 to FR-049, and each row has a source tag.
 - [x] Out of scope is stated, including web, zzThing, and a backend in this repo.
 - [x] ZQ1 to ZQ21 are decided in `decisions.md`, with a GitHub issue each (#1 to #21).
 - [x] Every task group TG1 to TG9 has a GitHub issue (#22 to #30) and tasks in `tasks.md`.
-- [x] The API contract proposes endpoints, auth, rate limits, errors, versioning, and offline cache rules for DEP-001 to DEP-012.
-- [x] Those proposals are for the zzThis server. Create stays gated on free public codes (DEP-001, FR-018, SC-8).
+- [x] The API section points at the pinned OpenAPI file instead of restating it, and maps DEP-001 to DEP-012 to zzThis spec 005.
+- [x] Create stays gated on free public codes (DEP-001, FR-018, SC-8). The local Worker turns the flag on for tests.
 - [x] Free public codes are called out as v2 in zzThis spec 002 (FR-018, DEP-001, ZQ3).
 - [x] On-device versus cloud recognition references zzThis Section 10.3 and Section 10.8 and does not add a third approach.
 - [x] Privacy and permissions cover camera and photos, and say location and microphone are off under the defaults.
 - [x] Accounts, abuse, and store obligations are present, with human gates.
 - [x] Platform is decided: SwiftUI and Jetpack Compose, iOS 17, Android API 26 (ZQ17, ZQ21). The tradeoff table remains.
-- [x] Success criteria SC-1 to SC-9 set no invented accuracy number.
+- [x] Success criteria SC-1 to SC-13 set no invented accuracy number.
 - [x] runtime.md names structure, modules, navigation, screen states, the generated client, auth, storage, privacy, accessibility, localization, testing, and release.
-- [x] design.md pins zzthis `design/` with `scripts/pin-design.sh`. No token values are invented here.
+- [x] design.md pins zzThis at one sha with `scripts/sync-zzthis.sh`, including fonts and `copy.json`. No token values or sentences are invented here.
+- [x] Every screen in runtime.md names a pattern in zzThis `design/UX.md`. None is a TODO.
+- [x] runtime.md names the toolchain, build configurations, the read pipeline, and an end-to-end run.
 - [x] Spec lint is `.github/workflows/ci.yml`.
 
 ## Source and copy rules
@@ -43,6 +45,6 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 
 - [ ] SC-1 to SC-8 on a binary.
 - [ ] T011 fixture tests.
-- [ ] T020 G9 runs on iOS and Android.
+- [ ] T020 `contracts/vectors.json` runs on iOS and Android.
 - [ ] T082 string check in CI.
 - [ ] A live call to the zzThis server. No such server is in this repo, and the sketch is not a versioned contract (DEP-009).

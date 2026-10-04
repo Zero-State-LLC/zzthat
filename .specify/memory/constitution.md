@@ -1,12 +1,12 @@
 # zzThat constitution
 
-Version 1.2.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
+Version 1.3.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
 
 This file is the governing contract for every zzThat spec, plan, and task under `specs/`. When an artifact conflicts with this file, this file wins until it is amended. Product-true locks from Michael, and operator locks from Danny, win over this file.
 
 zzThat is the iOS and Android apps portion of zzThis. The product rules live in the zzThis repository. This file adapts those rules to the apps. It does not replace them.
 
-Source pin: zzThis `main` at `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7` (2026-10-03). Later zzThis changes do not change this repo until a pull request says so.
+Source pin: zzThis at `1e129da3bf197afc2aa8c989ec028d4656f4aaa6` (2026-10-04), recorded in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist. Later zzThis changes do not change this repo until a pull request moves the pin.
 
 ## Labels used in every artifact
 
@@ -85,3 +85,4 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 | 1.1.0 | 2026-10-04 | ZQ1 to ZQ21 decided. Exact match is closed for the free app. Web stays later and outside this repo. Stack is SwiftUI and Jetpack Compose. Decisions log added. |
 | 1.1.1 | 2026-10-04 | Danny: zzthis is the central server and the later web client, and "Try zzThat" links to its marketing page. ZQ11 reversed: the server chooses the words for every code, including free public. |
 | 1.2.0 | 2026-10-04 | Runtime build contract, design consumption TODO, spec-lint CI, and the zzThat board. |
+| 1.3.0 | 2026-10-04 | One zzThis pin for everything. Deepened for a one-shot build: ZQ22 to ZQ26, sign-in by ID token, the read pipeline, strings from `copy.json`. |
