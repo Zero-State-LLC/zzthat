@@ -2,7 +2,9 @@
 
 Feature: [spec.md](spec.md) · Plan: [plan.md](plan.md)
 
-Workflows for every implementing task: anti-slop-code, production-systems, google-developer-style. CI file, when added: `.github/workflows/apps-ci.yml`. Do not add that file in the spec-only change.
+Workflows for every implementing task: anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. App tests, when added: `.github/workflows/apps-ci.yml`. Do not add the app workflow until the test targets exist.
+
+The build contract is [runtime.md](runtime.md). Visuals follow [design.md](design.md).
 
 No task below adds a backend or a resolver. Live server calls stay blocked on the dependencies named in the spec.
 
@@ -38,10 +40,11 @@ ZQ1 to ZQ21 were decided on 2026-10-04. See [decisions.md](decisions.md). They a
 
 Issue: [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) (TG1). Stack and minimums are decided.
 
-- [ ] T001 Scaffold iOS with Swift and SwiftUI, and Android with Kotlin and Jetpack Compose (ZQ17). No web target, no server module, no resolver.
+- [ ] T001 Scaffold the trees in runtime.md. Swift and SwiftUI, Kotlin and Jetpack Compose (ZQ17). No web target, no server module, no resolver.
 - [ ] T002 Set the deployment minimums to iOS 17 and Android 8.0 (API 26), as recorded in [plan.md](plan.md) (ZQ21).
 - [ ] T003 Add empty test targets for the grammar vectors. No product screens required.
-- [ ] T004 When tests exist, add `.github/workflows/apps-ci.yml` to run them. Not part of the spec-only pull request.
+- [ ] T004 When those test targets exist, add `.github/workflows/apps-ci.yml` to run them. Spec lint already lives in `.github/workflows/ci.yml`.
+- [ ] T005 Sync zzthis `design/` by the method its README documents. Blocked on the TODO in [design.md](design.md). Do not commit stand-in tokens or assets.
 
 ## Phase 2: API client
 
@@ -52,6 +55,8 @@ Issue: [#23](https://github.com/Zero-State-LLC/zzthat/issues/23) (TG2). Build th
 - [ ] T012 Resolve sends the canonical string and does not attach a photo. It sends no bearer token for a signed-out public read (FR-016).
 - [ ] T013 Reject a fixture that omits `X-ZZ-Contract` the way the server would (400 `contract-version`).
 - [ ] T014 On 429, wait for `Retry-After` and show one message that does not say whether the code exists (FR-033).
+- [ ] T015 Generate the iOS and Android clients from `contracts/zzthis-v1.openapi.yaml`. Do not hand-edit the generated types (runtime.md, API client).
+- [ ] T016 When zzthis publishes `GET /v1/openapi.json` for contract `1`, replace the proposal file with that document and regenerate. One source only.
 
 ## Phase 3: Grammar and capture
 
@@ -109,7 +114,10 @@ Issue: [#29](https://github.com/Zero-State-LLC/zzthat/issues/29) (TG8). Auth and
 - [ ] T071 Purpose strings and the system photo picker match FR-011 and FR-012.
 - [ ] T072 Do not add location permission (FR-013) or microphone permission (FR-014).
 - [ ] T073 Account deletion in the app, calling `DELETE /v1/me`, before any submission that includes accounts (FR-034).
-- [ ] T074 Report screen with the four reasons in FR-035. No block list.
+- [ ] T074 Report screen with the four reasons in FR-035, including loading, empty, error, offline, and demo (runtime.md). No block list.
+- [ ] T075 Analytics-free manifests: no analytics SDK, no advertising id, and no crash upload of a code, a photo, or a token.
+- [ ] T076 Accessibility from runtime.md: names for VoiceOver and TalkBack, text size, touch targets, reduced motion. Platform colors until design tokens sync.
+- [ ] T077 English string catalogs only. No user-facing sentence in a layout file. Dates use the platform locale.
 
 ## Phase 9: Store readiness
 
@@ -117,8 +125,9 @@ Issue: [#30](https://github.com/Zero-State-LLC/zzthat/issues/30) (TG9).
 
 - [ ] T080 Draft the privacy disclosure from the spec privacy table. Do not publish it.
 - [ ] T081 Put the FR-031 listing text and the 12+ / Teen rating into the store draft. Do not submit.
-- [ ] T082 Add a check that user-facing strings contain no em dash, do not use "mock", and say "check word" where they would have said "checksum" (FR-030, SC-7).
+- [ ] T082 Add a check that user-facing strings contain no em dash, do not use "mock" where they mean demo, and say "check word" where they would have said "checksum" (FR-030, SC-7).
 - [ ] T083 Stop for Danny's yes before any store submission, developer-account purchase, or production credential.
+- [ ] T084 Release pipeline from runtime.md: `apps/VERSION`, app CI that tests and does not upload, privacy manifest and Data safety drafts. No production URL in the tree.
 
 ## Later, not in the first release
 

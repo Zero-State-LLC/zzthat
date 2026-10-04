@@ -19,6 +19,9 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 - [x] Accounts, abuse, and store obligations are present, with human gates.
 - [x] Platform is decided: SwiftUI and Jetpack Compose, iOS 17, Android API 26 (ZQ17, ZQ21). The tradeoff table remains.
 - [x] Success criteria SC-1 to SC-9 set no invented accuracy number.
+- [x] runtime.md names structure, modules, navigation, screen states, the generated client, auth, storage, privacy, accessibility, localization, testing, and release.
+- [x] design.md consumes zzthis `design/` and keeps the TODO while that tree is absent. No token values are invented here.
+- [x] Spec lint is `.github/workflows/ci.yml`.
 
 ## Source and copy rules
 
@@ -26,7 +29,7 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 - [x] The grammar is referenced (zzThis Section 2.2a, G9), not redefined.
 - [x] Resolver, wordlist, and capture requirements are referenced, not copied as a second spec.
 - [x] User-facing rules require "demo", "check word", and no em dash (FR-030).
-- [x] "checksum" and "mock" appear only inside the copy rule that forbids them, or in the terms note that zzThis also says "checksum word". They are not used as zzThat product terms.
+- [x] The words checksum and mock appear only inside the copy rule that forbids them, beside check word and demo, or in the terms note that zzThis also says "checksum word". They are not used as zzThat product terms.
 
 ## Consistency
 

@@ -3,7 +3,8 @@
 Feature ID: 001-zzthat-apps
 Status: not built. Specification only. No application source in this change.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
-Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.1.1.
+Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.2.0.
+Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ21, 2026-10-04).
 Source pin: zzThis `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
 
@@ -523,9 +524,13 @@ zzThis spec 003 says "check word". zzThis `docs/SPEC.md` also says "checksum wor
 - Duplicate public codes and location (FR-013).
 - Live-code suggestions (FR-009).
 
+## Runtime
+
+The build contract is [runtime.md](runtime.md): project trees, modules, navigation, screen states (loading, empty, error, offline, demo), the generated API client, auth, storage, an analytics-free privacy stance, accessibility, localization, testing, and the release pipeline. Visuals follow [design.md](design.md). No screen invents a token or a UX pattern.
+
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). They are not open. zzThis Q18, Q25 for a code written with no device, Q30 to Q32, Q36, and Q37 remain open in zzThis. This spec does not close them.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). They are not open. zzThis Q18, Q25 for a code written with no device, Q30 to Q32, Q36, and Q37 remain open in zzThis. This spec does not close them. The zzthis `design/` tree is a TODO in design.md, not a closed decision.
 
 ## Workflows
 

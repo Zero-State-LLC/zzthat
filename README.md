@@ -8,26 +8,31 @@
 <p align="center">
   <a href="specs/README.md">Specs</a> ·
   <a href=".specify/memory/constitution.md">Constitution</a> ·
-  <a href="https://github.com/Zero-State-LLC/zzthat/issues?q=is%3Aissue+is%3Aopen+label%3Aquestion">Open questions</a> ·
+  <a href="https://github.com/orgs/Zero-State-LLC/projects/25">Board</a> ·
+  <a href="https://github.com/Zero-State-LLC/zzthat/issues">Issues</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis">zzThis</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis/blob/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/docs/SPEC.md">zzThis spec pin</a>
 </p>
 
 <p align="center">
+  <a href=".github/workflows/ci.yml"><img alt="spec lint" src="https://github.com/Zero-State-LLC/zzthat/actions/workflows/ci.yml/badge.svg"></a>
   <a href="#status"><img alt="status: specification" src="https://img.shields.io/badge/status-specification-f85000"></a>
   <a href="#status"><img alt="platforms: iOS and Android" src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1c1b19"></a>
   <a href="specs/001-zzthat-apps/spec.md"><img alt="spec 001" src="https://img.shields.io/badge/spec-001--zzthat--apps-1c1b19"></a>
 </p>
 
+Topics: `human-readable-codes` `handwritten-codes` `ios` `android` `swift` `kotlin` `prototype`
+
 zzThat is the free everyday-use iOS and Android apps for zz codes. A person writes a code such as `zz-kathy-lost-cat-zz` on a lost-pet flyer, a moving box, a garage-sale item, or a note, and anyone can scan it, like a QR code you can write by hand [MICHAEL 2026-10-02].
 
-zzThat is the apps portion of [zzThis](https://github.com/Zero-State-LLC/zzthis). The apps are thin clients. They call the zzThis central server to resolve, issue, and manage codes. They do not run a resolver [DANNY 2026-10-04].
+zzThat is the apps portion of [zzThis](https://github.com/Zero-State-LLC/zzthis). The apps are thin clients. They call the zzThis central server to resolve, issue, and manage codes. They do not run a resolver [DANNY 2026-10-04]. The later web client is built in that same repo.
 
-This repository holds the spec. It does not hold app source yet.
+This repository holds the spec and the repo tooling. It does not hold app source yet.
 
 ## Contents
 
 - [Status](#status)
+- [Design tokens](#design-tokens)
 - [Repository atlas](#repository-atlas)
 - [Architecture](#architecture)
 - [Roadmap](#roadmap)
@@ -39,9 +44,15 @@ This repository holds the spec. It does not hold app source yet.
 zzThat is a **specification**. The apps are not built. Recognition, the resolver, and the wordlist are untested in zzThis, and this repo does not claim results [ZZTHIS SPEC].
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
-- Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)).
+- Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
-- There is no CI workflow yet. A build badge would point at a file that does not exist.
+- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The badge above tracks that workflow on `main` after this branch merges. App test CI is not added until the test targets exist.
+
+## Design tokens
+
+This repo does not publish colors, type, spacing, or icons. Those values will come from zzthis `design/` (tokens JSON, generated Swift and Kotlin, logo and icon masters, UX patterns). The consumption rules are in [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md).
+
+TODO: `design/` is not on zzthis `main` at the pin above (checked 2026-10-04). Do not paste stand-in values here. The marketing site's CSS tokens are not a substitute.
 
 ## Repository atlas
 
@@ -50,10 +61,17 @@ zzThat is a **specification**. The apps are not built. Recognition, the resolver
 | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) | Governing rules for every spec in this repo |
 | [`specs/README.md`](specs/README.md) | Spec index, zzThis pin, and the issue map |
 | [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, and the proposed API contract |
+| [`specs/001-zzthat-apps/runtime.md`](specs/001-zzthat-apps/runtime.md) | Build contract: structure, screens, auth, storage, release |
+| [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md) | How the apps consume zzthis `design/` |
 | [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ21, decided 2026-10-04 |
-| [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack default, build order, and risks |
+| [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
-| [`specs/001-zzthat-apps/checklists/requirements.md`](specs/001-zzthat-apps/checklists/requirements.md) | Spec-quality checklist |
+| [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | PROPOSAL OpenAPI for client generation |
+| [`scripts/lint-specs.py`](scripts/lint-specs.py) | Spec lint |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Spec lint on pull requests and on `main` |
+| [`.github/workflows/project-collaboration.yml`](.github/workflows/project-collaboration.yml) | Adds new issues and pull requests to the board |
+| [`AGENTS.md`](AGENTS.md) | Contract for coding agents |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to open a change |
 | [`README.md`](README.md) | This file |
 
 zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
@@ -66,6 +84,7 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
+| `design/` | Tokens, generated Swift and Kotlin, masters, UX patterns. TODO: not on `main` yet |
 
 ## Architecture
 
@@ -81,7 +100,7 @@ flowchart LR
     Local["Camera or typing, then grammar and check word"]
   end
   subgraph Server["zzthis repo: central server"]
-    API["Resolve, issue, revoke, record versions"]
+    API["Resolve, mint, revoke, record versions"]
     Vision["Cloud vision, confirmed retry only"]
   end
   iOS --> Local
@@ -94,20 +113,21 @@ The apps do not cache a source of truth. They may show a signed public record fo
 
 ## Roadmap
 
-Work is tracked as GitHub issues. ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
+Work is tracked as GitHub issues and on the [zzThat board](https://github.com/orgs/Zero-State-LLC/projects/25). ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
 
 ### Phase 0: Spec
 
 - [x] Constitution, spec 001, plan, tasks, and checklist
 - [x] Decide ZQ1 to ZQ21 ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21), [log](specs/001-zzthat-apps/decisions.md))
 - [x] One issue per task group ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
+- [x] Runtime build contract and the design consumption TODO
 - [ ] Danny accepts the spec
 
 ### Phase 1: Scaffold and on-device grammar
 
 - [ ] Platform scaffold, SwiftUI and Compose ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 - [ ] Grammar vectors on both platforms ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
-- [ ] API client fixtures ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [ ] API client generated from the OpenAPI proposal ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
 ### Phase 2: Everyday flows
 
@@ -120,16 +140,12 @@ Live mint stays blocked until the zzThis server adds free public codes ([ZQ3](ht
 
 ### Phase 3: Accounts and stores
 
-- [ ] Permissions, sign-in, and the safety gaps ([#29](https://github.com/Zero-State-LLC/zzthat/issues/29))
+- [ ] Permissions, sign-in, privacy, and accessibility ([#29](https://github.com/Zero-State-LLC/zzthat/issues/29))
 - [ ] Store readiness, without submitting ([#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
 
 ## Contributing
 
-1. Read the [constitution](.specify/memory/constitution.md) and [spec 001](specs/001-zzthat-apps/spec.md) before adding app source.
-2. Do not invent grammar, resolver, or capture rules. Reference the pinned zzThis specs.
-3. Tag new product claims. Use [ZZTHIS SPEC], [MICHAEL date], [DANNY date], or [INFERRED].
-4. User-facing copy says "demo", says "check word", and uses no em dashes.
-5. Open a pull request. Danny accepts product specs. Store submission and spend need his yes.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Run `python3 scripts/lint-specs.py` before you push. Danny accepts product specs. Store submission and spend need his yes.
 
 ## License
 

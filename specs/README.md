@@ -1,6 +1,6 @@
 # Specs
 
-zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.1.1, ratification pending Danny's approval).
+zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.2.0, ratification pending Danny's approval).
 
 Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`. This repo references those specs. It does not copy them.
 
@@ -29,6 +29,8 @@ Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature o
 | Requirement checklist | `specs/NNN-name/checklists/requirements.md` |
 | Tasks | `specs/NNN-name/tasks.md` |
 | Decision log | [spec 001 decisions](001-zzthat-apps/decisions.md) (ZQ1 to ZQ21) and the zzThis Section 9 table (Q ids) |
+| Runtime build contract | [spec 001 runtime](001-zzthat-apps/runtime.md) |
+| Design consumption | [spec 001 design](001-zzthat-apps/design.md) |
 
 ## Issues to tasks
 

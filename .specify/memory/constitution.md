@@ -1,6 +1,6 @@
 # zzThat constitution
 
-Version 1.1.1. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
+Version 1.2.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
 
 This file is the governing contract for every zzThat spec, plan, and task under `specs/`. When an artifact conflicts with this file, this file wins until it is amended. Product-true locks from Michael, and operator locks from Danny, win over this file.
 
@@ -67,7 +67,7 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 ## Engineering standards
 
 - Default workflows: anti-slop-code, production-systems, google-developer-style.
-- This repo has no CI yet. An implementation pull request may add one workflow, named first in the feature plan. Do not invent a green check before that file exists.
+- Spec lint is `.github/workflows/ci.yml` (`python3 scripts/lint-specs.py`). App tests use `.github/workflows/apps-ci.yml`, added only when the test targets exist. Do not invent a green app check before that file exists.
 - The apps are native Swift with SwiftUI, and Kotlin with Jetpack Compose. Minimums are iOS 17 and Android 8.0 (API 26). Decided in ZQ17 and ZQ21. Both apps must pass the same zzThis G9 vectors.
 - Developer prose follows the Google developer documentation style guide, including principle XI.
 
@@ -84,3 +84,4 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 | 1.0.0 | 2026-10-04 | First draft. Adapted from the zzThis constitution at the pin above, plus the thin-client and iOS and Android scope from Danny. |
 | 1.1.0 | 2026-10-04 | ZQ1 to ZQ21 decided. Exact match is closed for the free app. Web stays later and outside this repo. Stack is SwiftUI and Jetpack Compose. Decisions log added. |
 | 1.1.1 | 2026-10-04 | Danny: zzthis is the central server and the later web client, and "Try zzThat" links to its marketing page. ZQ11 reversed: the server chooses the words for every code, including free public. |
+| 1.2.0 | 2026-10-04 | Runtime build contract, design consumption TODO, spec-lint CI, and the zzThat board. |

@@ -1,0 +1,26 @@
+name: CI
+
+# Spec lint only. App tests wait for .github/workflows/apps-ci.yml,
+# which an implementation change adds after the test targets exist.
+# The job id stays `build`, matching the zzThis required check name.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lint specs
+        run: python3 scripts/lint-specs.py

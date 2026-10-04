@@ -5,7 +5,7 @@ Decisions: [decisions.md](decisions.md).
 
 ## Workflows (copied from the spec)
 
-anti-slop-code, production-systems, google-developer-style. CI: none in this repo. An implementation change may add `.github/workflows/apps-ci.yml` and must name that addition in this plan before the file lands. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
+anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. An implementation change may add `.github/workflows/apps-ci.yml` for app tests and must name that addition in this plan before the file lands. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
 
 ## Technical context
 
@@ -24,7 +24,11 @@ anti-slop-code, production-systems, google-developer-style. CI: none in this rep
 | Create | Hidden until `GET /v1` says `free_public` is true. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |
 | On-device storage | Session tokens, last canonical read, public views for 24 hours, drafts labeled "Not a code yet." | FR-041, ZQ16. 24 hours is [INFERRED]. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
-| CI | Not added in this change | File name reserved above. |
+| Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
+| API client | Generated from `contracts/zzthis-v1.openapi.yaml` until zzthis publishes OpenAPI | PROPOSAL. ZQ19. |
+| Design | Consume zzthis `design/` as design.md says. No local tokens. | TODO. design.md. |
+| Privacy | Analytics-free. No crash upload of codes, photos, or tokens. | runtime.md |
+| CI | Spec lint in `.github/workflows/ci.yml`. App test workflow not added yet. | File name reserved above. |
 
 ## Constitution check
 
@@ -44,8 +48,8 @@ anti-slop-code, production-systems, google-developer-style. CI: none in this rep
 ## Build order
 
 1. Danny accepts this spec. ZQ1 to ZQ21 are already decided.
-2. Scaffold SwiftUI and Compose at the ZQ21 minimums (T001, T002).
-3. Grammar vectors (T020) and API fixtures for the proposal (T011) can land before the server exists.
+2. Scaffold SwiftUI and Compose at the ZQ21 minimums, using the trees in runtime.md (T001, T002). Sync design only after zzthis documents `design/` (T005).
+3. Grammar vectors (T020) and a generated client plus fixtures (T015, T011) can land before the server exists.
 4. Live mint waits until the zzThis server reports `free_public: true` and implements DEP-001 and DEP-006. Re-roll waits on DEP-008.
 5. Live public resolve waits on DEP-004 and DEP-005. The signed-out path is part of that.
 6. Local wordlist snap waits on zzThis spec 003.

@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: zzThis API, contract 1 (PROPOSAL)
+  version: "1"
+  description: >
+    PROPOSAL for the zzThis server, copied from specs/001-zzthat-apps/spec.md.
+    This file is not the live OpenAPI document. Replace it when GET /v1/openapi.json
+    is published. The apps generate their clients from this file until then.
+servers:
+  - url: https://api.example.invalid
+    description: Placeholder. No production host is set in this repo.
+paths:
+  /v1:
+    get:
+      operationId: getDiscovery
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      responses:
+        "200":
+          description: Discovery
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Discovery"
+  /v1/openapi.json:
+    get:
+      operationId: getOpenApi
+      responses:
+        "200":
+          description: This contract
+  /v1/auth/token:
+    post:
+      operationId: exchangeToken
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "200":
+          description: Token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+  /v1/auth/refresh:
+    post:
+      operationId: refreshToken
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Rotated pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+  /v1/auth/revoke:
+    post:
+      operationId: revokeToken
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "204":
+          description: Revoked
+  /v1/me:
+    get:
+      operationId: getMe
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+    delete:
+      operationId: deleteMe
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      security:
+        - bearer: []
+      responses:
+        "204":
+          description: Account and active codes revoked
+  /v1/resolve/{code}:
+    get:
+      operationId: resolveCode
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200":
+          description: Public view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resolve"
+        "404":
+          description: One not-found body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/codes:
+    post:
+      operationId: mintCode
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MintRequest"
+      responses:
+        "201":
+          description: Server-chosen wordlist code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MintedCode"
+        "403":
+          description: scope-unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/codes/{id}/reroll:
+    post:
+      operationId: rerollCode
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+        - $ref: "#/components/parameters/Id"
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Replacement wordlist code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MintedCode"
+        "403":
+          description: reroll-cap or scope-unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/me/codes:
+    get:
+      operationId: listMyCodes
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Owner list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeList"
+  /v1/records/{id}/versions:
+    post:
+      operationId: addRecordVersion
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+        - $ref: "#/components/parameters/Id"
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Record"
+      responses:
+        "201":
+          description: New version
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id:
+                    type: string
+  /v1/codes/{id}/revoke:
+    post:
+      operationId: revokeCode
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+        - $ref: "#/components/parameters/Id"
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [revoked]
+  /v1/reads:
+    post:
+      operationId: readPhoto
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                canonical:
+                  type: string
+      responses:
+        "200":
+          description: Read result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadResult"
+  /v1/reports:
+    post:
+      operationId: createReport
+      parameters:
+        - $ref: "#/components/parameters/Contract"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportRequest"
+      responses:
+        "202":
+          description: Accepted even if the code is unknown
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id:
+                    type: string
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  parameters:
+    Contract:
+      name: X-ZZ-Contract
+      in: header
+      required: true
+      schema:
+        type: string
+        enum: ["1"]
+    Code:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum:
+            - not-found
+            - contract-version
+            - check-mismatch
+            - reserved-handle
+            - scope-unavailable
+            - reroll-cap
+            - rate-limited
+    Discovery:
+      type: object
+      required: [contract, free_public, auth_providers, scopes]
+      properties:
+        contract:
+          type: string
+        free_public:
+          type: boolean
+        auth_providers:
+          type: array
+          items:
+            type: string
+            enum: [apple, google]
+        scopes:
+          type: array
+          items:
+            type: string
+    TokenRequest:
+      type: object
+      required: [provider, code, code_verifier, redirect_uri]
+      properties:
+        provider:
+          type: string
+          enum: [apple, google]
+        code:
+          type: string
+        code_verifier:
+          type: string
+        redirect_uri:
+          type: string
+          enum: ["zzthat://auth"]
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    TokenPair:
+      type: object
+      required: [access_token, token_type, expires_in, refresh_token]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          enum: [900]
+        refresh_token:
+          type: string
+    Account:
+      type: object
+      required: [id, providers, created_at]
+      properties:
+        id:
+          type: string
+        providers:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    Record:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    Resolve:
+      type: object
+      required: [view, canonical, record, share]
+      properties:
+        view:
+          type: string
+          enum: [public]
+        canonical:
+          type: string
+        record:
+          $ref: "#/components/schemas/Record"
+        share:
+          type: object
+          required: [text, url]
+          properties:
+            text:
+              type: string
+            url:
+              nullable: true
+    MintRequest:
+      type: object
+      required: [scope, record]
+      properties:
+        scope:
+          type: string
+          enum: [free_public]
+        record:
+          $ref: "#/components/schemas/Record"
+    MintedCode:
+      type: object
+      required: [id, canonical, check_word, status, record_id, rerolls_remaining]
+      properties:
+        id:
+          type: string
+        canonical:
+          type: string
+        check_word:
+          type: string
+        status:
+          type: string
+          enum: [active]
+        record_id:
+          type: string
+        rerolls_remaining:
+          type: integer
+          minimum: 0
+          maximum: 3
+    CodeList:
+      type: object
+      required: [codes, next_cursor]
+      properties:
+        codes:
+          type: array
+          items:
+            type: object
+            required: [id, canonical, status, record_id, created_at]
+            properties:
+              id:
+                type: string
+              canonical:
+                type: string
+              status:
+                type: string
+                enum: [active, revoked]
+              record_id:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+        next_cursor:
+          type: string
+          nullable: true
+    ReadResult:
+      type: object
+      required: [canonical, band]
+      properties:
+        canonical:
+          type: string
+        band:
+          type: string
+          enum: [accept, clarify, retry, abstain]
+        reason:
+          type: string
+          nullable: true
+    ReportRequest:
+      type: object
+      required: [canonical, reason]
+      properties:
+        canonical:
+          type: string
+        reason:
+          type: string
+          enum: [spam, harassment, personal-data, other]
+        note:
+          type: string
