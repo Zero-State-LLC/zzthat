@@ -8,7 +8,7 @@ The phases run in this order in one build, after the zzThis build branch exists 
 
 ## Phase 0: Decisions
 
-ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 to ZQ26 wait on Danny and Michael, and the build follows their defaults. See [decisions.md](decisions.md).
+ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 to ZQ26 (issues [#32](https://github.com/Zero-State-LLC/zzthat/issues/32) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) wait on Danny and Michael, and the build follows their defaults. See [decisions.md](decisions.md).
 
 ## Phase 1: Scaffold ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 

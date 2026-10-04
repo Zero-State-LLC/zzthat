@@ -1,6 +1,6 @@
 # Design consumption: zzThat apps
 
-The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, logos, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `1e129da3bf197afc2aa8c989ec028d4656f4aaa6`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
+The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, logos, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
 
 ## Sync
 

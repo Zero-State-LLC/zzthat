@@ -6,8 +6,8 @@ Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ26, 2026-10-04).
-zzThis pin: `1e129da3bf197afc2aa8c989ec028d4656f4aaa6`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/1e129da3bf197afc2aa8c989ec028d4656f4aaa6/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/1e129da3bf197afc2aa8c989ec028d4656f4aaa6/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/2ba134a8e8c8111d8e671a1bfed0114f038ec939/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/2ba134a8e8c8111d8e671a1bfed0114f038ec939/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -160,7 +160,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `1e129da3bf197afc2aa8c989ec028d4656f4aaa6` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `2ba134a8e8c8111d8e671a1bfed0114f038ec939` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
@@ -361,7 +361,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 to ZQ26 were added 2026-10-04 and wait on Danny and Michael, with defaults this spec follows. zzThis Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37 remain open in zzThis with prototype defaults. This spec does not close them. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 to ZQ26 were added 2026-10-04 (issues [#32](https://github.com/Zero-State-LLC/zzthat/issues/32) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) and wait on Danny and Michael, with defaults this spec follows. zzThis Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37 remain open in zzThis with prototype defaults. This spec does not close them. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
 
 ## Workflows
 
