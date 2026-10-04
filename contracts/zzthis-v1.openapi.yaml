@@ -1,0 +1,941 @@
+openapi: 3.1.0
+info:
+  title: zzThis API
+  version: "1"
+  license:
+    name: Proprietary
+  summary: Contract header X-ZZ-Contract 1.
+  description: |
+    Wire contract for the zzThis central server. Behavior rules are in spec.md.
+    Every /v1 request sends X-ZZ-Contract: 1. JSON names are snake_case.
+    A code in a path is the canonical form, percent-encoded.
+    GET /v1/resolve/{code} is the only edge-cached response. Store it with the
+    Workers Cache API only when the code is active, reusable, and public and
+    the caller is unauthenticated. That response sends
+    Cache-Control: public, max-age=60, stale-while-revalidate=300.
+    The cache key is https://cache.zzthis.internal/v1/resolve/{canonical}
+    with the canonical form percent-encoded once. It is not the caller's URL.
+    A record update, revoke, or expiry purges that key. Single-use,
+    short-expiry, private, authenticated, 404, and 429 responses send
+    Cache-Control: no-store. Every other response sends
+    Cache-Control: no-store too (spec.md FR-028).
+    Sign-in: POST /v1/auth/nonce, then the provider's own sign-in with that
+    nonce, then POST /v1/auth/token with the ID token (spec.md FR-020).
+    Adding an enum value is a breaking change in contract 1.
+servers:
+  - url: https://api.example.invalid
+    description: Placeholder. The real origin is an environment value, not this file.
+tags:
+  - name: meta
+    description: Discovery and this document.
+  - name: auth
+    description: Sign-in, tokens, and the account.
+  - name: codes
+    description: Mint, re-roll, revoke, list, and resolve.
+  - name: records
+    description: Owner record reads and versions.
+  - name: reads
+    description: Retry photo reads.
+  - name: reports
+    description: Reports about a code.
+  - name: audit
+    description: The append-only log, for auditors.
+paths:
+  /v1:
+    get:
+      tags: [meta]
+      operationId: getDiscovery
+      security: []
+      summary: Discovery and contract version.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      responses:
+        "200":
+          description: What this deployment currently allows.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Discovery" }
+              example:
+                contract: "1"
+                free_public: false
+                auth_providers: [apple, google]
+                scopes: [enterprise, logistics]
+                wordlist_version: proto-v0
+                photo_reads: false
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/openapi.json:
+    get:
+      tags: [meta]
+      operationId: getOpenApi
+      security: []
+      summary: This document as JSON.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      responses:
+        "200":
+          description: The OpenAPI document for contract 1.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { type: object }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/auth/nonce:
+    post:
+      tags: [auth]
+      operationId: createNonce
+      security: []
+      summary: A one-time nonce for the provider sign-in.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      responses:
+        "200":
+          description: Works once, for 10 minutes.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Nonce" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/auth/token:
+    post:
+      tags: [auth]
+      operationId: exchangeToken
+      security: []
+      summary: Exchange a provider ID token for a session.
+      description: |
+        The server does not read a redirect URI from this body.
+        APPLE_WEB_REDIRECT_URI is the only return URL.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TokenRequest" }
+      responses:
+        "200":
+          description: Access token and rotating refresh token. For client web the refresh token is only in the __Host-zz_refresh cookie and refresh_token is null. expires_in is 900.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshToken
+      security: []
+      summary: Rotate a refresh token. The web client sends {} and the cookie.
+      description: |
+        Reusing a revoked refresh token revokes every token in its family and returns 401.
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/RefreshCookie" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefreshRequest" }
+      responses:
+        "200":
+          description: A new pair. The previous refresh token no longer works. expires_in is 900.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/auth/revoke:
+    post:
+      tags: [auth]
+      operationId: revokeToken
+      security: []
+      summary: Revoke a refresh token. The web client sends {} and the cookie.
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/RefreshCookie" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefreshRequest" }
+      responses:
+        "204":
+          description: Revoked. The web cookie is cleared with Max-Age=0.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: The signed-in account.
+      security: [{ bearer: [] }]
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      responses:
+        "200":
+          description: Account id and providers. No profile fields.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      tags: [auth]
+      operationId: deleteMe
+      summary: Delete the account and revoke its active codes.
+      security: [{ bearer: [] }]
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      responses:
+        "204":
+          description: Account closed. Audit rows stay.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Failed" }
+  /v1/codes:
+    post:
+      tags: [codes]
+      operationId: mintCode
+      summary: Mint a plain code, or issue a requested handle.
+      security: [{ bearer: [] }]
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MintRequest" }
+      responses:
+        "201":
+          description: The server's code. Plain codes do not echo a client word list.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Code" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Failed" }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/codes/{id}/reroll:
+    post:
+      tags: [codes]
+      operationId: rerollCode
+      summary: Retire an unresolved code and mint another for the same record.
+      description: |
+        No row, or a row the caller does not own, is the one not-found body.
+        reroll-cap is only for the caller's own code when no re-rolls remain
+        or the code was already resolved. forbidden is suspension, decided
+        before the id is read. There is no 409.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/Id" }
+      responses:
+        "200":
+          description: Replacement wordlist code. The previous id is revoked.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Code" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Failed" }
+  /v1/me/codes:
+    get:
+      tags: [codes]
+      operationId: listMyCodes
+      summary: The signed-in owner's codes.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 50 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Owner view with each record's title. Codes retired by a re-roll are not listed.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CodePage" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/codes/{id}/revoke:
+    post:
+      tags: [codes]
+      operationId: revokeCode
+      summary: Revoke a code.
+      description: |
+        No row, or a row the caller does not own, is the one not-found body.
+        forbidden is suspension, decided before the id is read.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/Id" }
+      responses:
+        "200":
+          description: Revoked at the central server.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [revoked] }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Failed" }
+  /v1/resolve/{code}:
+    get:
+      tags: [codes]
+      operationId: resolveCode
+      security: []
+      summary: Resolve a canonical code.
+      description: |
+        Edge-cache only an active, reusable, public, unauthenticated 200.
+        Cache-Control is then public, max-age=60, stale-while-revalidate=300.
+        The Workers Cache API key is
+        https://cache.zzthis.internal/v1/resolve/{canonical} with the
+        canonical form percent-encoded once, not this request URL.
+        Look up that key before reading D1. A hit is returned as stored.
+        A record update, revoke, or expiry purges that key. If a purge fails,
+        60 seconds is the worst case. Single-use, short-expiry, private,
+        authenticated, 404, and 429 responses send Cache-Control: no-store.
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+          description: Canonical form, percent-encoded.
+      responses:
+        "200":
+          description: The view the caller is allowed to see. Public unauthenticated reusable codes use the public Cache-Control value. Every other 200 uses no-store.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/ResolveCache" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resolve" }
+              example:
+                view: public
+                canonical: zz-kathy-lost-cat-zz
+                record:
+                  title: Lost cat
+                  body: Answers on this page.
+                  updated_at: "2026-10-04T00:00:00Z"
+                share:
+                  text: zz-kathy-lost-cat-zz
+                  url: null
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/records/{id}:
+    get:
+      tags: [records]
+      operationId: getRecord
+      summary: The owner's current title and body.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/Id" }
+      responses:
+        "200":
+          description: Owner only. No bearer token is 401. Any other caller, and a missing id, get the one not-found body.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerRecord" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/records/{id}/versions:
+    post:
+      tags: [records]
+      operationId: addRecordVersion
+      summary: Append a signed record version.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/Id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EverydayRecord" }
+      responses:
+        "201":
+          description: The new version id. The server signed it.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, version]
+                properties:
+                  id: { type: string }
+                  version: { type: integer }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Failed" }
+  /v1/reads:
+    post:
+      tags: [reads]
+      operationId: submitRead
+      security: []
+      summary: Upload a retry photo after the person confirms. 503 not-ready while photo_reads is false.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  contentMediaType: image/jpeg
+                  maxLength: 8388608
+                  description: |
+                    image/jpeg, at most 8388608 bytes (8 MiB). The server
+                    checks the JPEG signature (FF D8 FF) and refuses a larger
+                    body with 413 before writing R2.
+                canonical:
+                  type: string
+            encoding:
+              photo:
+                contentType: image/jpeg
+      responses:
+        "200":
+          description: A reading band. Not a training acceptance.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReadResult" }
+        "400": { $ref: "#/components/responses/Error" }
+        "413": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/reports:
+    post:
+      tags: [reports]
+      operationId: createReport
+      security: []
+      summary: Report a code. The call must not reveal whether it exists.
+      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReportRequest" }
+      responses:
+        "202":
+          description: Accepted when the body parses, including when the code is unknown.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /v1/audit:
+    get:
+      tags: [audit]
+      operationId: listAudit
+      summary: Audit events for a role that has audit access.
+      security: [{ bearer: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - name: code_id
+          in: query
+          schema: { type: string }
+        - name: record_id
+          in: query
+          schema: { type: string }
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Append-only events. Newest last.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items: { $ref: "#/components/schemas/AuditEvent" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+components:
+  parameters:
+    Contract:
+      name: X-ZZ-Contract
+      in: header
+      required: true
+      schema: { type: string, enum: ["1"] }
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    RefreshCookie:
+      name: __Host-zz_refresh
+      in: cookie
+      required: false
+      description: Web refresh and revoke. iOS and Android send refresh_token in JSON instead.
+      schema: { type: string }
+  headers:
+    Contract:
+      schema: { type: string, enum: ["1"] }
+      required: true
+    ResolveCache:
+      description: Public value only for an active, reusable, public, unauthenticated resolve. no-store for every other resolve 200.
+      required: true
+      schema:
+        type: string
+        enum:
+          - "public, max-age=60, stale-while-revalidate=300"
+          - "no-store"
+    NoStore:
+      description: This response is not stored in the edge cache.
+      required: true
+      schema: { type: string, enum: ["no-store"] }
+    RefreshCookie:
+      description: |
+        Web client only. Cookie name __Host-zz_refresh.
+        Attributes on issue: HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000.
+        refresh_token in the body is null when this cookie is set.
+        Revoke clears it with Max-Age=0. Absent for ios and android.
+      required: false
+      schema: { type: string }
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        HS256 access token. iss is zzthis, sub is the account id, and
+        expires_in is 900. Verifiers accept only alg HS256. Reject alg none
+        and every other alg before checking the signature.
+  responses:
+    ContractVersion:
+      description: Missing or unsupported X-ZZ-Contract.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: contract-version }
+    NotFound:
+      description: One body for unknown, expired, used, revoked, and a private record read while signed out. Not stored. The JSON object is exactly {"error":"not-found"}.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/NotFoundError" }
+          example: { error: not-found }
+    RateLimited:
+      description: The body does not depend on whether a code exists. Not stored. The JSON object is exactly {"error":"rate-limited"}.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+        Retry-After:
+          description: Whole seconds to wait.
+          schema: { type: integer, minimum: 1 }
+          required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/RateLimitedError" }
+          example: { error: rate-limited }
+    Unauthorized:
+      description: No usable bearer token, ID token, nonce, or refresh token.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: unauthorized }
+    Error:
+      description: See spec.md for which error code uses which status.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Failed:
+      description: A write failed. Nothing was stored.
+      headers:
+        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+        Cache-Control: { $ref: "#/components/headers/NoStore" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { error: failed }
+  schemas:
+    NotFoundError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [not-found]
+    RateLimitedError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [rate-limited]
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum:
+            - contract-version
+            - unauthorized
+            - forbidden
+            - not-found
+            - malformed
+            - unsupported
+            - reserved-handle
+            - taken
+            - scope-unavailable
+            - reroll-cap
+            - content-refused
+            - rate-limited
+            - not-ready
+            - failed
+            - payload-too-large
+        reason:
+          type: string
+          description: Parser reason, check-mismatch, wrong-length, or bare-mark-needs-context. Absent when it would distinguish live codes.
+    Discovery:
+      type: object
+      required:
+        [
+          contract,
+          free_public,
+          auth_providers,
+          scopes,
+          wordlist_version,
+          photo_reads,
+        ]
+      properties:
+        contract: { type: string, enum: ["1"] }
+        free_public: { type: boolean }
+        auth_providers:
+          type: array
+          items: { type: string, enum: [apple, google, dev] }
+        scopes:
+          type: array
+          items: { type: string, enum: [enterprise, logistics, free_public] }
+        wordlist_version:
+          type: string
+          description: The list the server verifies against, such as fixture-7 or proto-v0.
+        photo_reads:
+          type: boolean
+          description: False until a photo reader is configured (Q18).
+    Nonce:
+      type: object
+      required: [nonce, expires_in]
+      properties:
+        nonce: { type: string }
+        expires_in: { type: integer }
+    TokenRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        No redirect_uri field. The server uses APPLE_WEB_REDIRECT_URI only
+        and does not read a return URL from this body.
+      required: [provider, client, id_token, nonce]
+      properties:
+        provider: { type: string, enum: [apple, google, dev] }
+        client: { type: string, enum: [ios, android, web] }
+        id_token: { type: string }
+        nonce:
+          type: string
+          description: The raw nonce from POST /v1/auth/nonce. Apple clients pass its hex SHA-256 to Apple.
+        authorization_code:
+          type: [string, "null"]
+          description: Apple only. The server exchanges it once so it can revoke the Apple token at account deletion.
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        refresh_token:
+          type: [string, "null"]
+          description: iOS and Android send it. The web client omits it and sends the cookie.
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in, refresh_token]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, enum: [Bearer] }
+        expires_in:
+          type: integer
+          enum: [900]
+          description: Access token lifetime, in seconds.
+        refresh_token:
+          type: [string, "null"]
+          description: Null for client web, which gets the __Host-zz_refresh cookie.
+    Account:
+      type: object
+      required: [id, providers, created_at]
+      properties:
+        id: { type: string }
+        providers:
+          type: array
+          items: { type: string, enum: [apple, google, dev] }
+        created_at: { type: string, format: date-time }
+    EverydayRecord:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        body: { type: string, maxLength: 4000 }
+    MintRequest:
+      type: object
+      required: [scope, record]
+      properties:
+        scope: { type: string, enum: [enterprise, logistics, free_public] }
+        kind:
+          type: string
+          enum: [plain, handle]
+          default: plain
+        handle:
+          type: string
+          description: Required when kind is handle. Ignored for plain. The server does not invent a different handle.
+        record: { $ref: "#/components/schemas/EverydayRecord" }
+        single_use: { type: boolean, default: false }
+        expires_at: { type: [string, "null"], format: date-time }
+    Code:
+      type: object
+      required:
+        [
+          id,
+          canonical,
+          check_word,
+          status,
+          record_id,
+          scope,
+          rerolls_remaining,
+          created_at,
+        ]
+      properties:
+        id: { type: string }
+        canonical: { type: string }
+        check_word: { type: [string, "null"] }
+        status: { type: string, enum: [active, used, expired, revoked] }
+        record_id: { type: string }
+        scope: { type: string, enum: [enterprise, logistics, free_public] }
+        rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
+        created_at: { type: string, format: date-time }
+    OwnedCode:
+      type: object
+      required:
+        [
+          id,
+          canonical,
+          check_word,
+          status,
+          record_id,
+          scope,
+          rerolls_remaining,
+          created_at,
+          title,
+        ]
+      properties:
+        id: { type: string }
+        canonical: { type: string }
+        check_word: { type: [string, "null"] }
+        status: { type: string, enum: [active, used, expired, revoked] }
+        record_id: { type: string }
+        scope: { type: string, enum: [enterprise, logistics, free_public] }
+        rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
+        created_at: { type: string, format: date-time }
+        title:
+          type: string
+          description: The record's current title.
+    CodePage:
+      type: object
+      required: [codes, next_cursor]
+      properties:
+        codes:
+          type: array
+          items: { $ref: "#/components/schemas/OwnedCode" }
+        next_cursor: { type: [string, "null"] }
+    OwnerRecord:
+      type: object
+      required: [id, version, title, body, updated_at]
+      properties:
+        id: { type: string }
+        version: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        updated_at: { type: string, format: date-time }
+    Resolve:
+      type: object
+      required: [view, canonical, record, share]
+      properties:
+        view:
+          type: string
+          enum: [public, owner]
+          description: Always public in contract 1 (spec.md FR-008).
+        canonical: { type: string }
+        record:
+          type: object
+          required: [title, body, updated_at]
+          properties:
+            title: { type: string }
+            body: { type: string }
+            updated_at: { type: string, format: date-time }
+        share:
+          type: object
+          required: [text, url]
+          properties:
+            text: { type: string }
+            url:
+              type: [string, "null"]
+              description: Always null in contract 1.
+    ReadResult:
+      type: object
+      required: [canonical, band, reason]
+      properties:
+        canonical: { type: [string, "null"] }
+        band: { type: string, enum: [accept, clarify, retry, abstain] }
+        reason: { type: [string, "null"] }
+    ReportRequest:
+      type: object
+      required: [canonical, reason]
+      properties:
+        canonical: { type: string }
+        reason: { type: string, enum: [spam, harassment, personal-data, other] }
+        note: { type: string, maxLength: 500, default: "" }
+    AuditEvent:
+      type: object
+      required:
+        [id, actor_id, action, target_type, target_id, result, created_at]
+      properties:
+        id: { type: string }
+        actor_id: { type: [string, "null"] }
+        action: { type: string }
+        target_type: { type: string }
+        target_id: { type: string }
+        result: { type: string }
+        created_at: { type: string, format: date-time }

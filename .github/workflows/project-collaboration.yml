@@ -1,0 +1,85 @@
+name: Project collaboration automation
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  repository-projects: write
+
+env:
+  ORG_NAME: Zero-State-LLC
+  # zzThat board: https://github.com/orgs/Zero-State-LLC/projects/25
+  PROJECT_NUMBER: "25"
+  STATUS_FIELD: Status
+  STATUS_VALUE: Todo
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue or PR to the zzThat board
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const contentId = context.payload.issue?.node_id || context.payload.pull_request?.node_id;
+            const issueNumber = context.payload.issue?.number || context.payload.pull_request?.number;
+            if (!contentId || !issueNumber) return;
+            const projectNumber = Number(process.env.PROJECT_NUMBER);
+            let project = null;
+            try {
+              const result = await github.graphql(`
+                query($org:String!, $number:Int!) {
+                  organization(login:$org) {
+                    projectV2(number:$number) {
+                      id
+                      title
+                      fields(first:50) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField { id name options { name } }
+                        }
+                      }
+                    }
+                  }
+                }`, { org: process.env.ORG_NAME, number: projectNumber });
+              project = result?.organization?.projectV2 || null;
+            } catch (error) {
+              core.warning(`Could not read project #${projectNumber}: ${error.message || error}`);
+            }
+            if (!project) {
+              core.warning(`Project #${projectNumber} was not visible. Set PROJECT_TOKEN with project scope if the default token cannot see org boards.`);
+              return;
+            }
+            let itemId = null;
+            try {
+              const added = await github.graphql(`
+                mutation($projectId:ID!, $contentId:ID!) {
+                  addProjectV2ItemById(input:{projectId:$projectId, contentId:$contentId}) { item { id } }
+                }`, { projectId: project.id, contentId });
+              itemId = added.addProjectV2ItemById.item.id;
+            } catch (error) {
+              core.warning(`Could not add this item to the project: ${error.message || error}`);
+            }
+            if (!itemId) return;
+            const status = project.fields.nodes.find(field => field.name === process.env.STATUS_FIELD);
+            const option = status?.options?.find(item => item.name === process.env.STATUS_VALUE);
+            if (!status || !option) {
+              core.warning(`Field "${process.env.STATUS_FIELD}" option "${process.env.STATUS_VALUE}" was not found.`);
+              return;
+            }
+            try {
+              await github.graphql(`
+                mutation($projectId:ID!, $itemId:ID!, $fieldId:ID!, $optionId:String!) {
+                  updateProjectV2ItemFieldValue(input:{
+                    projectId:$projectId, itemId:$itemId, fieldId:$fieldId, value:{singleSelectOptionId:$optionId}
+                  }) { projectV2Item { id } }
+                }`, { projectId: project.id, itemId, fieldId: status.id, optionId: option.id });
+            } catch (error) {
+              core.warning(`Could not set status: ${error.message || error}`);
+            }
