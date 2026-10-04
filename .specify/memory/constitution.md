@@ -1,6 +1,6 @@
 # zzThat constitution
 
-Version 1.1.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
+Version 1.1.1. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
 
 This file is the governing contract for every zzThat spec, plan, and task under `specs/`. When an artifact conflicts with this file, this file wins until it is amended. Product-true locks from Michael, and operator locks from Danny, win over this file.
 
@@ -46,7 +46,7 @@ zzThis spec 002 lists free public codes as v2 [ZZTHIS SPEC]. zzThat is the free 
 
 ### VII. iOS and Android only
 
-This repository ships iOS and Android apps, together [DANNY 2026-10-04]. A web client is out of scope here. Michael's copy still says the app is coming to the web at zzthat.com [MICHAEL 2026-10-02]. That web client is later, and it is not this repo (ZQ1, decided 2026-10-04).
+This repository ships iOS and Android apps, together [DANNY 2026-10-04]. It does not build a web client. The later web client, and the central server, live in the zzthis repository. The site that repository publishes today is the marketing page for zzThis (ZQ1, corrected 2026-10-04).
 
 ### VIII. Spec before code
 
@@ -83,3 +83,4 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 |---|---|---|
 | 1.0.0 | 2026-10-04 | First draft. Adapted from the zzThis constitution at the pin above, plus the thin-client and iOS and Android scope from Danny. |
 | 1.1.0 | 2026-10-04 | ZQ1 to ZQ21 decided. Exact match is closed for the free app. Web stays later and outside this repo. Stack is SwiftUI and Jetpack Compose. Decisions log added. |
+| 1.1.1 | 2026-10-04 | Danny: zzthis is the central server and the later web client, and "Try zzThat" links to its marketing page. ZQ11 reversed: the server chooses the words for every code, including free public. |

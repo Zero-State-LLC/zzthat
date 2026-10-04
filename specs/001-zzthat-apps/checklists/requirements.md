@@ -7,7 +7,7 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 - [x] Spec has a `## Workflows` section naming workflows and the CI file to add later.
 - [x] Plan and tasks copy that workflow list and do not replace it.
 - [x] Each user story US1 to US6 has acceptance.
-- [x] Functional requirements have IDs FR-001 to FR-039, and each row has a source tag.
+- [x] Functional requirements have IDs FR-001 to FR-041, and each row has a source tag.
 - [x] Out of scope is stated, including web, zzThing, and a backend in this repo.
 - [x] ZQ1 to ZQ21 are decided in `decisions.md`, with a GitHub issue each (#1 to #21).
 - [x] Every task group TG1 to TG9 has a GitHub issue (#22 to #30) and tasks in `tasks.md`.
@@ -33,7 +33,7 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 - [x] Thin client (FR-002, FR-003) matches Danny's 2026-10-04 decision and zzThis Section 10.1.
 - [x] Offline issue is forbidden (FR-022), matching zzThis Section 10.5.
 - [x] Exact match (FR-009) matches zzThis spec 002 FR-001. ZQ13 records Michael's open suggestion policy.
-- [x] Server-issued words (FR-017) match zzThis spec 002 US2. ZQ11 records the conflict with the handwritten examples.
+- [x] Server-issued words (FR-017) match zzThis spec 002 US2, including free public codes. There is no person-written claim contract (ZQ11).
 - [x] Capture bands follow spec 004, and the marketing labels Manual, Rescan, Confirm, Resolve are not treated as the product contract.
 
 ## Not verified, because nothing is built

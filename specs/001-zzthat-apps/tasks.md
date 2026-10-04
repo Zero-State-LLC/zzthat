@@ -45,9 +45,9 @@ Issue: [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) (TG1). Stack an
 
 ## Phase 2: API client
 
-Issue: [#23](https://github.com/Zero-State-LLC/zzthat/issues/23) (TG2). Build the client against the proposal in spec.md. Live calls wait until the zzThis server publishes contract `1`. Claim also waits on `free_public`.
+Issue: [#23](https://github.com/Zero-State-LLC/zzthat/issues/23) (TG2). Build the client against the proposal in spec.md. Live calls wait until the zzThis server publishes contract `1`. Mint also waits on `free_public`.
 
-- [ ] T010 Client for discovery, auth, resolve, claim, check, list, record version, revoke, reads, and reports. No audit call. Prefix `/v1`. Header `X-ZZ-Contract: 1`.
+- [ ] T010 Client for discovery, auth, resolve, mint, re-roll, list, record version, revoke, reads, and reports. No person-written claim, no uniqueness check, and no audit call. Prefix `/v1`. Header `X-ZZ-Contract: 1`.
 - [ ] T011 Fixture tests for each row of the spec error table, including `scope-unavailable`, `contract-version`, and `rate-limited`. Assert the 404 fixture is one body for unknown, expired, used, revoked, and a signed-out read of a private record.
 - [ ] T012 Resolve sends the canonical string and does not attach a photo. It sends no bearer token for a signed-out public read (FR-016).
 - [ ] T013 Reject a fixture that omits `X-ZZ-Contract` the way the server would (400 `contract-version`).
@@ -64,12 +64,13 @@ Issue: [#24](https://github.com/Zero-State-LLC/zzthat/issues/24) (TG3).
 
 ## Phase 4: Create a code
 
-Issue: [#25](https://github.com/Zero-State-LLC/zzthat/issues/25) (TG4). The person chooses the words (ZQ11). Live claim waits on `free_public` (ZQ3) and on sign-in (DEP-003).
+Issue: [#25](https://github.com/Zero-State-LLC/zzthat/issues/25) (TG4). The server chooses the words (ZQ11). Live mint waits on `free_public` (ZQ3) and on sign-in (DEP-003).
 
-- [ ] T030 Create screen: the person enters the words, the app shows the canonical form, and claim sends that form (FR-017). The server must not be asked to mint a different code.
-- [ ] T031 When issue cannot be performed because the free public scope is absent, show the unavailable state and do not display a made-up code (FR-018, SC-8).
-- [ ] T032 Creation check: photograph the handwriting on device and compare the parse to the issued canonical form (FR-037). A mismatch asks the person to rewrite or confirm. It does not upload the photo.
-- [ ] T033 Reject any attempt to put a phone number into the code string on the client (FR-019). The server remains the enforcement point.
+- [ ] T030 Create screen calls mint and shows the returned canonical form and check word (FR-017). The screen has no field for the person to type the code words.
+- [ ] T031 When mint cannot run because the free public scope is absent, show the unavailable state and do not display a made-up code (FR-018, SC-8).
+- [ ] T032 "Get different words" calls re-roll and stops after 3 successes. At `reroll-cap`, the current words stay (FR-017, DEP-008).
+- [ ] T033 Creation check: photograph the handwriting on device and compare the parse to the minted canonical form (FR-037). A mismatch asks the person to rewrite or confirm. It does not upload the photo.
+- [ ] T034 The create screen does not accept a phone number or any other person-written code string (FR-019). The server remains the enforcement point.
 
 ## Phase 5: Scan and resolve
 
@@ -98,7 +99,7 @@ Issue: [#28](https://github.com/Zero-State-LLC/zzthat/issues/28) (TG7).
 - [ ] T061 Issue and revoke while offline are refused. They are not queued as successes.
 - [ ] T062 Do not write single-use or short-expiry responses into the resolve cache (FR-023).
 - [ ] T063 Keep the last canonical read on device for a later resolve. Do not keep the photo as an upload (FR-004). Expire a cached public view after 24 hours (FR-041).
-- [ ] T064 Local draft labeled "Not a code yet." It has no share action and no resolve action (FR-024, ZQ16).
+- [ ] T064 Local draft of a title and body, labeled "Not a code yet." It has no code words, no share action, and no resolve action (FR-024, ZQ16).
 
 ## Phase 8: Accounts, privacy, and abuse
 
@@ -125,5 +126,6 @@ Issue: [#30](https://github.com/Zero-State-LLC/zzthat/issues/30) (TG9).
 - Duplicate public codes and location (ZQ4). Stays v2 in zzThis.
 - A share URL (ZQ9). `share.url` stays null.
 - Live-code suggestions (ZQ13).
-- A web client. Not this repo (ZQ1, FR-001).
+- A web client. Built later in zzthis, not in this repo (ZQ1, FR-001).
+- A person-written claim (ZQ11).
 

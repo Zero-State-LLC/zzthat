@@ -3,7 +3,7 @@
 Feature ID: 001-zzthat-apps
 Status: not built. Specification only. No application source in this change.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
-Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.1.0.
+Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.1.1.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ21, 2026-10-04).
 Source pin: zzThis `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
 
@@ -11,7 +11,7 @@ Source pin: zzThis `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
 
 zzThat is the free everyday-use app for zz codes: handwritten codes such as `zz-kathy-lost-cat-zz` that a person can write on a lost-pet flyer, a moving box, a garage-sale item, or a note, and that another person can scan [MICHAEL 2026-10-02]. It is the apps portion of zzThis. The phone apps are API clients of one central server [ZZTHIS SPEC] [DANNY 2026-10-04].
 
-zzThis Section 12.2 still lists the apps as a product the site repo does not build [ZZTHIS SPEC]. zzThis issues #57 (Q33) and #58 (Q39) are unanswered there. Their stated defaults are adopted here, and the rest of ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). This spec is the iOS and Android product spec.
+zzThis Section 12.2 still lists the apps as a product the site repo does not build [ZZTHIS SPEC]. zzThis issues #57 (Q33) and #58 (Q39) are unanswered there. This spec keeps their scope default (iOS and Android together, web later) and their launch default (the first public store release). Danny names [zzthis](https://github.com/Zero-State-LLC/zzthis) as the home of that later web client and of the central server, and points "Try zzThat" at the zzThis marketing page [DANNY 2026-10-04]. The rest of ZQ1 to ZQ21 are in [decisions.md](decisions.md). This spec is the iOS and Android product spec.
 
 ## Users
 
@@ -31,11 +31,12 @@ As a person, I create a zz code in the app and write it on a thing, so that some
 
 Acceptance:
 
-1. The person chooses the words. The app parses them to one canonical form. The server claims that form in the free public scope. It does not replace the words with a different code (ZQ11). A word code still needs a valid check word [ZZTHIS SPEC] spec 002 FR-021. A field code does not [ZZTHIS SPEC] spec 003.
+1. The server chooses the words and the check word [ZZTHIS SPEC] spec 002 US2. Create calls mint and shows that wordlist code. The person does not send a code string (ZQ11). Issued word codes are two or three data words plus a check word [ZZTHIS SPEC] Section 2.2. Which of those counts the server uses stays zzThis Q27.
 2. If the server has no free public scope, the app does not invent a code. It shows an unavailable state (FR-018, ZQ3).
-3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11.
-4. After the person writes the code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017.
-5. The pitch examples `zz-kathy-lost-cat-zz` and `zz-moving-box-kitchen-3-zz` are claims of those canonical strings [MICHAEL 2026-10-02]. Writing a code with no device at all stays zzThis Q25 and is not this screen.
+3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11. The free app does not mint field codes or handles.
+4. After the person writes the minted code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017.
+5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, the current words stay (ZQ11). The cap count is [INFERRED].
+6. The pitch lines `zz-kathy-lost-cat-zz` and `zz-moving-box-kitchen-3-zz` are examples in the copy [MICHAEL 2026-10-02]. Create does not claim those strings. Writing a code with no device at all stays zzThis Q25 and is not this screen.
 
 ### US2. Scan a handwritten code with the camera (P1)
 
@@ -104,7 +105,7 @@ Acceptance:
 
 | ID | Requirement | Source |
 |---|---|---|
-| FR-001 | The products in this repo are an iOS app and an Android app, shipped together. No web client is built here. The web sentence in the zzThis copy stays a later promise, outside this repo. | [DANNY 2026-10-04] [MICHAEL 2026-10-02]. ZQ1, aligned with the default stated on zzThis issue #57. |
+| FR-001 | The products in this repo are an iOS app and an Android app, shipped together. The later web client is built in the zzthis repo, which is also the central server. The site that repo publishes today is the marketing page for zzThis. | [DANNY 2026-10-04]. ZQ1. The both-platforms default is the one stated on zzThis issue #57. |
 | FR-002 | The apps are thin clients. They contain no resolver, no database of record, and no second HTTP API. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.1 |
 | FR-003 | Resolve, issue, revoke, and record updates are HTTP calls to the zzThis central server. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.6 |
 | FR-004 | Recognition runs on the device first. The photo stays on the device by default. | [ZZTHIS SPEC] Section 10.3 |
@@ -120,14 +121,14 @@ Acceptance:
 | FR-014 | The first release does not request microphone permission. If voice is added later, the audio stays on the device. | [ZZTHIS SPEC] spec 004 names voice. ZQ10 keeps it out of the first release. On-device audio is [INFERRED] from Section 10.3. |
 | FR-015 | Issue, revoke, and record update require a signed-in owner. Unauthenticated write calls are the server's 401. | [ZZTHIS SPEC] spec 002 error states |
 | FR-016 | A signed-out person can resolve a public code. The app must not require an account for that read. Writes still require sign-in. | [MICHAEL 2026-10-02] "anyone can scan". [ZZTHIS SPEC] spec 002 FR-020. ZQ6. The Section 10.6 line that every call is authenticated is an inferred sketch and does not win for this read. |
-| FR-017 | Create claims the canonical code the person wrote. The server does not substitute other words. Word codes still require a valid check word. Field codes do not gain an invented check word. | [MICHAEL 2026-10-02] examples. [ZZTHIS SPEC] spec 004 FR-017 and spec 003 field-code edge case. ZQ11. Spec 002 US2 (server-chosen words) stays the path for scopes that mint wordlist codes, not for this free-public claim. |
+| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [INFERRED]. |
 | FR-018 | Until the server exposes a free public scope, create shows an honest unavailable state and does not issue. | [ZZTHIS SPEC] spec 002 FR-016 (free public is v2). ZQ3 is [#3](https://github.com/Zero-State-LLC/zzthat/issues/3). |
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
 | FR-021 | Revoke and new record versions use the server. A list of my codes waits on DEP-002. | [ZZTHIS SPEC] Section 10.6. DEP-002 is [INFERRED]. |
 | FR-022 | The app may show a briefly cached signed record without a connection. It cannot issue, revoke, or mark a code used offline. | [ZZTHIS SPEC] Section 10.5 |
 | FR-023 | The app does not cache single-use or short-expiry codes for a later resolve. | [INFERRED] from the edge rule in [ZZTHIS SPEC] Section 10.2 |
-| FR-024 | The app may keep a local draft labeled "Not a code yet." That draft is not issued, not resolved, and not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. |
+| FR-024 | The app may keep a local draft of a title and body, labeled "Not a code yet." That draft has no code words, is not issued, is not resolved, and is not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. ZQ11: words come from mint, not from the draft. |
 | FR-025 | Capture uses the spec 004 decision bands. Numeric thresholds are parameters, not constants invented here. | [ZZTHIS SPEC] spec 004. Thresholds are zzThis Q37. |
 | FR-026 | When a photo or a block of text holds several code candidates, the person chooses one. | [ZZTHIS SPEC] spec 004 FR-013 [MICHAEL 2026-10-03] |
 | FR-027 | A bare mark is reported as a bare mark and is not resolved in v1. The app offers typed entry. | [ZZTHIS SPEC] spec 004 FR-011 |
@@ -140,7 +141,7 @@ Acceptance:
 | FR-034 | If the app has accounts, it offers account deletion in the app before store submission. | [INFERRED] store practice. The server method is DEP-012. |
 | FR-035 | The app offers a report with reason `spam`, `harassment`, `personal-data`, or `other`. It does not keep a block list. | [ZZTHIS SPEC] Section 2.3 for server-side abuse. The report action is ZQ8 [INFERRED]. |
 | FR-036 | The resolved view is a screen in the app: a title and a body. | [ZZTHIS SPEC] "useful page", tagged [BRIEF]. ZQ5 and ZQ12. |
-| FR-037 | The creation check (US1 acceptance 4) runs on the device. An online uniqueness check runs only when the server requires it. | [ZZTHIS SPEC] spec 004 FR-017 |
+| FR-037 | The creation check (US1 acceptance 4) runs on the device. It compares the photo's parse to the minted canonical form. The app does not ask whether a person-written string is free. | [ZZTHIS SPEC] spec 004 FR-017. ZQ11. |
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
 | FR-039 | The same G9 input yields the same canonical form, or the same failure reason, on iOS and on Android. | [ZZTHIS SPEC] Section 2.2a. The two implementations are [INFERRED] until a shared package exists (zzThis Q29). |
 | FR-040 | Sign-in is OAuth 2.0 and OpenID Connect with PKCE, through Sign in with Apple and Sign in with Google. Access tokens last 15 minutes. Refresh tokens rotate. Tokens live in the platform secure store. | ZQ7 and ZQ18. [INFERRED] thin-client practice. zzThis Q19 does not specify this. |
@@ -150,7 +151,7 @@ Acceptance:
 
 The apps call the zzThis server. They do not run that server [DANNY 2026-10-04]. zzThis Section 10.6 is an inferred sketch, not a contract [ZZTHIS SPEC]. The shapes below are a proposal for the zzThis server, decided with ZQ19. Spec 002's not-found collapse still holds [ZZTHIS SPEC]. Paths use the `/v1` prefix. Every request and response carries `X-ZZ-Contract: 1`. JSON field names are snake_case. A code in a path is the canonical form, percent-encoded.
 
-The app hides Create until discovery says the free public scope is on (ZQ3). It does not call claim, check, or record writes before that.
+The app hides Create until discovery says the free public scope is on (ZQ3). It does not call mint, re-roll, or record writes before that.
 
 ### Discovery and version (DEP-009)
 
@@ -242,44 +243,58 @@ Response `200` for a public everyday code:
 
 Response `404` is `{ "error": "not-found" }` for unknown, expired, used, and revoked, and for a private record read by a signed-out caller [ZZTHIS SPEC] spec 002 FR-011 and FR-020. The body is identical in those cases.
 
-### Claim a person-written code (DEP-001, DEP-006)
+### Mint a wordlist code (DEP-001, DEP-006)
 
-`POST /v1/codes` requires a bearer token.
+`POST /v1/codes` requires a bearer token. The body has no canonical code. The server chooses the words and the check word [ZZTHIS SPEC] spec 002 US2 (ZQ11).
 
 Request:
 
 ```json
 {
   "scope": "free_public",
-  "canonical": "zz-kathy-lost-cat-zz",
   "record": { "title": "Lost cat", "body": "Answers on this page." }
 }
 ```
 
-The server parses `canonical` again and stores only its own parse [ZZTHIS SPEC] spec 002 FR-013. It does not choose different words (ZQ11). If every part is a wordlist word, it verifies the check word before it stores anything [ZZTHIS SPEC] spec 002 FR-021. If the code is a field code, it does not require a check word [ZZTHIS SPEC] spec 003.
+The issued code is kind `plain`, stored in canonical form [ZZTHIS SPEC] spec 002 US2 and FR-013. It is a wordlist code: two or three data words plus a check word [ZZTHIS SPEC] Section 2.2. The server keeps it unique among active codes in the scope [ZZTHIS SPEC] spec 002 US2. It does not return a field code or a handle for this call. The words in the example below are a shape, not a code the app asks for.
 
 Response `201`:
 
 ```json
 {
   "id": "code_id",
-  "canonical": "zz-kathy-lost-cat-zz",
+  "canonical": "zz-copper-lantern-sky-zz",
+  "check_word": "sky",
   "status": "active",
-  "record_id": "record_id"
+  "record_id": "record_id",
+  "rerolls_remaining": 3
 }
 ```
 
+`check_word` is the last data-bearing word of `canonical`. The app shows both.
+
 Until `free_public` is on, the response is `403` and `{ "error": "scope-unavailable" }`. The app treats that as the unavailable create state and shows no code (FR-018).
 
-`409` and `{ "error": "taken" }` when that canonical form is already active in the scope. The body does not name the owner [ZZTHIS SPEC]. `422` and `{ "error": "reserved-handle" }` for a reserved name [ZZTHIS SPEC] spec 002 FR-019.
+If the server cannot store a unique code, it returns `500` and stores nothing [ZZTHIS SPEC] spec 002 FR-018. It does not return `taken` for the person to retry with different words.
 
-### Uniqueness check (DEP-008)
+### Get different words (DEP-008)
 
-`POST /v1/codes/check` requires a bearer token.
+`POST /v1/codes/{id}/reroll` requires a bearer token. The body is empty. The server revokes the current code, does not issue those words again (the prototype default while zzThis Q36 is open), and returns a new wordlist code for the same record.
 
-Request: `{ "scope": "free_public", "canonical": "zz-kathy-lost-cat-zz" }`.
+Response `200`:
 
-Response `200`: `{ "result": "available" }`. Other `result` values are `taken`, `invalid`, and `scope-unavailable`. The response time must not depend on which of those it is [ZZTHIS SPEC] spec 002 enumeration rule. The app uses this before the person writes the code on an object. The creation photo check itself stays on the device (FR-037).
+```json
+{
+  "id": "code_id_2",
+  "canonical": "zz-maple-harbor-stone-zz",
+  "check_word": "stone",
+  "status": "active",
+  "record_id": "record_id",
+  "rerolls_remaining": 2
+}
+```
+
+The cap is 3 successful re-rolls after the first mint (ZQ11). The next call returns `403` and `{ "error": "reroll-cap" }`. The app hides "Get different words" and keeps the current words. A re-roll of a code the caller does not own is `403`. A re-roll while `free_public` is off is `403` and `{ "error": "scope-unavailable" }`.
 
 ### List, update, revoke (DEP-002)
 
@@ -345,9 +360,8 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 | Call | Limit |
 |---|---|
 | `GET /v1/resolve/{code}` | 60 per minute per IP, and 120 per minute per signed-in user |
-| `POST /v1/codes` | 10 per hour per user |
+| `POST /v1/codes` and `POST /v1/codes/{id}/reroll` | 10 per hour per user, shared |
 | `POST /v1/reads` | 5 per hour per IP, and 20 per hour per signed-in user |
-| `POST /v1/codes/check` | 30 per minute per user |
 | `POST /v1/reports` | 10 per hour per IP |
 
 `429` body is `{ "error": "rate-limited" }` and does not depend on whether the code exists. `Retry-After` is the wait in seconds. The app honors it (FR-033).
@@ -362,8 +376,8 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 | 400 `check-mismatch` | Confirm that code. Do not auto-correct [ZZTHIS SPEC] spec 004 FR-016 |
 | 400 `contract-version` | Ask the person to update the app |
 | 422 bare mark | Not resolved in v1. Offer typing (FR-027) |
-| 422 `reserved-handle` | That name cannot be claimed (FR-028) |
-| 409 `taken` | That code is already taken. Do not show the owner |
+| 422 `reserved-handle` | Shown only if a typed handle is refused (FR-028). Create does not issue handles |
+| 403 `reroll-cap` | Keep the current words. Hide "Get different words" (FR-017) |
 | 403 `scope-unavailable` | Create is unavailable (FR-018) |
 | 401 on a write | Sign-in (FR-015) |
 | 403 otherwise | The person is not allowed to do that |
@@ -384,7 +398,7 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 
 ### Proposal status
 
-DEP-001 through DEP-012 are proposals for the zzThis server. This repository does not implement them. Create stays gated on DEP-001 even though the claim shape is written down.
+DEP-001 through DEP-012 are proposals for the zzThis server. This repository does not implement them. Create stays gated on DEP-001. There is no person-written claim contract and no uniqueness-check contract.
 
 | ID | Proposal |
 |---|---|
@@ -393,9 +407,9 @@ DEP-001 through DEP-012 are proposals for the zzThis server. This repository doe
 | DEP-003 | `POST /v1/auth/token`, `/auth/refresh`, `/auth/revoke`, and `GET /v1/me` |
 | DEP-004 | `GET /v1/resolve/{code}` with no session for a public record |
 | DEP-005 | `record.title` and `record.body` |
-| DEP-006 | `POST /v1/codes` claims the caller's canonical string |
+| DEP-006 | `POST /v1/codes` mints a server-chosen wordlist code and returns `check_word` |
 | DEP-007 | `POST /v1/reads` |
-| DEP-008 | `POST /v1/codes/check` |
+| DEP-008 | `POST /v1/codes/{id}/reroll`, cap 3, previous code revoked |
 | DEP-009 | `/v1`, `X-ZZ-Contract: 1`, `GET /v1/openapi.json` |
 | DEP-010 | The limit table and `Retry-After` |
 | DEP-011 | `share.text` plus `share.url: null` on resolve. No URL resource |
@@ -421,7 +435,7 @@ The wordlist, the check-word algorithm, and capture thresholds stay in zzThis sp
 | Photo upload | Only after the FR-005 sentence. | FR-005 [ZZTHIS SPEC] |
 | Microphone | Not requested. | FR-014 |
 | Location | Not requested. | FR-013 |
-| Canonical code | Sent on resolve and claim. | FR-006 |
+| Canonical code | Sent on resolve. Mint does not send one. | FR-006, FR-017 |
 | Account id | Sent on writes, from the bearer token. | FR-040 |
 | Code string | No phone number or other personal data. | FR-019 [ZZTHIS SPEC] |
 | Page | Title and body the person wrote. | ZQ5 |
@@ -430,8 +444,8 @@ The code on paper is a public identifier. Authorization stays on the server [ZZT
 
 ## Accounts and abuse
 
-- Claim, revoke, record updates, and the uniqueness check require a signed-in free account (FR-015, FR-040).
-- Reserved handles are refused by the server [ZZTHIS SPEC] spec 002 FR-019.
+- Mint, re-roll, revoke, and record updates require a signed-in free account (FR-015, FR-040).
+- This app does not issue handles. The server still refuses a reserved handle if one is submitted [ZZTHIS SPEC] spec 002 FR-019.
 - A private record is not opened by a signed-out caller [ZZTHIS SPEC] spec 002 FR-020.
 - Copied marks, replay, enumeration, unauthorized updates, and malformed input stay server-side [ZZTHIS SPEC] Section 2.3. The app's part is FR-009, FR-010, FR-033, and the report in FR-035.
 - No duplicate codes and no location (FR-013) [ZZTHIS SPEC] Section 12.2.
@@ -455,7 +469,7 @@ The comparison that led there:
 |---|---|---|
 | Camera and on-device vision | Platform APIs, which Option A needs [ZZTHIS SPEC] | The same APIs through native modules |
 | Grammar | Two implementations, locked by G9 [ZZTHIS SPEC] | One implementation if the framework can host it |
-| Web | Not a goal of this repo [DANNY 2026-10-04] | A web target would be scope this repo excludes |
+| Web | Built later in zzthis, not in this repo [DANNY 2026-10-04] | A web target here would be scope this repo excludes |
 
 The zzThis plan's TypeScript note for the grammar library is [INFERRED] there. It is not a decision to use a JavaScript UI.
 
@@ -466,13 +480,13 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | ID | Pass when |
 |---|---|
 | SC-1 | iOS and Android each pass every G9 vector (FR-007, FR-039). |
-| SC-2 | Resolve and claim send the canonical code and do not send a photo on that call (FR-004, FR-006). |
+| SC-2 | Resolve sends the canonical code and does not send a photo. Mint sends no canonical code and no photo (FR-004, FR-006, FR-017). |
 | SC-3 | Unknown, expired, used, and revoked codes show one not-found state (FR-010). |
 | SC-4 | A photo upload happens only after the FR-005 sentence (FR-005). |
 | SC-5 | The repo contains no resolver and no database of record (FR-002). |
 | SC-6 | Offline: a cached signed public record can be shown for up to 24 hours; issue and revoke are refused (FR-022, FR-041). |
 | SC-7 | User-facing strings follow FR-030. |
-| SC-8 | While `free_public` is false, create stays unavailable and claims nothing (FR-018). |
+| SC-8 | While `free_public` is false, create stays unavailable and mints nothing (FR-018). |
 | SC-9 | A signed-out person can open a public fixture code (FR-016). |
 
 ## Edge cases
@@ -484,7 +498,8 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 - Check-word mismatch on a word code: confirm, do not auto-correct (FR-028).
 - `zz-moving-box-kitchen-3-zz` is a field code because it contains a digit. No check word is required [ZZTHIS SPEC] spec 003.
 - 429: wait for `Retry-After` (FR-033).
-- Offline claim: refused, not queued as success (FR-022). A draft may remain, labeled "Not a code yet" (FR-024).
+- Offline mint: refused, not queued as success (FR-022). A title and body may remain, labeled "Not a code yet" (FR-024). The app does not invent words for that draft.
+- Re-roll at the cap: the current words stay (FR-017).
 - `free_public` false: create is unavailable (FR-018).
 - Signed-out resolve of a public code: the title and body (FR-016).
 
@@ -496,7 +511,8 @@ zzThis spec 003 says "check word". zzThis `docs/SPEC.md` also says "checksum wor
 
 ## Out of scope
 
-- A web client in this repo (FR-001). The public sentence that names the web is unchanged on zzThis and is not a task here (ZQ1).
+- A web client in this repo (FR-001). The later web client is a zzthis task (ZQ1). The "Try zzThat" link target is the zzThis marketing page, not a zzthat.com site (ZQ2). zzThis spec 001 FR-016 still names zzthat.com; this repo does not edit that file.
+- A person-written claim, and a client uniqueness check (ZQ11).
 - zzThing [ZZTHIS SPEC].
 - A backend, resolver, wordlist pipeline, or check-word algorithm in this repo.
 - Logistics, postal, and enterprise product surfaces, except where the shared API requires the client to tolerate those code kinds.

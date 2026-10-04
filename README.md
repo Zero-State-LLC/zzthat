@@ -38,7 +38,7 @@ This repository holds the spec. It does not hold app source yet.
 
 zzThat is a **specification**. The apps are not built. Recognition, the resolver, and the wordlist are untested in zzThis, and this repo does not claim results [ZZTHIS SPEC].
 
-- iOS and Android ship together. A web client is not built from this repo [DANNY 2026-10-04]. The zzThis copy still says the app is coming to the web at zzthat.com [MICHAEL 2026-10-02]. That web client is later, and it is not this repo ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)).
+- iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
 - Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
 - There is no CI workflow yet. A build badge would point at a file that does not exist.
@@ -56,7 +56,7 @@ zzThat is a **specification**. The apps are not built. Recognition, the resolver
 | [`specs/001-zzthat-apps/checklists/requirements.md`](specs/001-zzthat-apps/checklists/requirements.md) | Spec-quality checklist |
 | [`README.md`](README.md) | This file |
 
-zzThis, not this repo, holds the grammar, the resolver, the wordlist, and capture. The pin is commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
+zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`.
 
 | zzThis path | Role for these apps |
 |---|---|
@@ -80,7 +80,7 @@ flowchart LR
   subgraph Phone["On the phone"]
     Local["Camera or typing, then grammar and check word"]
   end
-  subgraph Server["zzThis central server, other repo"]
+  subgraph Server["zzthis repo: central server"]
     API["Resolve, issue, revoke, record versions"]
     Vision["Cloud vision, confirmed retry only"]
   end
@@ -111,7 +111,7 @@ Work is tracked as GitHub issues. ZQ1 to ZQ21 are decided. Task groups are [#22]
 
 ### Phase 2: Everyday flows
 
-Live claim stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)).
+Live mint stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 
 - [ ] Create a code ([#25](https://github.com/Zero-State-LLC/zzthat/issues/25))
 - [ ] Scan and resolve ([#26](https://github.com/Zero-State-LLC/zzthat/issues/26))

@@ -1,6 +1,6 @@
 # Specs
 
-zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.1.0, ratification pending Danny's approval).
+zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.1.1, ratification pending Danny's approval).
 
 Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`. This repo references those specs. It does not copy them.
 
@@ -36,8 +36,8 @@ Question issues and task-group issues are in this repo. zzThis question numbers 
 
 | Issue | Spec |
 |---|---|
-| [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) ZQ1 web promise | 001 FR-001 |
-| [#2](https://github.com/Zero-State-LLC/zzthat/issues/2) ZQ2 launch (zzThis Q39) | 001, no launch claim |
+| [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) ZQ1 web client lives in zzthis | 001 FR-001 |
+| [#2](https://github.com/Zero-State-LLC/zzthat/issues/2) ZQ2 launch link is the zzThis marketing page | 001, no launch claim |
 | [#3](https://github.com/Zero-State-LLC/zzthat/issues/3) ZQ3 free public scope is v2 | 001 FR-018, DEP-001 |
 | [#4](https://github.com/Zero-State-LLC/zzthat/issues/4) ZQ4 duplicates and location | 001 FR-013 |
 | [#5](https://github.com/Zero-State-LLC/zzthat/issues/5) ZQ5 resolved view contents | 001 DEP-005 |
@@ -46,7 +46,7 @@ Question issues and task-group issues are in this repo. zzThis question numbers 
 | [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) ZQ8 abuse and safety | 001 FR-035 |
 | [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) ZQ9 share payload | 001 FR-020, DEP-011 |
 | [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) ZQ10 voice (zzThis Q38) | 001 FR-014 |
-| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) ZQ11 who chooses the words | 001 FR-017, DEP-006 |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) ZQ11 server chooses the words | 001 FR-017, DEP-006, DEP-008 |
 | [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) ZQ12 in-app resolved view | 001 FR-036 |
 | [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) ZQ13 suggestions (zzThis Q40) | 001 FR-009 |
 | [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) ZQ14 retry photo consent | 001 FR-005, DEP-007 |
@@ -60,7 +60,7 @@ Question issues and task-group issues are in this repo. zzThis question numbers 
 | [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) TG1 platform scaffold | T001 to T004 |
 | [#23](https://github.com/Zero-State-LLC/zzthat/issues/23) TG2 API client | T010 to T014 |
 | [#24](https://github.com/Zero-State-LLC/zzthat/issues/24) TG3 grammar and capture | T020 to T023 |
-| [#25](https://github.com/Zero-State-LLC/zzthat/issues/25) TG4 create a code | T030 to T033 |
+| [#25](https://github.com/Zero-State-LLC/zzthat/issues/25) TG4 create a code | T030 to T034 |
 | [#26](https://github.com/Zero-State-LLC/zzthat/issues/26) TG5 scan and resolve | T040 to T044 |
 | [#27](https://github.com/Zero-State-LLC/zzthat/issues/27) TG6 share and manage | T050 to T053 |
 | [#28](https://github.com/Zero-State-LLC/zzthat/issues/28) TG7 offline | T060 to T063 |

@@ -6,8 +6,8 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 
 | Issue | ID | Decision |
 |---|---|---|
-| [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) | ZQ1 | iOS and Android together. No web client in this repo. Web stays a later promise because the zzThis copy names it. |
-| [#2](https://github.com/Zero-State-LLC/zzthat/issues/2) | ZQ2 | Launch means the first public App Store release and the first public Play release, together. The zzThis button links to zzthat.com. This repo does not add the button. |
+| [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) | ZQ1 | iOS and Android together in this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server. The current zzthis site is the marketing page for zzThis. |
+| [#2](https://github.com/Zero-State-LLC/zzthat/issues/2) | ZQ2 | Launch means the first public App Store release and the first public Play release, together. "Try zzThat" links to the zzThis marketing page at `https://zero-state-llc.github.io/zzthis/`. This repo does not add the button. |
 | [#3](https://github.com/Zero-State-LLC/zzthat/issues/3) | ZQ3 | Wait. Create stays unavailable until the zzThis server adds the free public scope. |
 | [#4](https://github.com/Zero-State-LLC/zzthat/issues/4) | ZQ4 | No duplicate public codes and no location permission. Uniqueness is per scope. GPS priority stays v2. |
 | [#5](https://github.com/Zero-State-LLC/zzthat/issues/5) | ZQ5 | The resolved page is an in-app title and body. No phone field. |
@@ -16,7 +16,7 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list. No personal data in the code string. |
 | [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) | ZQ9 | Share the canonical code as text. `share.url` stays null. |
 | [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) | ZQ10 | No voice and no microphone in the first release. Later voice, if any, stays on the device. |
-| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The person chooses the words. The server claims that code. It does not mint a different one. |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. |
 | [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) | ZQ12 | The useful page is a screen in the app. |
 | [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) | ZQ13 | No live-code suggestions. Exact match. |
 | [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) | ZQ14 | The retry consent sentence in spec.md FR-005. No training use. |
@@ -28,4 +28,6 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#20](https://github.com/Zero-State-LLC/zzthat/issues/20) | ZQ20 | 429 plus `Retry-After`. Limits in spec.md DEP-010. |
 | [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) | ZQ21 | iOS 17 and later. Android 8.0, API 26, and later. |
 
-Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), the 24-hour cache lifetime in the spec, and which repository will build the later web client (#1). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.
+Corrected the same day, after the first close: ZQ1 and ZQ2 name zzthis as the web client, the central server, and the marketing page the launch link uses. ZQ11 is reversed to server-chosen words.
+
+Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), the 24-hour cache lifetime, and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.
