@@ -6,7 +6,7 @@ The apps do not define a visual system or their own sentences. Colors, type, spa
 
 `scripts/sync-zzthis.sh <sha>` (task T005) does the whole sync:
 
-1. Download zzThis `scripts/pin-zzthis.sh` at that sha and run it into a temporary folder. If the pinned commit has no `pin-zzthis.sh` yet, run `scripts/pin-design.sh` at that sha and download the other paths below directly from `https://raw.githubusercontent.com/Zero-State-LLC/zzthis/<sha>/`.
+1. Download zzThis `scripts/pin-zzthis.sh` at that sha and run it into `.zzthis-pin/`, a relative folder in the checkout that `.gitignore` lists. The pin scripts accept only a relative destination and a full 40-character sha. If the pinned commit has no `pin-zzthis.sh` yet, run `scripts/pin-design.sh` at that sha and download the other paths below directly from `https://raw.githubusercontent.com/Zero-State-LLC/zzthis/<sha>/`.
 2. Copy each file in the table into place.
 3. Generate the string catalogs from `copy.json` (runtime.md, Localization).
 4. Write the sha to `contracts/ZZTHIS-API-PIN` and to `apps/DESIGN-PIN`, one line each, the same full sha.
