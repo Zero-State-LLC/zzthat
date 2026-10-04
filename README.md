@@ -38,8 +38,9 @@ This repository holds the spec. It does not hold app source yet.
 
 zzThat is a **specification**. The apps are not built. Recognition, the resolver, and the wordlist are untested in zzThis, and this repo does not claim results [ZZTHIS SPEC].
 
-- iOS and Android are in scope. A web client is not built from this repo [DANNY 2026-10-04]. Michael's zzThis copy also says the app is coming to the web at zzthat.com [MICHAEL 2026-10-02]. That split is [ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1).
-- Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. The apps cannot issue those codes until the server grows the scope. See [ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3).
+- iOS and Android ship together. A web client is not built from this repo [DANNY 2026-10-04]. The zzThis copy still says the app is coming to the web at zzthat.com [MICHAEL 2026-10-02]. That web client is later, and it is not this repo ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)).
+- Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)).
+- Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
 - There is no CI workflow yet. A build badge would point at a file that does not exist.
 
 ## Repository atlas
@@ -48,7 +49,8 @@ zzThat is a **specification**. The apps are not built. Recognition, the resolver
 |---|---|
 | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) | Governing rules for every spec in this repo |
 | [`specs/README.md`](specs/README.md) | Spec index, zzThis pin, and the issue map |
-| [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, the API contract, and open questions |
+| [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, and the proposed API contract |
+| [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ21, decided 2026-10-04 |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack default, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
 | [`specs/001-zzthat-apps/checklists/requirements.md`](specs/001-zzthat-apps/checklists/requirements.md) | Spec-quality checklist |
@@ -92,24 +94,24 @@ The apps do not cache a source of truth. They may show a signed public record fo
 
 ## Roadmap
 
-Work is tracked as GitHub issues. Question issues are [ZQ1 to ZQ21](https://github.com/Zero-State-LLC/zzthat/issues?q=is%3Aissue+is%3Aopen+label%3Aquestion). Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
+Work is tracked as GitHub issues. ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
 
 ### Phase 0: Spec
 
 - [x] Constitution, spec 001, plan, tasks, and checklist
-- [x] One issue per open question ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21))
+- [x] Decide ZQ1 to ZQ21 ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21), [log](specs/001-zzthat-apps/decisions.md))
 - [x] One issue per task group ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
 - [ ] Danny accepts the spec
 
 ### Phase 1: Scaffold and on-device grammar
 
-- [ ] Platform scaffold ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22), after [#17](https://github.com/Zero-State-LLC/zzthat/issues/17))
+- [ ] Platform scaffold, SwiftUI and Compose ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 - [ ] Grammar vectors on both platforms ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
 - [ ] API client fixtures ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
 ### Phase 2: Everyday flows
 
-Blocked on the zzThis server for any live issue or resolve, and on [ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3) for free public codes.
+Live claim stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)).
 
 - [ ] Create a code ([#25](https://github.com/Zero-State-LLC/zzthat/issues/25))
 - [ ] Scan and resolve ([#26](https://github.com/Zero-State-LLC/zzthat/issues/26))
@@ -119,7 +121,7 @@ Blocked on the zzThis server for any live issue or resolve, and on [ZQ3](https:/
 ### Phase 3: Accounts and stores
 
 - [ ] Permissions, sign-in, and the safety gaps ([#29](https://github.com/Zero-State-LLC/zzthat/issues/29))
-- [ ] Store readiness, without submitting ([#30](https://github.com/Zero-State-LLC/zzthat/issues/30), after [#15](https://github.com/Zero-State-LLC/zzthat/issues/15))
+- [ ] Store readiness, without submitting ([#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
 
 ## Contributing
 

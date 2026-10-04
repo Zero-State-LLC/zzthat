@@ -1,6 +1,6 @@
 # zzThat constitution
 
-Version 1.0.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
+Version 1.1.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
 
 This file is the governing contract for every zzThat spec, plan, and task under `specs/`. When an artifact conflicts with this file, this file wins until it is amended. Product-true locks from Michael, and operator locks from Danny, win over this file.
 
@@ -12,11 +12,11 @@ Source pin: zzThis `main` at `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7` (2026-10
 
 - **[ZZTHIS SPEC]**: a claim taken from zzThis `docs/SPEC.md` or from `specs/002-resolver-core`, `specs/003-wordlist-checkword`, or `specs/004-capture` at the pin above. The original tag inside zzThis (for example [OPERATOR 2026-10-02] or [PRODUCT]) stays available in that repo. This repo does not retag those sources.
 - **[MICHAEL date]**: a decision or piece of copy from Michael Chung. The date is the date used in zzThis.
-- **[DANNY date]**: an operator decision from Danny. The thin-client decision and the iOS and Android scope are [DANNY 2026-10-04], from the instruction that opened this spec.
+- **[DANNY date]**: an operator decision from Danny. The thin-client decision and the iOS and Android scope are [DANNY 2026-10-04]. The 2026-10-04 instruction to close ZQ1 to ZQ21 from the zzThis docs and from native thin-client practice is the same date.
 - **[INFERRED]**: a design or engineering choice made in a zzThat spec. An implementer may follow it without further approval. It is not a product fact.
-- **OPEN**: a decision still owed by Michael or Danny. Each OPEN item names its default, if one exists, and its ZQ id in [spec 001](../../specs/001-zzthat-apps/spec.md).
+- **OPEN**: a decision still owed. ZQ1 to ZQ21 are decided in [decisions.md](../../specs/001-zzthat-apps/decisions.md). A new gap gets the next ZQ id.
 
-Do not invent product behavior, metrics, or API fields to fill a gap. Record a ZQ instead.
+Do not invent a second grammar or a second resolver. API shapes the zzThis server does not publish yet are proposals in spec 001, tagged as proposals, and they wait on that server.
 
 ## Principles
 
@@ -30,7 +30,7 @@ A code a person writes by hand must work. Printed marks and machine-only feature
 
 ### III. Exact match, correction on the device
 
-The server matches the exact code. By default it never suggests other live codes. Unknown, used, expired, and revoked codes look the same to a caller [ZZTHIS SPEC]. The app corrects against the closed wordlist and the check word, on the device [ZZTHIS SPEC]. The free app does not show live-code suggestions unless ZQ13 is answered otherwise. The default is off.
+The server matches the exact code. It does not suggest other live codes. Unknown, used, expired, and revoked codes look the same to a caller [ZZTHIS SPEC]. The app corrects against the closed wordlist and the check word, on the device [ZZTHIS SPEC]. The free app does not show live-code suggestions (ZQ13, decided 2026-10-04).
 
 ### IV. Honest status
 
@@ -38,7 +38,7 @@ zzThis has no validated codebook, no controlled comparisons, and no tested recog
 
 ### V. Do not invent the code format
 
-Encoding rules, the v1 text grammar, word counts, and check-word behavior come from zzThis. This repo references those specs. It does not copy them in as a second definition. Gaps stay OPEN.
+Encoding rules, the v1 text grammar, word counts, and check-word behavior come from zzThis. This repo references those specs. It does not copy them in as a second definition. ZQ1 to ZQ21 are closed in the decisions log. A new gap stays OPEN.
 
 ### VI. Free public codes are not in the resolver v1 line
 
@@ -46,7 +46,7 @@ zzThis spec 002 lists free public codes as v2 [ZZTHIS SPEC]. zzThat is the free 
 
 ### VII. iOS and Android only
 
-This repository ships iOS and Android apps. A web client is out of scope here [DANNY 2026-10-04]. Michael's earlier copy also names the web [MICHAEL 2026-10-02]. That conflict is ZQ1. It does not add a web target to this repo.
+This repository ships iOS and Android apps, together [DANNY 2026-10-04]. A web client is out of scope here. Michael's copy still says the app is coming to the web at zzthat.com [MICHAEL 2026-10-02]. That web client is later, and it is not this repo (ZQ1, decided 2026-10-04).
 
 ### VIII. Spec before code
 
@@ -68,13 +68,13 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 
 - Default workflows: anti-slop-code, production-systems, google-developer-style.
 - This repo has no CI yet. An implementation pull request may add one workflow, named first in the feature plan. Do not invent a green check before that file exists.
-- The platform default is native Swift and Kotlin [INFERRED]. ZQ17 can replace it. Whatever stack is chosen, both apps must pass the same zzThis G9 vectors.
+- The apps are native Swift with SwiftUI, and Kotlin with Jetpack Compose. Minimums are iOS 17 and Android 8.0 (API 26). Decided in ZQ17 and ZQ21. Both apps must pass the same zzThis G9 vectors.
 - Developer prose follows the Google developer documentation style guide, including principle XI.
 
 ## Governance
 
 - Owner of product decisions: Michael Chung (GitHub zzmojo). Owner of operator decisions and approvals: Danny.
-- zzThis question IDs (Q1 and up) stay in the zzThis decision log. New questions for these apps use the next free ZQ id in spec 001. Do not renumber either series.
+- zzThis question IDs (Q1 and up) stay in the zzThis decision log. App questions ZQ1 to ZQ21 are decided in `specs/001-zzthat-apps/decisions.md`. A new question uses the next free ZQ id. Do not renumber either series.
 - A spec is accepted when Danny approves the pull request that adds or changes it.
 
 ## Amendments
@@ -82,3 +82,4 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-10-04 | First draft. Adapted from the zzThis constitution at the pin above, plus the thin-client and iOS and Android scope from Danny. |
+| 1.1.0 | 2026-10-04 | ZQ1 to ZQ21 decided. Exact match is closed for the free app. Web stays later and outside this repo. Stack is SwiftUI and Jetpack Compose. Decisions log added. |

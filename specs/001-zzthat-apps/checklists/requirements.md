@@ -1,6 +1,6 @@
 # Requirements checklist: 001-zzthat-apps
 
-Checked 2026-10-04 against this spec package. The apps are not built. Rows below check the spec, not a binary.
+Checked 2026-10-04 against this spec package, then again the same day after ZQ1 to ZQ21 were decided. The apps are not built. Rows below check the spec, not a binary.
 
 ## Completeness
 
@@ -9,16 +9,16 @@ Checked 2026-10-04 against this spec package. The apps are not built. Rows below
 - [x] Each user story US1 to US6 has acceptance.
 - [x] Functional requirements have IDs FR-001 to FR-039, and each row has a source tag.
 - [x] Out of scope is stated, including web, zzThing, and a backend in this repo.
-- [x] Every ZQ has an owner, a default, and a GitHub issue (#1 to #21).
+- [x] ZQ1 to ZQ21 are decided in `decisions.md`, with a GitHub issue each (#1 to #21).
 - [x] Every task group TG1 to TG9 has a GitHub issue (#22 to #30) and tasks in `tasks.md`.
-- [x] The API contract lists sketched endpoints, auth, rate limits, errors, versioning, and offline cache rules.
-- [x] Missing server APIs are dependencies DEP-001 to DEP-012, not features this repo builds.
+- [x] The API contract proposes endpoints, auth, rate limits, errors, versioning, and offline cache rules for DEP-001 to DEP-012.
+- [x] Those proposals are for the zzThis server. Create stays gated on free public codes (DEP-001, FR-018, SC-8).
 - [x] Free public codes are called out as v2 in zzThis spec 002 (FR-018, DEP-001, ZQ3).
 - [x] On-device versus cloud recognition references zzThis Section 10.3 and Section 10.8 and does not add a third approach.
 - [x] Privacy and permissions cover camera and photos, and say location and microphone are off under the defaults.
 - [x] Accounts, abuse, and store obligations are present, with human gates.
-- [x] Platform options, a recommendation, and tradeoffs are present and tagged [INFERRED] where they are not a Danny decision.
-- [x] Success criteria SC-1 to SC-8 set no invented accuracy number.
+- [x] Platform is decided: SwiftUI and Jetpack Compose, iOS 17, Android API 26 (ZQ17, ZQ21). The tradeoff table remains.
+- [x] Success criteria SC-1 to SC-9 set no invented accuracy number.
 
 ## Source and copy rules
 

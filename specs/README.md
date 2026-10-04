@@ -1,6 +1,6 @@
 # Specs
 
-zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.0.0, ratification pending Danny's approval).
+zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.1.0, ratification pending Danny's approval).
 
 Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`. This repo references those specs. It does not copy them.
 
@@ -9,13 +9,13 @@ Product behavior that is already specified lives in [zzThis](https://github.com/
 | [`docs/SPEC.md`](https://github.com/Zero-State-LLC/zzthis/blob/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/docs/SPEC.md) | Grammar (Section 2.2a), architecture (Section 10), questions (Section 9), v1 and v2 line (Section 12) |
 | [`specs/002-resolver-core`](https://github.com/Zero-State-LLC/zzthis/tree/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/specs/002-resolver-core) | The server the apps call. Free public codes are v2 there. |
 | [`specs/003-wordlist-checkword`](https://github.com/Zero-State-LLC/zzthis/tree/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/specs/003-wordlist-checkword) | Wordlist, check word, and the v1 text grammar |
-| [`specs/004-capture`](https://github.com/Zero-State-LLC/zzthis/tree/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/specs/004-capture) | Camera, typing, and voice capture. Voice is not in the first app release until [ZQ10](https://github.com/Zero-State-LLC/zzthat/issues/10) says otherwise. |
+| [`specs/004-capture`](https://github.com/Zero-State-LLC/zzthis/tree/0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7/specs/004-capture) | Camera, typing, and voice capture. Voice is not in the first app release (ZQ10). |
 
 ## Features
 
 | ID | Feature | Built? | specify | clarify | plan | checklist | tasks | analyze |
 |---|---|---|---|---|---|---|---|---|
-| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done | Open: ZQ1 to ZQ21 | Proposal | [Done](001-zzthat-apps/checklists/requirements.md) | [Draft](001-zzthat-apps/tasks.md) | Not started |
+| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done | Decided: ZQ1 to ZQ21 ([log](001-zzthat-apps/decisions.md)) | Proposal | [Done](001-zzthat-apps/checklists/requirements.md) | [Draft](001-zzthat-apps/tasks.md) | Not started |
 
 Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature of this repo [ZZTHIS SPEC].
 
@@ -28,7 +28,7 @@ Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature o
 | Plan (how and stack) | `specs/NNN-name/plan.md` |
 | Requirement checklist | `specs/NNN-name/checklists/requirements.md` |
 | Tasks | `specs/NNN-name/tasks.md` |
-| Decision log | spec 001 open-question table (ZQ ids) and the zzThis Section 9 table (Q ids) |
+| Decision log | [spec 001 decisions](001-zzthat-apps/decisions.md) (ZQ1 to ZQ21) and the zzThis Section 9 table (Q ids) |
 
 ## Issues to tasks
 

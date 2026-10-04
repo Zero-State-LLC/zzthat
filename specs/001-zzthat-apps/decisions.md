@@ -1,0 +1,31 @@
+# Decisions: zzThat apps
+
+Decided 2026-10-04 from the zzThis pin `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7`, from zzThis issues #57 (Q33) and #58 (Q39) as those issues state their defaults, and from native thin-client practice where zzThis is silent. This repo does not change zzThis.
+
+Create stays gated until the zzThis resolver adds free public codes (zzThis spec 002 FR-016, a v2 item). The proposed HTTP shapes in [spec.md](spec.md) are a proposal for that server. They are not implemented here.
+
+| Issue | ID | Decision |
+|---|---|---|
+| [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) | ZQ1 | iOS and Android together. No web client in this repo. Web stays a later promise because the zzThis copy names it. |
+| [#2](https://github.com/Zero-State-LLC/zzthat/issues/2) | ZQ2 | Launch means the first public App Store release and the first public Play release, together. The zzThis button links to zzthat.com. This repo does not add the button. |
+| [#3](https://github.com/Zero-State-LLC/zzthat/issues/3) | ZQ3 | Wait. Create stays unavailable until the zzThis server adds the free public scope. |
+| [#4](https://github.com/Zero-State-LLC/zzthat/issues/4) | ZQ4 | No duplicate public codes and no location permission. Uniqueness is per scope. GPS priority stays v2. |
+| [#5](https://github.com/Zero-State-LLC/zzthat/issues/5) | ZQ5 | The resolved page is an in-app title and body. No phone field. |
+| [#6](https://github.com/Zero-State-LLC/zzthat/issues/6) | ZQ6 | A public code resolves with no account. Writes require sign-in. |
+| [#7](https://github.com/Zero-State-LLC/zzthat/issues/7) | ZQ7 | A free account is Sign in with Apple or Sign in with Google. The server stores the id and the provider. |
+| [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list. No personal data in the code string. |
+| [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) | ZQ9 | Share the canonical code as text. `share.url` stays null. |
+| [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) | ZQ10 | No voice and no microphone in the first release. Later voice, if any, stays on the device. |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The person chooses the words. The server claims that code. It does not mint a different one. |
+| [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) | ZQ12 | The useful page is a screen in the app. |
+| [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) | ZQ13 | No live-code suggestions. Exact match. |
+| [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) | ZQ14 | The retry consent sentence in spec.md FR-005. No training use. |
+| [#15](https://github.com/Zero-State-LLC/zzthat/issues/15) | ZQ15 | Listing text is the everyday-use sentences. Apple 12+ and Play Teen. Do not submit. |
+| [#16](https://github.com/Zero-State-LLC/zzthat/issues/16) | ZQ16 | A local draft is allowed if labeled "Not a code yet." It is not issued offline. |
+| [#17](https://github.com/Zero-State-LLC/zzthat/issues/17) | ZQ17 | Swift and SwiftUI. Kotlin and Jetpack Compose. |
+| [#18](https://github.com/Zero-State-LLC/zzthat/issues/18) | ZQ18 | OAuth 2.0 and OpenID Connect with PKCE. Apple and Google. 15-minute access tokens. Rotating refresh tokens. |
+| [#19](https://github.com/Zero-State-LLC/zzthat/issues/19) | ZQ19 | `/v1`, OpenAPI at `GET /v1/openapi.json`, header `X-ZZ-Contract: 1`. |
+| [#20](https://github.com/Zero-State-LLC/zzthat/issues/20) | ZQ20 | 429 plus `Retry-After`. Limits in spec.md DEP-010. |
+| [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) | ZQ21 | iOS 17 and later. Android 8.0, API 26, and later. |
+
+Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), the 24-hour cache lifetime in the spec, and which repository will build the later web client (#1). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.
