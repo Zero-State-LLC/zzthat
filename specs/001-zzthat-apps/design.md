@@ -1,36 +1,32 @@
 # Design consumption: zzThat apps
 
-The apps do not define a visual system. Colors, type, spacing, logos, icons, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) under `design/`.
+The apps do not define a visual system. Colors, type, spacing, logos, icons, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) `design/`.
 
-## TODO
+Pin: `497ea0d218ee0e7709c02ca4107846a062ff2ce2` (zzthis branch `cursor/zzthis-practices-design-api-c324`, draft PR #59). `design/README.md` at that commit is the method. It is a pinned copy. It is not a git submodule.
 
-Checked 2026-10-04: zzthis `main` at `0a5c9b93e8f8266ff9d0855f4afe2dafbe1d26d7` has no `design/` tree, and no other branch on that remote has one. A sibling change is expected to add it. Until `design/README.md` exists in zzthis, this repo does not copy tokens, generate stand-in Swift or Kotlin, or add logo or icon files.
+## Sync
 
-Task: T005 in [tasks.md](tasks.md). Issue: [#22](https://github.com/Zero-State-LLC/zzthat/issues/22).
+From a zzThat checkout:
 
-## What zzthis is expected to publish
+```sh
+PIN=497ea0d218ee0e7709c02ca4107846a062ff2ce2
+curl -fsSL "https://raw.githubusercontent.com/Zero-State-LLC/zzthis/${PIN}/scripts/pin-design.sh" -o /tmp/pin-design.sh
+sh /tmp/pin-design.sh /tmp/zzthis-design "$PIN"
+```
 
-Danny named the contents. The paths inside `design/` are whatever `design/README.md` documents. Do not guess filenames beyond that README.
+`scripts/pin-design.sh` writes `PIN` inside the destination. zzThat commits that sha as `apps/DESIGN-PIN`, one line, the same full sha. Task T005 does this copy. Do not track `main`.
 
-- Tokens as JSON
-- Generated Swift and generated Kotlin from those tokens
-- Logo and icon masters
-- A UX patterns document
+| Copy from the pin | Commit in zzThat |
+|---|---|
+| `generated/Tokens.swift` | `apps/ios/zzThat/Core/Design/Tokens.swift` |
+| `generated/Tokens.kt` | `apps/android/core-design/src/main/kotlin/llc/zerostate/zzthis/design/Tokens.kt` |
+| `brand/logo-on-light.svg` and `brand/zzthis-logo-on-light.png` | iOS and Android logo resources |
+| `brand/logo-on-dark.svg` and `brand/zzthis-logo-on-dark.webp` | dark logo resources |
+| `brand/mark.svg` and `brand/mark-zz-code.webp` | the app icon source |
+| the sha | `apps/DESIGN-PIN` |
 
-## How this repo consumes it
+`tokens.json` stays in zzthis. The apps compile the Swift and Kotlin files.
 
-Follow the method `design/README.md` documents. That is either a git submodule or a sync script. Do not pick one before that file says which.
+`design/UX.md` is the pattern list. Screens in [runtime.md](runtime.md) name the pattern it gives them. A screen it does not name keeps a TODO. Do not invent a local pattern or a second palette.
 
-When the README lands:
-
-1. Pin the zzthis commit in this repo's design sync the same way the spec pin is pinned.
-2. Run the documented sync. Commit only the files that README says to commit. Generated Swift lands in the iOS design module. Generated Kotlin lands in the Android design module. See [runtime.md](runtime.md).
-3. Point every screen in runtime.md at a pattern name from the UX patterns document. If a screen has no pattern yet, leave the TODO on that screen. Do not draw a local substitute.
-4. Delete this TODO only in the pull request that performs the first successful sync.
-
-## Rules until then
-
-- No color values, type ramps, or spacing scales in zzThat specs, READMEs, or app source.
-- No bitmap or vector logo, app icon, or glyph committed here.
-- Screens still name their job and their states in runtime.md. The visual treatment waits.
-- The marketing site's CSS tokens in zzthis `src/styles/tokens.css` are the site's tokens. They are not a substitute for `design/`.
+To move the pin, run the script with the new sha and replace those same files in one pull request.

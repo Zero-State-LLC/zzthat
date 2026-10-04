@@ -22,11 +22,11 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | API | Proposal in spec.md. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
 | Auth | OIDC with PKCE. Sign in with Apple and Sign in with Google. Access token 15 minutes. Rotating refresh in the platform secure store. | ZQ18 |
 | Create | Hidden until `GET /v1` says `free_public` is true. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |
-| On-device storage | Session tokens, last canonical read, public views for 24 hours, drafts labeled "Not a code yet." | FR-041, ZQ16. 24 hours is [INFERRED]. |
+| On-device storage | Session tokens, last canonical read, public resolves only for the `Cache-Control` lifetime in FR-041, drafts labeled "Not a code yet." | FR-041, ZQ16. zzThis spec 005 FR-018. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
 | Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
-| API client | Generated from `contracts/zzthis-v1.openapi.yaml` until zzthis publishes OpenAPI | PROPOSAL. ZQ19. |
-| Design | Consume zzthis `design/` as design.md says. No local tokens. | TODO. design.md. |
+| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml` | zzthis `497ea0d218ee0e7709c02ca4107846a062ff2ce2`. ZQ19. |
+| Design | Pinned copy via `scripts/pin-design.sh`. Sha in `apps/DESIGN-PIN`. | design.md. Not a submodule. |
 | Privacy | Analytics-free. No crash upload of codes, photos, or tokens. | runtime.md |
 | CI | Spec lint in `.github/workflows/ci.yml`. App test workflow not added yet. | File name reserved above. |
 
@@ -58,11 +58,11 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 ## Risks
 
 - Free public codes are still v2 on the resolver [ZZTHIS SPEC] spec 002 FR-016. US1 cannot complete on a live server until that scope exists. ZQ3 keeps the gate.
-- The HTTP shapes are a proposal. A shipped app must not call a server that has not published `X-ZZ-Contract: 1`.
+- The HTTP shapes are the pinned OpenAPI. A shipped app must not call a server that has not published `X-ZZ-Contract: 1`.
 - Two native parsers can drift. FR-039 is the control.
 - ZQ11 matches spec 002 US2. The server chooses the words for free public codes too. This repo does not propose a person-written claim.
 - Public resolve without a session (ZQ6) disagrees with the inferred "every call is authenticated" line in Section 10.6. The not-found collapse for private records has to stay.
-- The re-roll cap of 3 is a starting choice. zzThis does not set that number. Replaced words follow the never-reissue default while Q36 is open.
-- Rate-limit numbers and the 24-hour cache are starting choices, not measurements (Q26 is still open in zzThis).
-- Edge revocation can lag by the purge window [ZZTHIS SPEC] Q26. The app cannot fix that locally.
+- The re-roll cap of 3 is in zzThis spec 005 FR-006. Replaced words follow the never-reissue default while Q36 is open.
+- Rate-limit numbers are still the starting table (ZQ20). The cache lifetime is not: Q26 is zzThis spec 005 FR-018.
+- If an edge purge fails, 60 seconds is the worst case [ZZTHIS SPEC] spec 005 FR-018. The app still drops its copy when `Cache-Control` says so.
 - The age rating is a filing default. It is not a legal opinion.

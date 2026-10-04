@@ -50,9 +50,7 @@ zzThat is a **specification**. The apps are not built. Recognition, the resolver
 
 ## Design tokens
 
-This repo does not publish colors, type, spacing, or icons. Those values will come from zzthis `design/` (tokens JSON, generated Swift and Kotlin, logo and icon masters, UX patterns). The consumption rules are in [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md).
-
-TODO: `design/` is not on zzthis `main` at the pin above (checked 2026-10-04). Do not paste stand-in values here. The marketing site's CSS tokens are not a substitute.
+This repo does not publish its own colors, type, spacing, or icons. zzThat pins the zzthis `design/` tree with `scripts/pin-design.sh` and records the sha in `apps/DESIGN-PIN`. The rules and the current sha are in [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md). Token values are the generated Swift and Kotlin files from that pin, not a second palette.
 
 ## Repository atlas
 
@@ -66,7 +64,7 @@ TODO: `design/` is not on zzthis `main` at the pin above (checked 2026-10-04). D
 | [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ21, decided 2026-10-04 |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
-| [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | PROPOSAL OpenAPI for client generation |
+| [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | Pinned copy of zzthis `specs/005-v1-api/openapi.yaml` |
 | [`scripts/lint-specs.py`](scripts/lint-specs.py) | Spec lint |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Spec lint on pull requests and on `main` |
 | [`.github/workflows/project-collaboration.yml`](.github/workflows/project-collaboration.yml) | Adds new issues and pull requests to the board |
@@ -84,7 +82,7 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
-| `design/` | Tokens, generated Swift and Kotlin, masters, UX patterns. TODO: not on `main` yet |
+| `design/` and `scripts/pin-design.sh` | Tokens, generated Swift and Kotlin, masters, UX patterns. Pin `497ea0d218ee0e7709c02ca4107846a062ff2ce2` |
 
 ## Architecture
 
@@ -109,7 +107,7 @@ flowchart LR
   Local -.->|"photo only after the person confirms"| Vision
 ```
 
-The apps do not cache a source of truth. They may show a signed public record for a short time without a connection. They cannot issue or revoke offline [ZZTHIS SPEC].
+The apps do not cache a source of truth. A resolved public record stays only as long as the server's `Cache-Control` allows (`public, max-age=60, stale-while-revalidate=300` for a reusable public resolve, `no-store` otherwise) [ZZTHIS SPEC] spec 005 FR-018. They cannot issue or revoke offline.
 
 ## Roadmap
 
@@ -120,7 +118,7 @@ Work is tracked as GitHub issues and on the [zzThat board](https://github.com/or
 - [x] Constitution, spec 001, plan, tasks, and checklist
 - [x] Decide ZQ1 to ZQ21 ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21), [log](specs/001-zzthat-apps/decisions.md))
 - [x] One issue per task group ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
-- [x] Runtime build contract and the design consumption TODO
+- [x] Runtime build contract and the design pin (`scripts/pin-design.sh`)
 - [ ] Danny accepts the spec
 
 ### Phase 1: Scaffold and on-device grammar

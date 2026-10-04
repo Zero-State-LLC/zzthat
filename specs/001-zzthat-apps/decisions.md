@@ -30,4 +30,6 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 
 Corrected the same day, after the first close: ZQ1 and ZQ2 name zzthis as the web client, the central server, and the marketing page the launch link uses. ZQ11 is reversed to server-chosen words.
 
-Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), the 24-hour cache lifetime, and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.
+The app cache follows zzThis spec 005 FR-018 [DANNY 2026-10-04] (Q26): honor `Cache-Control`, which is `public, max-age=60, stale-while-revalidate=300` for an active reusable public unauthenticated resolve, and `no-store` otherwise. The v1 photo read returns `abstain` while Danny chooses the image model (Q18).
+
+Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 stay open in zzThis. This repo does not answer them.

@@ -20,7 +20,7 @@ Checked 2026-10-04 against this spec package, then again the same day after ZQ1 
 - [x] Platform is decided: SwiftUI and Jetpack Compose, iOS 17, Android API 26 (ZQ17, ZQ21). The tradeoff table remains.
 - [x] Success criteria SC-1 to SC-9 set no invented accuracy number.
 - [x] runtime.md names structure, modules, navigation, screen states, the generated client, auth, storage, privacy, accessibility, localization, testing, and release.
-- [x] design.md consumes zzthis `design/` and keeps the TODO while that tree is absent. No token values are invented here.
+- [x] design.md pins zzthis `design/` with `scripts/pin-design.sh`. No token values are invented here.
 - [x] Spec lint is `.github/workflows/ci.yml`.
 
 ## Source and copy rules

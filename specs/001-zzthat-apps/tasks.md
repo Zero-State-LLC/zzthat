@@ -44,7 +44,7 @@ Issue: [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) (TG1). Stack an
 - [ ] T002 Set the deployment minimums to iOS 17 and Android 8.0 (API 26), as recorded in [plan.md](plan.md) (ZQ21).
 - [ ] T003 Add empty test targets for the grammar vectors. No product screens required.
 - [ ] T004 When those test targets exist, add `.github/workflows/apps-ci.yml` to run them. Spec lint already lives in `.github/workflows/ci.yml`.
-- [ ] T005 Sync zzthis `design/` by the method its README documents. Blocked on the TODO in [design.md](design.md). Do not commit stand-in tokens or assets.
+- [ ] T005 Run zzthis `scripts/pin-design.sh` for sha `497ea0d218ee0e7709c02ca4107846a062ff2ce2` and commit the files [design.md](design.md) lists, including `apps/DESIGN-PIN`. Not a submodule. Do not hand-write tokens.
 
 ## Phase 2: API client
 
@@ -56,7 +56,7 @@ Issue: [#23](https://github.com/Zero-State-LLC/zzthat/issues/23) (TG2). Build th
 - [ ] T013 Reject a fixture that omits `X-ZZ-Contract` the way the server would (400 `contract-version`).
 - [ ] T014 On 429, wait for `Retry-After` and show one message that does not say whether the code exists (FR-033).
 - [ ] T015 Generate the iOS and Android clients from `contracts/zzthis-v1.openapi.yaml`. Do not hand-edit the generated types (runtime.md, API client).
-- [ ] T016 When zzthis publishes `GET /v1/openapi.json` for contract `1`, replace the proposal file with that document and regenerate. One source only.
+- [ ] T016 Generate from the pinned OpenAPI. When a later zzthis sha changes `specs/005-v1-api/openapi.yaml`, replace the copy and `contracts/ZZTHIS-API-PIN` together and regenerate.
 
 ## Phase 3: Grammar and capture
 
@@ -103,7 +103,7 @@ Issue: [#28](https://github.com/Zero-State-LLC/zzthat/issues/28) (TG7).
 - [ ] T060 Show a cached signed reusable public view with an offline label (FR-022, SC-6).
 - [ ] T061 Issue and revoke while offline are refused. They are not queued as successes.
 - [ ] T062 Do not write single-use or short-expiry responses into the resolve cache (FR-023).
-- [ ] T063 Keep the last canonical read on device for a later resolve. Do not keep the photo as an upload (FR-004). Expire a cached public view after 24 hours (FR-041).
+- [ ] T063 Keep the last canonical read on device for a later resolve. Do not keep the photo as an upload (FR-004). Cache a public resolve only for the `Cache-Control` lifetime in FR-041. Do not store a `no-store` response.
 - [ ] T064 Local draft of a title and body, labeled "Not a code yet." It has no code words, no share action, and no resolve action (FR-024, ZQ16).
 
 ## Phase 8: Accounts, privacy, and abuse

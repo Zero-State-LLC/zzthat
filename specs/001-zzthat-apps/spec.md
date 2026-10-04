@@ -146,7 +146,7 @@ Acceptance:
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
 | FR-039 | The same G9 input yields the same canonical form, or the same failure reason, on iOS and on Android. | [ZZTHIS SPEC] Section 2.2a. The two implementations are [INFERRED] until a shared package exists (zzThis Q29). |
 | FR-040 | Sign-in is OAuth 2.0 and OpenID Connect with PKCE, through Sign in with Apple and Sign in with Google. Access tokens last 15 minutes. Refresh tokens rotate. Tokens live in the platform secure store. | ZQ7 and ZQ18. [INFERRED] thin-client practice. zzThis Q19 does not specify this. |
-| FR-041 | A reusable public record view may be cached for 24 hours. A newer online response replaces it. | [ZZTHIS SPEC] Section 10.5 says "briefly" and sets no number. 24 hours is [INFERRED]. |
+| FR-041 | The app caches a resolved public record only as that response's `Cache-Control` allows. An active, reusable, public, unauthenticated resolve uses `public, max-age=60, stale-while-revalidate=300`. Every other resolve sends `no-store` and is not stored. The app does not invent a longer lifetime. | zzThis spec 005 FR-018 [DANNY 2026-10-04] (Q26). Pin `497ea0d218ee0e7709c02ca4107846a062ff2ce2`. |
 
 ## API contract
 
@@ -188,11 +188,11 @@ Request:
   "provider": "apple",
   "code": "authorization-code",
   "code_verifier": "pkce-verifier",
-  "redirect_uri": "zzthat://auth"
+  "redirect_uri": "https://example.invalid/auth"
 }
 ```
 
-`provider` is `apple` or `google`.
+`provider` is `apple` or `google`. `redirect_uri` is an https URL on the server allowlist `ZZ_REDIRECT_ALLOWLIST`. The contract does not use `zzthat://auth` [ZZTHIS SPEC] spec 005.
 
 Response `200`:
 
@@ -274,7 +274,7 @@ Response `201`:
 
 `check_word` is the last data-bearing word of `canonical`. The app shows both.
 
-Until `free_public` is on, the response is `403` and `{ "error": "scope-unavailable" }`. The app treats that as the unavailable create state and shows no code (FR-018).
+Until `free_public` is on, the response is `403` and `{ "error": "scope-unavailable" }`. If the plain-code issuer is not configured, the response is `503` and `{ "error": "not-ready" }`. The app treats both as the unavailable create state and shows no code (FR-018) [ZZTHIS SPEC] spec 005 FR-004.
 
 If the server cannot store a unique code, it returns `500` and stores nothing [ZZTHIS SPEC] spec 002 FR-018. It does not return `taken` for the person to retry with different words.
 
@@ -338,7 +338,7 @@ Response `200`:
 { "canonical": "zz-kathy-lost-cat-zz", "band": "accept", "reason": null }
 ```
 
-`band` is `accept`, `clarify`, `retry`, or `abstain` [ZZTHIS SPEC] spec 004. The server may store the photo for review of this read [ZZTHIS SPEC] Section 10.1. It is not a training set (ZQ14).
+`band` is `accept`, `clarify`, `retry`, or `abstain` [ZZTHIS SPEC] spec 004. In v1 the server port is a placeholder: `POST /v1/reads` returns `abstain` until Danny chooses an image model [ZZTHIS SPEC] spec 005 Q18. The photo is jpeg, at most 8 MiB. A larger body is 413 `payload-too-large`. The server may store the photo for review of this read [ZZTHIS SPEC] Section 10.1. It is not a training set (ZQ14).
 
 ### Report (ZQ8)
 
@@ -374,12 +374,12 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 | 200, public code | The title and body (US3) |
 | 404 `not-found` | One not-found state (FR-010) |
 | 400 grammar failure | Plain language, no other code offered (FR-009) |
-| 400 `check-mismatch` | Confirm that code. Do not auto-correct [ZZTHIS SPEC] spec 004 FR-016 |
+| 400 `malformed` with reason `check-mismatch` | Confirm that code. Do not auto-correct [ZZTHIS SPEC] spec 004 FR-016 and spec 005 FR-010 |
 | 400 `contract-version` | Ask the person to update the app |
 | 422 bare mark | Not resolved in v1. Offer typing (FR-027) |
 | 422 `reserved-handle` | Shown only if a typed handle is refused (FR-028). Create does not issue handles |
 | 403 `reroll-cap` | Keep the current words. Hide "Get different words" (FR-017) |
-| 403 `scope-unavailable` | Create is unavailable (FR-018) |
+| 403 `scope-unavailable` or 503 `not-ready` | Create is unavailable (FR-018). `not-ready` means the plain-code issuer is not configured [ZZTHIS SPEC] spec 005 FR-004 |
 | 401 on a write | Sign-in (FR-015) |
 | 403 otherwise | The person is not allowed to do that |
 | 429 | Wait for `Retry-After` (FR-033) |
@@ -388,9 +388,9 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 
 ### Offline cache rules
 
-1. A signed public view of a reusable code may be shown for 24 hours without a connection (FR-041) [ZZTHIS SPEC] Section 10.5.
+1. Store a resolve only when its `Cache-Control` allows it (FR-041). For an active, reusable, public, unauthenticated resolve that is `public, max-age=60, stale-while-revalidate=300` [ZZTHIS SPEC] spec 005 FR-018. The server purges that key on record update, revoke, or expiry. If a purge fails, 60 seconds is the worst case on the edge. The app still stops serving its copy when those directives say so.
 2. The cache is not the source of truth. The next online resolve replaces it.
-3. Do not cache single-use or short-expiry codes (FR-023).
+3. Do not store a response that sends `no-store`. That includes single-use codes, short-expiry codes, private records, authenticated responses, 404, and 429 (FR-023) [ZZTHIS SPEC] spec 005 FR-018.
 4. Do not issue, revoke, or mark used from the cache (FR-022).
 5. Do not cache not-found as a permanent answer.
 6. The last canonical text may be kept so resolve can be retried. The photo stays on the device unless FR-005 was accepted (FR-004).
@@ -399,7 +399,7 @@ Limits are per client, per role, and per code in the resolver spec, and the numb
 
 ### Proposal status
 
-DEP-001 through DEP-012 are proposals for the zzThis server. This repository does not implement them. Create stays gated on DEP-001. There is no person-written claim contract and no uniqueness-check contract.
+The wire shapes are the pinned file [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml), copied from zzthis `specs/005-v1-api/openapi.yaml` at `497ea0d218ee0e7709c02ca4107846a062ff2ce2` (draft PR #59). `contracts/ZZTHIS-API-PIN` holds that sha. This repository does not implement the server. Create stays gated on DEP-001. There is no person-written claim contract and no uniqueness-check contract. The everyday app does not call `GET /v1/audit`.
 
 | ID | Proposal |
 |---|---|
@@ -407,9 +407,9 @@ DEP-001 through DEP-012 are proposals for the zzThis server. This repository doe
 | DEP-002 | `GET /v1/me/codes` |
 | DEP-003 | `POST /v1/auth/token`, `/auth/refresh`, `/auth/revoke`, and `GET /v1/me` |
 | DEP-004 | `GET /v1/resolve/{code}` with no session for a public record |
-| DEP-005 | `record.title` and `record.body` |
+| DEP-005 | `record.title` (1 to 120 characters) and `record.body` (0 to 4000). Title is required. Body may be empty. |
 | DEP-006 | `POST /v1/codes` mints a server-chosen wordlist code and returns `check_word` |
-| DEP-007 | `POST /v1/reads` |
+| DEP-007 | `POST /v1/reads` (`submitRead`). v1 returns `abstain`. |
 | DEP-008 | `POST /v1/codes/{id}/reroll`, cap 3, previous code revoked |
 | DEP-009 | `/v1`, `X-ZZ-Contract: 1`, `GET /v1/openapi.json` |
 | DEP-010 | The limit table and `Retry-After` |
@@ -422,7 +422,7 @@ The wordlist, the check-word algorithm, and capture thresholds stay in zzThis sp
 
 - Option A ships first: on device where it is good enough, cloud vision only after the FR-005 confirm [ZZTHIS SPEC] Section 10.3 and Section 10.8.
 - Option B stays a zzThis benchmark, not a zzThat deliverable [ZZTHIS SPEC].
-- zzThis Q18 is still open there. Until it closes, the app does not upload a photo by default (FR-004, FR-005).
+- zzThis Q18 stays open: Danny is choosing the image model. The v1 server placeholder returns `abstain` from `POST /v1/reads` [ZZTHIS SPEC] spec 005. The app does not upload a photo by default (FR-004, FR-005). An `abstain` result uses that capture band and does not invent a reading.
 - The app does not train a model [INFERRED].
 - No accuracy figure is a release criterion (FR-029).
 - Voice is out of the first release (FR-014).
@@ -485,7 +485,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | SC-3 | Unknown, expired, used, and revoked codes show one not-found state (FR-010). |
 | SC-4 | A photo upload happens only after the FR-005 sentence (FR-005). |
 | SC-5 | The repo contains no resolver and no database of record (FR-002). |
-| SC-6 | Offline: a cached signed public record can be shown for up to 24 hours; issue and revoke are refused (FR-022, FR-041). |
+| SC-6 | Offline: a cached public resolve is shown only while its `Cache-Control` lifetime allows; `no-store` responses are not kept; issue and revoke are refused (FR-022, FR-041). |
 | SC-7 | User-facing strings follow FR-030. |
 | SC-8 | While `free_public` is false, create stays unavailable and mints nothing (FR-018). |
 | SC-9 | A signed-out person can open a public fixture code (FR-016). |
@@ -530,7 +530,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). They are not open. zzThis Q18, Q25 for a code written with no device, Q30 to Q32, Q36, and Q37 remain open in zzThis. This spec does not close them. The zzthis `design/` tree is a TODO in design.md, not a closed decision.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). They are not open. zzThis Q18, Q25 for a code written with no device, Q30 to Q32, Q36, and Q37 remain open in zzThis. This spec does not close them. Design sync follows [design.md](design.md) and zzthis `scripts/pin-design.sh`. Q18's model is still Danny's. The v1 read returns `abstain`.
 
 ## Workflows
 
