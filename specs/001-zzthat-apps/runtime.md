@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build contract for the iOS and And
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: specification, deepened 2026-10-04 for a one-shot build. Danny accepts spec 001 before the trees below are created.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `6b9c37973a463064b448a585153fdaf72d230c9b`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 
@@ -164,7 +164,7 @@ The client is generated. Hand-written request types are a lint failure.
 2. Android: the OpenAPI Generator Gradle plugin in `:core-api`, generator `kotlin`, library `jvm-retrofit2`, serialization `kotlinx_serialization`, coroutines on, input `contracts/zzthis-v1.openapi.yaml`, output in the build folder. OkHttp has no cache. An interceptor adds the headers. An authenticator refreshes once on 401.
 3. The bearer token is added to every call except resolve, nonce, token, refresh, revoke, and a signed-out report (FR-016).
 4. Demo builds use an in-memory implementation of the generated API protocol (iOS) and interfaces (Android) that returns fixtures.
-5. Fixture tests cover every row of the spec error table, including `content-refused`, `wrong-length`, `contract-version`, and `rate-limited`. The 404 fixture is one body for unknown, expired, used, revoked, and a signed-out read of a private record.
+5. Fixture tests cover every row of the spec error table, including `content-refused`, `wrong-length`, `contract-version`, and `rate-limited`. The 404 fixture is exactly `{ "error": "not-found" }` for unknown, expired, used, revoked, and a signed-out read of a private record. The 429 fixture is exactly `{ "error": "rate-limited" }`. Neither body has another field.
 6. When either generator fails on the pinned file, open a `bug` issue in zzThis with the generator output. Do not hand-write the types.
 7. When the pin moves and the OpenAPI file changes, the sync replaces it and both clients regenerate in the same pull request.
 
@@ -172,13 +172,13 @@ The client is generated. Hand-written request types are a lint failure.
 
 zzThis spec 005 FR-020 and FR-021, as amended by ZQ22.
 
-1. `POST /v1/auth/nonce` returns a nonce.
+1. `POST /v1/auth/nonce` returns a nonce that works once, for 10 minutes. The app does not send a redirect URI.
 2. iOS, Apple: an `ASAuthorizationAppleIDRequest` with no requested scopes, and `nonce` set to the hex SHA-256 of the server nonce. Send the identity token and the authorization code.
 3. iOS, Google: GoogleSignIn with the server nonce. Send the ID token.
 4. Android, Google: Credential Manager with `GetSignInWithGoogleOption`, the web client id as the server client id, and the server nonce. Send the ID token. Android does not offer Apple (ZQ23).
 5. `POST /v1/auth/token` with `provider`, `client` (`ios` or `android`), `id_token`, `nonce`, and, for Apple, `authorization_code`.
 6. Keep the refresh token in the Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) on iOS. On Android, encrypt it with an AES-GCM key held in the Android Keystore and keep it in DataStore. Do not use `EncryptedSharedPreferences`, which is deprecated. The access token stays in memory.
-7. On 401, one `POST /v1/auth/refresh`. The old refresh token is discarded. A second 401 signs the person out.
+7. On 401, one `POST /v1/auth/refresh`. The old refresh token is discarded. A second 401, or reuse of a revoked refresh token, signs the person out.
 8. Sign-out calls `POST /v1/auth/revoke`, then deletes the tokens and the owner list snapshot.
 9. Delete account calls `DELETE /v1/me`, then deletes the tokens, the draft, and every cache.
 10. Local builds add Developer sign-in: provider `dev`, ID token `dev:local-tester` (FR-048).
@@ -197,7 +197,7 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
 | Photo | The app's cache folder | Deleted when the scan or write check ends (FR-004) |
 
-A `no-store` response is never written. Not-found is never cached. No record-signing key is stored.
+A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, photos, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. A photo upload is JPEG only and at most 8 MiB (8388608 bytes).
 
 ## Read pipeline
 

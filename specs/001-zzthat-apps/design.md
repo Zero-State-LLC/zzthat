@@ -1,6 +1,6 @@
 # Design consumption: zzThat apps
 
-The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, logos, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
+The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, logos, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `6b9c37973a463064b448a585153fdaf72d230c9b`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
 
 ## Sync
 
@@ -9,7 +9,9 @@ The apps do not define a visual system or their own sentences. Colors, type, spa
 1. Download zzThis `scripts/pin-zzthis.sh` at that sha and run it into a temporary folder. If the pinned commit has no `pin-zzthis.sh` yet, run `scripts/pin-design.sh` at that sha and download the other paths below directly from `https://raw.githubusercontent.com/Zero-State-LLC/zzthis/<sha>/`.
 2. Copy each file in the table into place.
 3. Generate the string catalogs from `copy.json` (runtime.md, Localization).
-4. Write the sha to `contracts/ZZTHIS-API-PIN`.
+4. Write the sha to `contracts/ZZTHIS-API-PIN` and to `apps/DESIGN-PIN`, one line each, the same full sha.
+
+`pin-design.sh` at this pin takes a relative destination inside the checkout. It rejects an absolute path and any `..` segment, and it writes `PIN` inside that directory.
 
 CI runs the sync at the committed pin and fails on any difference (SC-10). To move the pin, run the script with the new sha and commit everything it changed in one pull request.
 

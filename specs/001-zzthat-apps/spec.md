@@ -6,8 +6,8 @@ Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ26, 2026-10-04).
-zzThis pin: `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/2ba134a8e8c8111d8e671a1bfed0114f038ec939/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/2ba134a8e8c8111d8e671a1bfed0114f038ec939/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `6b9c37973a463064b448a585153fdaf72d230c9b`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/6b9c37973a463064b448a585153fdaf72d230c9b/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/6b9c37973a463064b448a585153fdaf72d230c9b/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -147,12 +147,12 @@ Acceptance:
 | FR-037 | The creation check (US1 acceptance 4) runs on the device. It compares the photo's parse to the minted canonical form. The app does not ask whether a person-written string is free. | [ZZTHIS SPEC] spec 004 FR-017. ZQ11. |
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
 | FR-039 | The same G9 input yields the same canonical form, or the same failure reason, on iOS and on Android. | [ZZTHIS SPEC] Section 2.2a. The two implementations are [INFERRED] until a shared package exists (zzThis Q29). |
-| FR-040 | Sign-in follows zzThis spec 005 FR-020: the app gets a nonce from `POST /v1/auth/nonce`, signs in with the platform's own provider sign-in using that nonce, and sends the ID token to `POST /v1/auth/token`. iOS offers Sign in with Apple and Google. Android offers Google through Credential Manager (ZQ23). Access tokens last 15 minutes. Refresh tokens rotate. The refresh token lives in the Keychain on iOS, and on Android it is encrypted with an Android Keystore key and kept in DataStore. | ZQ7, and ZQ18 as amended by ZQ22. [INFERRED] storage. |
-| FR-041 | The app keeps a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300`. Online, it uses that copy for 60 seconds after the fetch and then fetches again before showing. Offline, it shows the copy, labeled offline, until 360 seconds after the fetch, and then the not-on-this-device state. A `no-store` response is never kept. The app does not invent a longer lifetime. | zzThis spec 005 FR-018 and FR-019 [DANNY 2026-10-04] (Q26). ZQ26. |
+| FR-040 | Sign-in follows zzThis spec 005 FR-020 and FR-021: the app gets a nonce from `POST /v1/auth/nonce`, signs in with the platform's own provider sign-in using that nonce, and sends the ID token to `POST /v1/auth/token`. iOS offers Sign in with Apple and Google. Android offers Google through Credential Manager (ZQ23). Access tokens last exactly 900 seconds. Refresh tokens rotate. The refresh token lives in the Keychain on iOS, and on Android it is encrypted with an Android Keystore key and kept in DataStore. The app sends no redirect URI. | ZQ7, and ZQ18 as amended by ZQ22. The zzthis default while [zzthis #68](https://github.com/Zero-State-LLC/zzthis/issues/68) waits for Danny. [INFERRED] storage. |
+| FR-041 | The app keeps a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300`. Online, it uses that copy for 60 seconds after the fetch and then fetches again before showing. Offline, it shows the copy, labeled offline, until 360 seconds after the fetch, and then the not-on-this-device state. Every other `/v1` response sends `no-store` and is never kept. The app does not invent a longer lifetime. | zzThis spec 005 FR-018, FR-019, and FR-028 [DANNY 2026-10-04] (Q26). ZQ26. |
 | FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. | [ZZTHIS SPEC] design/UX.md |
 | FR-043 | Fonts are the IBM Plex files from zzThis `design/fonts/` at the pin. Colors and type come from the pinned token files. | [ZZTHIS SPEC] design/README.md |
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
-| FR-045 | The app offers the photo upload (FR-005) only when `GET /v1` reports `photo_reads: true`. It is false in v1, so v1 never uploads a photo. | [ZZTHIS SPEC] spec 005 US5 |
+| FR-045 | The app offers the photo upload (FR-005) only when `GET /v1` reports `photo_reads: true`. It is false in v1, so v1 never uploads a photo. When it is offered, the file is JPEG only and at most 8388608 bytes (8 MiB). The server checks the JPEG signature (bytes FF D8 FF). Another type is 400 `malformed`. A larger body is 413 `payload-too-large` and is not stored. | [ZZTHIS SPEC] spec 005 US5 and FR-013 |
 | FR-046 | The record body is shown as plain text. Links in it are not tappable. | [ZZTHIS SPEC] spec 005 FR-007 |
 | FR-047 | The Account screen shows the support contact and the privacy policy link from build settings. A store submission waits for both (ZQ25). | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
@@ -160,7 +160,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `2ba134a8e8c8111d8e671a1bfed0114f038ec939` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `6b9c37973a463064b448a585153fdaf72d230c9b` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
@@ -176,7 +176,7 @@ The contract is zzThis spec 005 and its OpenAPI file, pinned at `2ba134a8e8c8111
 | `GET /v1/records/{id}` | Code detail, Edit record | Owner only |
 | `POST /v1/records/{id}/versions` | Save in Edit record | |
 | `POST /v1/codes/{id}/revoke` | Revoke confirm | |
-| `POST /v1/reads` | Not in v1 | Only after FR-005, and only when `photo_reads` is true (FR-045) |
+| `POST /v1/reads` | Not in v1 | Only after FR-005, and only when `photo_reads` is true (FR-045). JPEG only, at most 8 MiB |
 | `POST /v1/reports` | Report | Allowed signed out. The answer never says whether the code exists. |
 
 The apps never call `GET /v1/audit`. There is no person-written claim call and no uniqueness-check call.
@@ -189,7 +189,7 @@ The DEP ids were zzThat proposals. zzThis spec 005 adopted them on 2026-10-04.
 |---|---|---|
 | DEP-001 | `free_public` in discovery, and 403 `scope-unavailable` until it is on | FR-005 |
 | DEP-002 | `GET /v1/me/codes` | US3, FR-030 |
-| DEP-003 | Sign-in, refresh, revoke, and `GET /v1/me` | FR-020, FR-021. Changed to ID tokens (ZQ22). |
+| DEP-003 | `POST /v1/auth/nonce`, then `POST /v1/auth/token` with the provider ID token, plus refresh, revoke, and `GET /v1/me` | FR-020, FR-021. Changed to ID tokens (ZQ22). |
 | DEP-004 | Signed-out resolve of a public record | FR-008 |
 | DEP-005 | `title` 1 to 120 characters, `body` 0 to 4000 | FR-007 |
 | DEP-006 | Server-chosen mint that returns `check_word` | US2, FR-004 |
@@ -207,7 +207,7 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 | Server result | What the person sees (key in `copy.json`) |
 |---|---|
 | 200, public code | The title and body (US3) |
-| 404 `not-found` | `resolve.not_found` (FR-010) |
+| 404 `not-found` | `resolve.not_found` (FR-010). The JSON is exactly `{ "error": "not-found" }`, with no other field, and `Cache-Control: no-store` |
 | 400 `malformed` | `type.malformed`. No other code offered (FR-009) |
 | 400 `malformed`, reason `check-mismatch` | `scan.check_mismatch`. Confirm or retype. Do not auto-correct [ZZTHIS SPEC] spec 004 FR-016 |
 | 400 `malformed`, reason `wrong-length` | `scan.wrong_length` |
@@ -219,7 +219,8 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 | 403 `scope-unavailable`, or 503 `not-ready` on mint | `create.unavailable` (FR-018) |
 | 401 on a write | Sign in (FR-015) |
 | 403 otherwise | `error.forbidden` |
-| 429 | `resolve.rate_limited`, then wait for `Retry-After` (FR-033) |
+| 413 `payload-too-large` | The photo is over 8 MiB. Nothing was stored (FR-045) |
+| 429 | `resolve.rate_limited`, then wait for `Retry-After` (FR-033). The JSON is exactly `{ "error": "rate-limited" }`, with no other field, and `Cache-Control: no-store` |
 | 500 on a write | `error.nothing_saved` [ZZTHIS SPEC] spec 002 FR-018 |
 | 503 otherwise | `error.unavailable` |
 | No connection | Offline rules (US6). `error.no_connection` for writes |
@@ -229,7 +230,7 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 1. Keep a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300` (FR-041). Store the body and the fetch time.
 2. Online: use the copy for 60 seconds after the fetch. After that, fetch before showing. Do not show a stale copy while online.
 3. Offline: show the copy, labeled offline, until 360 seconds after the fetch. Then show `resolve.not_on_device`.
-4. Never keep a `no-store` response. That covers single-use codes, short-expiry codes, private records, authenticated responses, 404, and 429 (FR-023) [ZZTHIS SPEC] spec 005 FR-018.
+4. Never keep a `no-store` response. Every `/v1` response except a cacheable resolve sends it [ZZTHIS SPEC] spec 005 FR-028. That covers tokens, photos, owner responses, single-use codes, short-expiry codes, private records, authenticated responses, 404, and 429 (FR-023, FR-041).
 5. Do not issue, revoke, re-roll, or mark used from the cache (FR-022).
 6. The last canonical text may be kept so resolve can be retried. The photo stays on the device and is deleted when the scan ends (FR-004).
 7. A draft labeled "Not a code yet" is local only (FR-024).

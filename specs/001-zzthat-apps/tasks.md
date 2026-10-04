@@ -36,7 +36,7 @@ Done when: every vector row passes on both platforms, and a rendered image of `z
 - [ ] T015 Generate both clients from `contracts/zzthis-v1.openapi.yaml` (runtime.md, API client). No hand-edited types.
 - [ ] T010 The middleware: `/v1`, `X-ZZ-Contract: 1`, the bearer rule, one refresh on 401, no HTTP cache (FR-049).
 - [ ] T017 The demo implementation of the generated API for Demo builds.
-- [ ] T011 Fixture tests for each row of the spec error table, with one 404 body for unknown, expired, used, revoked, and a signed-out private read.
+- [ ] T011 Fixture tests for each row of the spec error table. The 404 body is exactly `{ "error": "not-found" }` for unknown, expired, used, revoked, and a signed-out private read. The 429 body is exactly `{ "error": "rate-limited" }`. Neither has another field.
 - [ ] T012 Resolve sends the canonical string, no photo, and no `Authorization` header (FR-016).
 - [ ] T013 A response without `X-ZZ-Contract`, or a 400 `contract-version`, shows `error.update_app`.
 - [ ] T014 On 429, wait for `Retry-After` and show one message that does not say whether the code exists (FR-033).

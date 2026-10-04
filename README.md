@@ -11,7 +11,7 @@
   <a href="https://github.com/orgs/Zero-State-LLC/projects/25">Board</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthat/issues">Issues</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis">zzThis</a> ·
-  <a href="https://github.com/Zero-State-LLC/zzthis/blob/2ba134a8e8c8111d8e671a1bfed0114f038ec939/docs/SPEC.md">zzThis spec pin</a>
+  <a href="https://github.com/Zero-State-LLC/zzthis/blob/6b9c37973a463064b448a585153fdaf72d230c9b/docs/SPEC.md">zzThis spec pin</a>
 </p>
 
 <p align="center">
@@ -72,7 +72,7 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to open a change |
 | [`README.md`](README.md) | This file |
 
-zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `2ba134a8e8c8111d8e671a1bfed0114f038ec939`, recorded in `contracts/ZZTHIS-API-PIN`.
+zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `6b9c37973a463064b448a585153fdaf72d230c9b`, recorded in `contracts/ZZTHIS-API-PIN`.
 
 | zzThis path | Role for these apps |
 |---|---|
@@ -82,7 +82,7 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
-| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `2ba134a8e8c8111d8e671a1bfed0114f038ec939` |
+| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `6b9c37973a463064b448a585153fdaf72d230c9b` |
 | `specs/005-v1-api` and `docs/ONE-SHOT-BRIEF.md` | The `/v1` contract and the one-shot build brief |
 
 ## Architecture
@@ -108,7 +108,7 @@ flowchart LR
   Local -.->|"photo only after the person confirms"| Vision
 ```
 
-The apps do not cache a source of truth. A resolved public record stays only as long as the server's `Cache-Control` allows (`public, max-age=60, stale-while-revalidate=300` for a reusable public resolve, `no-store` otherwise) [ZZTHIS SPEC] spec 005 FR-018. They cannot issue or revoke offline.
+The apps do not cache a source of truth. Only an active reusable public unauthenticated resolve may be kept, and only for the server's `Cache-Control` (`public, max-age=60, stale-while-revalidate=300`). Every other `/v1` response is `no-store` [ZZTHIS SPEC] spec 005 FR-018 and FR-028. They cannot issue or revoke offline.
 
 ## Roadmap
 

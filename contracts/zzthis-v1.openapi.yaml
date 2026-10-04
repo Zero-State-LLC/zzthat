@@ -13,9 +13,11 @@ info:
     Workers Cache API only when the code is active, reusable, and public and
     the caller is unauthenticated. That response sends
     Cache-Control: public, max-age=60, stale-while-revalidate=300.
-    The cache key is that request. A record update, revoke, or expiry purges
-    the key. Single-use, short-expiry, private, authenticated, 404, and 429
-    responses send Cache-Control: no-store. Every other response sends
+    The cache key is https://cache.zzthis.internal/v1/resolve/{canonical}
+    with the canonical form percent-encoded once. It is not the caller's URL.
+    A record update, revoke, or expiry purges that key. Single-use,
+    short-expiry, private, authenticated, 404, and 429 responses send
+    Cache-Control: no-store. Every other response sends
     Cache-Control: no-store too (spec.md FR-028).
     Sign-in: POST /v1/auth/nonce, then the provider's own sign-in with that
     nonce, then POST /v1/auth/token with the ID token (spec.md FR-020).
@@ -49,7 +51,11 @@ paths:
       responses:
         "200":
           description: What this deployment currently allows.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Discovery" }
@@ -72,7 +78,11 @@ paths:
       responses:
         "200":
           description: The OpenAPI document for contract 1.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { type: object }
@@ -88,7 +98,11 @@ paths:
       responses:
         "200":
           description: Works once, for 10 minutes.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Nonce" }
@@ -100,6 +114,9 @@ paths:
       operationId: exchangeToken
       security: []
       summary: Exchange a provider ID token for a session.
+      description: |
+        The server does not read a redirect URI from this body.
+        APPLE_WEB_REDIRECT_URI is the only return URL.
       parameters: [{ $ref: "#/components/parameters/Contract" }]
       requestBody:
         required: true
@@ -108,8 +125,11 @@ paths:
             schema: { $ref: "#/components/schemas/TokenRequest" }
       responses:
         "200":
-          description: Access token and rotating refresh token. For client web the refresh token is only in the __Host-zz_refresh cookie and refresh_token is null.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          description: Access token and rotating refresh token. For client web the refresh token is only in the __Host-zz_refresh cookie and refresh_token is null. expires_in is 900.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TokenResponse" }
@@ -122,7 +142,11 @@ paths:
       operationId: refreshToken
       security: []
       summary: Rotate a refresh token. The web client sends {} and the cookie.
-      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      description: |
+        Reusing a revoked refresh token revokes every token in its family and returns 401.
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/RefreshCookie" }
       requestBody:
         required: true
         content:
@@ -130,11 +154,15 @@ paths:
             schema: { $ref: "#/components/schemas/RefreshRequest" }
       responses:
         "200":
-          description: A new pair. The previous refresh token no longer works.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          description: A new pair. The previous refresh token no longer works. expires_in is 900.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TokenResponse" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
   /v1/auth/revoke:
@@ -143,7 +171,9 @@ paths:
       operationId: revokeToken
       security: []
       summary: Revoke a refresh token. The web client sends {} and the cookie.
-      parameters: [{ $ref: "#/components/parameters/Contract" }]
+      parameters:
+        - { $ref: "#/components/parameters/Contract" }
+        - { $ref: "#/components/parameters/RefreshCookie" }
       requestBody:
         required: true
         content:
@@ -151,8 +181,12 @@ paths:
             schema: { $ref: "#/components/schemas/RefreshRequest" }
       responses:
         "204":
-          description: Revoked.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          description: Revoked. The web cookie is cleared with Max-Age=0.
+          headers:
+            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
   /v1/me:
@@ -165,10 +199,15 @@ paths:
       responses:
         "200":
           description: Account id and providers. No profile fields.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Account" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
     delete:
@@ -180,7 +219,12 @@ paths:
       responses:
         "204":
           description: Account closed. Audit rows stay.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
@@ -199,7 +243,11 @@ paths:
       responses:
         "201":
           description: The server's code. Plain codes do not echo a client word list.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Code" }
@@ -216,6 +264,11 @@ paths:
       tags: [codes]
       operationId: rerollCode
       summary: Retire an unresolved code and mint another for the same record.
+      description: |
+        No row, or a row the caller does not own, is the one not-found body.
+        reroll-cap is only for the caller's own code when no re-rolls remain
+        or the code was already resolved. forbidden is suspension, decided
+        before the id is read. There is no 409.
       security: [{ bearer: [] }]
       parameters:
         - { $ref: "#/components/parameters/Contract" }
@@ -223,14 +276,18 @@ paths:
       responses:
         "200":
           description: Replacement wordlist code. The previous id is revoked.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Code" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
   /v1/me/codes:
@@ -250,10 +307,15 @@ paths:
       responses:
         "200":
           description: Owner view with each record's title. Codes retired by a re-roll are not listed.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CodePage" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
@@ -262,6 +324,9 @@ paths:
       tags: [codes]
       operationId: revokeCode
       summary: Revoke a code.
+      description: |
+        No row, or a row the caller does not own, is the one not-found body.
+        forbidden is suspension, decided before the id is read.
       security: [{ bearer: [] }]
       parameters:
         - { $ref: "#/components/parameters/Contract" }
@@ -269,7 +334,11 @@ paths:
       responses:
         "200":
           description: Revoked at the central server.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema:
@@ -277,6 +346,7 @@ paths:
                 required: [status]
                 properties:
                   status: { type: string, enum: [revoked] }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -290,8 +360,11 @@ paths:
       summary: Resolve a canonical code.
       description: |
         Edge-cache only an active, reusable, public, unauthenticated 200.
-        Cache-Control is then public, max-age=60, stale-while-revalidate=300,
-        stored with the Workers Cache API under this request as the cache key.
+        Cache-Control is then public, max-age=60, stale-while-revalidate=300.
+        The Workers Cache API key is
+        https://cache.zzthis.internal/v1/resolve/{canonical} with the
+        canonical form percent-encoded once, not this request URL.
+        Look up that key before reading D1. A hit is returned as stored.
         A record update, revoke, or expiry purges that key. If a purge fails,
         60 seconds is the worst case. Single-use, short-expiry, private,
         authenticated, 404, and 429 responses send Cache-Control: no-store.
@@ -336,11 +409,16 @@ paths:
         - { $ref: "#/components/parameters/Id" }
       responses:
         "200":
-          description: Owner only. Anyone else gets the one not-found body.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          description: Owner only. No bearer token is 401. Any other caller, and a missing id, get the one not-found body.
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/OwnerRecord" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
@@ -361,7 +439,11 @@ paths:
       responses:
         "201":
           description: The new version id. The server signed it.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema:
@@ -395,13 +477,25 @@ paths:
                 photo:
                   type: string
                   format: binary
-                  description: image/jpeg
+                  contentMediaType: image/jpeg
+                  maxLength: 8388608
+                  description: |
+                    image/jpeg, at most 8388608 bytes (8 MiB). The server
+                    checks the JPEG signature (FF D8 FF) and refuses a larger
+                    body with 413 before writing R2.
                 canonical:
                   type: string
+            encoding:
+              photo:
+                contentType: image/jpeg
       responses:
         "200":
           description: A reading band. Not a training acceptance.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ReadResult" }
@@ -424,7 +518,11 @@ paths:
       responses:
         "202":
           description: Accepted when the body parses, including when the code is unknown.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema:
@@ -457,7 +555,11 @@ paths:
       responses:
         "200":
           description: Append-only events. Newest last.
-          headers: { X-ZZ-Contract: { $ref: "#/components/headers/Contract" } }
+          headers:
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
           content:
             application/json:
               schema:
@@ -467,6 +569,7 @@ paths:
                   events:
                     type: array
                     items: { $ref: "#/components/schemas/AuditEvent" }
+        "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
@@ -481,6 +584,12 @@ components:
       name: id
       in: path
       required: true
+      schema: { type: string }
+    RefreshCookie:
+      name: __Host-zz_refresh
+      in: cookie
+      required: false
+      description: Web refresh and revoke. iOS and Android send refresh_token in JSON instead.
       schema: { type: string }
   headers:
     Contract:
@@ -498,10 +607,23 @@ components:
       description: This response is not stored in the edge cache.
       required: true
       schema: { type: string, enum: ["no-store"] }
+    RefreshCookie:
+      description: |
+        Web client only. Cookie name __Host-zz_refresh.
+        Attributes on issue: HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000.
+        refresh_token in the body is null when this cookie is set.
+        Revoke clears it with Max-Age=0. Absent for ios and android.
+      required: false
+      schema: { type: string }
   securitySchemes:
     bearer:
       type: http
       scheme: bearer
+      bearerFormat: JWT
+      description: |
+        HS256 access token. iss is zzthis, sub is the account id, and
+        expires_in is 900. Verifiers accept only alg HS256. Reject alg none
+        and every other alg before checking the signature.
   responses:
     ContractVersion:
       description: Missing or unsupported X-ZZ-Contract.
@@ -513,16 +635,16 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
           example: { error: contract-version }
     NotFound:
-      description: One body for unknown, expired, used, revoked, and a private record read while signed out. Not stored.
+      description: One body for unknown, expired, used, revoked, and a private record read while signed out. Not stored. The JSON object is exactly {"error":"not-found"}.
       headers:
         X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
         Cache-Control: { $ref: "#/components/headers/NoStore" }
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema: { $ref: "#/components/schemas/NotFoundError" }
           example: { error: not-found }
     RateLimited:
-      description: The body does not depend on whether a code exists. Not stored.
+      description: The body does not depend on whether a code exists. Not stored. The JSON object is exactly {"error":"rate-limited"}.
       headers:
         X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
         Cache-Control: { $ref: "#/components/headers/NoStore" }
@@ -532,7 +654,7 @@ components:
           required: true
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema: { $ref: "#/components/schemas/RateLimitedError" }
           example: { error: rate-limited }
     Unauthorized:
       description: No usable bearer token, ID token, nonce, or refresh token.
@@ -561,8 +683,25 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
           example: { error: failed }
   schemas:
+    NotFoundError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [not-found]
+    RateLimitedError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [rate-limited]
     Error:
       type: object
+      additionalProperties: false
       required: [error]
       properties:
         error:
@@ -620,6 +759,10 @@ components:
         expires_in: { type: integer }
     TokenRequest:
       type: object
+      additionalProperties: false
+      description: |
+        No redirect_uri field. The server uses APPLE_WEB_REDIRECT_URI only
+        and does not read a return URL from this body.
       required: [provider, client, id_token, nonce]
       properties:
         provider: { type: string, enum: [apple, google, dev] }
@@ -633,6 +776,7 @@ components:
           description: Apple only. The server exchanges it once so it can revoke the Apple token at account deletion.
     RefreshRequest:
       type: object
+      additionalProperties: false
       properties:
         refresh_token:
           type: [string, "null"]
@@ -643,7 +787,10 @@ components:
       properties:
         access_token: { type: string }
         token_type: { type: string, enum: [Bearer] }
-        expires_in: { type: integer }
+        expires_in:
+          type: integer
+          enum: [900]
+          description: Access token lifetime, in seconds.
         refresh_token:
           type: [string, "null"]
           description: Null for client web, which gets the __Host-zz_refresh cookie.
