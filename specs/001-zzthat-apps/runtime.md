@@ -71,7 +71,7 @@ Each feature calls core modules. Features do not call each other except through 
 | Report | The four reasons in FR-035 | A block list |
 | API (`ZZAPI`, `:core-api`) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
-| Storage | Resolve cache, owner list snapshot, draft, last canonical | A second source of truth |
+| Storage | Resolve cache, draft, last canonical | A second source of truth, or any `no-store` response |
 | Core (`ZZCore`, `:core-grammar`) | zzThis Section 2.2a, the spec 003 check word, the spec 004 scanner and bands, the list loader | A second grammar |
 | Design (`ZZDesign`, `:core-design`) | The pinned token files and fonts | Values authored in this repo |
 
@@ -128,8 +128,8 @@ Each screen implements five states. Strings come from `copy.json`.
 | Create | Mint a wordlist code (US1, ZQ11) | `create.signed_out`, or Unavailable | `create.content_refused`, 401, 500 | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
 | Minted code | The canonical form and the check word, and re-roll | Not used after a 201 | `minted.reroll_cap` keeps the words | Hide re-roll. The words stay. | Demo words. The button does not call. | Minted code |
 | Write check | The photo of the handwriting matches the minted code (FR-037) | No photo yet | `writecheck.mismatch`. No upload. | Runs on the device | A fixture photo labeled Demo | Write check |
-| My codes | Owner list with titles | `codes.empty`, or `codes.signed_out` | 401, 403, 500 | Last list labeled offline, if any | Fixture rows labeled Demo | My codes |
-| Code detail | One owned code: share, edit, revoke | Not used | 404 for a code the server dropped | Last owner row. Writes disabled. | Fixture row labeled Demo | Code detail |
+| My codes | Owner list with titles | `codes.empty`, or `codes.signed_out` | 401, 403, 500 | `error.no_connection`. No list is kept, because owner responses are `no-store`. | Fixture rows labeled Demo | My codes |
+| Code detail | One owned code: share, edit, revoke | Not used | 404 for a code the server dropped | `error.no_connection`. Nothing owned is kept offline. | Fixture row labeled Demo | Code detail |
 | Edit record | New title and body | `create.title_required` | `error.nothing_saved`, `create.content_refused` | Refuse the save | Demo fields. Save does not call. | Edit record |
 | Revoke confirm | One confirm, then revoke | Not used | `error.nothing_saved`. The code stays active. | Refuse | Demo confirm does not call | Revoke confirm |
 | Unavailable | Create while `free_public` is false or the issuer is not ready (FR-018) | `create.unavailable` | Not a second error | Same copy | Same copy, labeled Demo | Create |
@@ -179,7 +179,7 @@ zzThis spec 005 FR-020 and FR-021. ZQ18 [DANNY 2026-10-04] (zzThis Q66): native 
 5. `POST /v1/auth/token` with `provider`, `client` (`ios` or `android`), `id_token`, `nonce`, and, for Apple, `authorization_code`.
 6. Keep the refresh token in the Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) on iOS. On Android, encrypt it with an AES-GCM key held in the Android Keystore and keep it in DataStore. Do not use `EncryptedSharedPreferences`, which is deprecated. The access token stays in memory.
 7. On 401, one `POST /v1/auth/refresh`. The old refresh token is discarded. A second 401, or reuse of a revoked refresh token, signs the person out.
-8. Sign-out calls `POST /v1/auth/revoke`, then deletes the tokens and the owner list snapshot.
+8. Sign-out calls `POST /v1/auth/revoke`, then deletes the tokens.
 9. Delete account calls `DELETE /v1/me`, then deletes the tokens, the draft, and every cache.
 10. Local builds add Developer sign-in: provider `dev`, ID token `dev:local-tester` (FR-048).
 
@@ -193,7 +193,6 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Access token | Memory | 900 seconds |
 | Public reusable resolve | A small JSON file in the caches folder, keyed by canonical code, at most 50 entries, oldest dropped first | FR-041: 60 seconds online, 360 seconds offline |
 | Last canonical text | App storage | Until the person clears it, so resolve can be retried |
-| Owner list snapshot | App cache | Shown offline with an offline label. Deleted at sign-out. |
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
 | Photo | The app's cache folder | Deleted when the scan or write check ends (FR-004) |
 
