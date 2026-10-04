@@ -20,7 +20,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Check word and wordlist | Follow spec 003. Do not show a local pass before that library exists. | [ZZTHIS SPEC]. Blocked on Q30, Q31, Q32. |
 | Recognition | Option A. On device first. Cloud only after the FR-005 sentence. | [ZZTHIS SPEC] Section 10.3. Q18 still open in zzThis. |
 | API | Proposal in spec.md. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
-| Auth | A server nonce, the platform's own provider sign-in, and an ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 as amended by ZQ22, ZQ23 |
+| Auth | Native Apple or Google sign-in, a server nonce, and the provider ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 [DANNY 2026-10-04] (Q66). ZQ23. |
 | Create | Hidden until `GET /v1` says `free_public` is true. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |
 | On-device storage | Session tokens, last canonical read, public resolves for 60 seconds online and 360 seconds offline (FR-041), drafts labeled "Not a code yet." | FR-041, ZQ16, ZQ26. zzThis spec 005 FR-018. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
@@ -51,7 +51,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 
 The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks.md), Phase 1 to Phase 11.
 
-1. Danny accepts this spec and the zzThis build intent. ZQ22 to ZQ26 are answered, or their defaults stand.
+1. Danny accepts this spec and the zzThis build intent. ZQ23 to ZQ26 are answered, or their defaults stand. ZQ22 is already yes.
 2. The zzThis build branch exists, with the fonts, `pin-zzthis.sh`, and the wordlist files. Pin to its head.
 3. Scaffold, then the core library on both platforms against `contracts/vectors.json`.
 4. API client, accounts, scan and resolve, create, share and manage, offline, privacy and strings.

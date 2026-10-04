@@ -147,7 +147,7 @@ Acceptance:
 | FR-037 | The creation check (US1 acceptance 4) runs on the device. It compares the photo's parse to the minted canonical form. The app does not ask whether a person-written string is free. | [ZZTHIS SPEC] spec 004 FR-017. ZQ11. |
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
 | FR-039 | The same G9 input yields the same canonical form, or the same failure reason, on iOS and on Android. | [ZZTHIS SPEC] Section 2.2a. The two implementations are [INFERRED] until a shared package exists (zzThis Q29). |
-| FR-040 | Sign-in follows zzThis spec 005 FR-020 and FR-021: the app gets a nonce from `POST /v1/auth/nonce`, signs in with the platform's own provider sign-in using that nonce, and sends the ID token to `POST /v1/auth/token`. iOS offers Sign in with Apple and Google. Android offers Google through Credential Manager (ZQ23). Access tokens last exactly 900 seconds. Refresh tokens rotate. The refresh token lives in the Keychain on iOS, and on Android it is encrypted with an Android Keystore key and kept in DataStore. The app sends no redirect URI. | ZQ7, and ZQ18 as amended by ZQ22. The zzthis default while [zzthis #68](https://github.com/Zero-State-LLC/zzthis/issues/68) waits for Danny. [INFERRED] storage. |
+| FR-040 | Sign-in follows zzThis spec 005 FR-020 and FR-021: the app gets a nonce from `POST /v1/auth/nonce`, signs in with the platform's own provider sign-in using that nonce, and sends the ID token to `POST /v1/auth/token`. iOS offers Sign in with Apple and Google. Android offers Google through Credential Manager (ZQ23). Access tokens last exactly 900 seconds. Refresh tokens rotate. The refresh token lives in the Keychain on iOS, and on Android it is encrypted with an Android Keystore key and kept in DataStore. The app sends no redirect URI. | ZQ7 and ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ22 is the same yes. [INFERRED] storage. |
 | FR-041 | The app keeps a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300`. Online, it uses that copy for 60 seconds after the fetch and then fetches again before showing. Offline, it shows the copy, labeled offline, until 360 seconds after the fetch, and then the not-on-this-device state. Every other `/v1` response sends `no-store` and is never kept. The app does not invent a longer lifetime. | zzThis spec 005 FR-018, FR-019, and FR-028 [DANNY 2026-10-04] (Q26). ZQ26. |
 | FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. | [ZZTHIS SPEC] design/UX.md |
 | FR-043 | Fonts are the IBM Plex files from zzThis `design/fonts/` at the pin. Colors and type come from the pinned token files. | [ZZTHIS SPEC] design/README.md |
@@ -189,7 +189,7 @@ The DEP ids were zzThat proposals. zzThis spec 005 adopted them on 2026-10-04.
 |---|---|---|
 | DEP-001 | `free_public` in discovery, and 403 `scope-unavailable` until it is on | FR-005 |
 | DEP-002 | `GET /v1/me/codes` | US3, FR-030 |
-| DEP-003 | `POST /v1/auth/nonce`, then `POST /v1/auth/token` with the provider ID token, plus refresh, revoke, and `GET /v1/me` | FR-020, FR-021. Changed to ID tokens (ZQ22). |
+| DEP-003 | `POST /v1/auth/nonce`, then `POST /v1/auth/token` with the provider ID token, plus refresh, revoke, and `GET /v1/me` | FR-020, FR-021. ZQ18 [DANNY 2026-10-04] (zzThis Q66). |
 | DEP-004 | Signed-out resolve of a public record | FR-008 |
 | DEP-005 | `title` 1 to 120 characters, `body` 0 to 4000 | FR-007 |
 | DEP-006 | Server-chosen mint that returns `check_word` | US2, FR-004 |
@@ -362,7 +362,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 to ZQ26 were added 2026-10-04 (issues [#32](https://github.com/Zero-State-LLC/zzthat/issues/32) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) and wait on Danny and Michael, with defaults this spec follows. zzThis Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37 remain open in zzThis with prototype defaults. This spec does not close them. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) wait on Danny and Michael, with defaults this spec follows. zzThis Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37 remain open in zzThis with prototype defaults. This spec does not close them. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
 
 ## Workflows
 

@@ -170,7 +170,7 @@ The client is generated. Hand-written request types are a lint failure.
 
 ## Auth
 
-zzThis spec 005 FR-020 and FR-021, as amended by ZQ22.
+zzThis spec 005 FR-020 and FR-021. ZQ18 [DANNY 2026-10-04] (zzThis Q66): native Sign in with Apple or Sign in with Google, then the provider ID token with the server nonce. The PKCE authorization-code exchange is not used.
 
 1. `POST /v1/auth/nonce` returns a nonce that works once, for 10 minutes. The app does not send a redirect URI.
 2. iOS, Apple: an `ASAuthorizationAppleIDRequest` with no requested scopes, and `nonce` set to the hex SHA-256 of the server nonce. Send the identity token and the authorization code.
