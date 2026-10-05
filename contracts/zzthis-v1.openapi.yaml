@@ -821,6 +821,10 @@ components:
         handle:
           type: string
           description: Required when kind is handle. Ignored for plain. The server does not invent a different handle.
+        visibility:
+          type: string
+          enum: [public, private]
+          description: free_public is always public, and private there is 400 malformed. It defaults to public; only enterprise and logistics records can be private (spec.md FR-035).
         record: { $ref: "#/components/schemas/EverydayRecord" }
         single_use: { type: boolean, default: false }
         expires_at: { type: [string, "null"], format: date-time }
@@ -895,8 +899,8 @@ components:
       properties:
         view:
           type: string
-          enum: [public, owner]
-          description: Always public in contract 1 (spec.md FR-008).
+          enum: [public, owner, viewer]
+          description: public for a public record. owner or viewer only for a private record read with that bearer token (spec.md FR-035).
         canonical: { type: string }
         record:
           type: object
