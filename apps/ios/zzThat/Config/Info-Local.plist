@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>$(ZZ_DISPLAY_NAME)</string>
+	<key>ZZBuild</key>
+	<string>$(ZZ_BUILD)</string>
+	<key>ZZAPIOrigin</key>
+	<string>$(ZZ_API_ORIGIN)</string>
+	<key>ZZSupportEmail</key>
+	<string>$(ZZ_SUPPORT_EMAIL)</string>
+	<key>ZZPrivacyURL</key>
+	<string>$(ZZ_PRIVACY_URL)</string>
+	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync). The pin
+	     889a4a7 has no design/fonts yet, so the list is empty; a test fails
+	     when a bundled TTF is missing here. -->
+	<key>UIAppFonts</key>
+	<array/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>GIDClientID</key>
+	<string>$(ZZ_GOOGLE_IOS_CLIENT_ID)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(ZZ_GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Plain HTTP only to the local Worker on localhost (runtime.md). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

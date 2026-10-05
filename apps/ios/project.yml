@@ -1,0 +1,144 @@
+# XcodeGen project for the zzThat iOS app (runtime.md, Project structure).
+# Generate with `xcodegen generate` in apps/ios. The .xcodeproj is generated
+# and not committed. Every xcodebuild call passes -skipPackagePluginValidation
+# (runtime.md, Testing), because ZZAPI runs the Swift OpenAPI Generator plugin.
+#
+# Pinned tools: Xcode 26.6, XcodeGen 2.46.0, Swift 6. Pinned packages:
+# swift-openapi-generator 1.13.1, swift-openapi-runtime 1.12.2,
+# swift-openapi-urlsession 1.3.2, swift-http-types 1.8.0 (Packages/ZZAPI),
+# GoogleSignIn-iOS 10.0.0, swift-snapshot-testing 1.19.6 (tests only).
+name: zzThat
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.6"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  groupSortPosition: top
+configs:
+  Demo: debug
+  Local: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_EMIT_LOC_STRINGS: NO
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: NO
+    DEVELOPMENT_LANGUAGE: en
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  ZZCore:
+    path: Packages/ZZCore
+  ZZAPI:
+    path: Packages/ZZAPI
+  ZZDesign:
+    path: Packages/ZZDesign
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    exactVersion: 10.0.0
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.6
+targets:
+  zzThat:
+    type: application
+    platform: iOS
+    configFiles:
+      Demo: zzThat/Config/Demo.xcconfig
+      Local: zzThat/Config/Local.xcconfig
+      Release: zzThat/Config/Release.xcconfig
+    sources:
+      - path: zzThat
+        excludes:
+          - "Config/**"
+      # The pinned wordlists (design.md, Sync), bundled as a folder. The pin
+      # 889a4a7 has none yet, so the folder may be missing.
+      - path: ../../contracts/wordlists
+        type: folder
+        optional: true
+        buildPhase: resources
+    dependencies:
+      - package: ZZCore
+      - package: ZZAPI
+      - package: ZZDesign
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        # Written by scripts/sync-zzthis.sh from zzThis copy.json
+        # scan.camera_purpose, and localized by InfoPlist.xcstrings.
+        INFOPLIST_KEY_NSCameraUsageDescription: "zzThat uses the camera to read a code you choose to scan. The photo stays on your phone."
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
+        MARKETING_VERSION: "0.0.0"
+        ENABLE_PREVIEWS: YES
+        # The version script edits the built Info.plist before signing.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Version from apps/VERSION
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(SRCROOT)/../VERSION
+        script: |
+          # apps/VERSION is the user-visible version (runtime.md, Release step 1).
+          # The build number is CURRENT_PROJECT_VERSION, which CI sets from the run number.
+          set -eu
+          version=$(tr -d '[:space:]' < "$SRCROOT/../VERSION")
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+  zzThatTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: zzThatTests
+        excludes:
+          - "__Snapshots__/**"
+    dependencies:
+      - target: zzThat
+      - package: SnapshotTesting
+        product: SnapshotTesting
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.tests
+  zzThatUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: zzThatUITests
+    dependencies:
+      - target: zzThat
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.uitests
+        TEST_TARGET_NAME: zzThat
+schemes:
+  zzThat:
+    build:
+      targets:
+        zzThat: all
+        zzThatTests: [test]
+        zzThatUITests: [test]
+    run:
+      config: Demo
+    test:
+      config: Demo
+      gatherCoverageData: false
+      targets:
+        - zzThatTests
+        - zzThatUITests
+    profile:
+      config: Release
+    analyze:
+      config: Demo
+    archive:
+      config: Release

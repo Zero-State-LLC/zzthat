@@ -1,0 +1,9 @@
+// Local: the local zzThis Worker (npm run dev:api) and developer sign-in.
+#include "Shared.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.zer0state.zzthat.local
+ZZ_DISPLAY_NAME = zzThat Local
+ZZ_BUILD = local
+ZZ_API_ORIGIN = http:/$()/localhost:8787
+INFOPLIST_FILE = zzThat/Config/Info-Local.plist
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) ZZ_LOCAL
