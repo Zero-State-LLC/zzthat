@@ -1,5 +1,7 @@
 // Plain Kotlin JVM module (runtime.md, API client). The Retrofit client is
 // generated from the pinned contract into the build folder and never committed.
+// The generator validates the contract first, and a contract that fails
+// validation fails the build (Danny, #43 C5).
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -55,10 +57,6 @@ val openApiGenerate = tasks.register<JavaExec>("openApiGenerate") {
         "--openapi-generator-ignore-list",
         "src/main/kotlin/com/zer0state/zzthat/api/generated/infrastructure/ApiClient.kt," +
             "src/main/kotlin/com/zer0state/zzthat/api/generated/auth/**",
-        // The pinned file fails one OpenAPI 3.1 metadata rule
-        // (info.license.identifier is missing), which touches no wire shape,
-        // so spec validation is skipped and generation runs on the file as pinned.
-        "--skip-validate-spec",
     )
     doFirst {
         // Nothing stale survives a regeneration.

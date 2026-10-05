@@ -3,6 +3,8 @@ package com.zer0state.zzthat
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -74,6 +76,11 @@ class DemoFlowTest {
     @Test
     fun scanTypeCreateAndMyCodesInDemo() {
         waitFor("demo.badge")
+
+        // The photo picker is named scan.choose_photo (Danny, #43 A1), apart from the camera button.
+        val strings = rule.activity.resources
+        rule.onNodeWithTag("scan.photo_picker").assertContentDescriptionEquals(strings.getString(R.string.scan_choose_photo))
+        rule.onNodeWithTag("scan.take_photo").assertTextEquals(strings.getString(R.string.scan_take_photo))
 
         // Scan the fixture photo on the device, then report it.
         openFixturePhoto()
