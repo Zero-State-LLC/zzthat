@@ -1,14 +1,16 @@
 import XCTest
 
 /// SC-12 and runtime.md, End-to-end run: against the local zzThis Worker
-/// (`npm run dev:api` at the pin), in the Local configuration. It needs that
-/// Worker, so it runs only when ZZ_E2E=1 is set for the test run, for example
-/// `TEST_RUNNER_ZZ_E2E=1 xcodebuild test -configuration Local ...`.
+/// (`npm run dev:api` at the pin), in the Local configuration, which is the
+/// only build with developer sign-in. apps-e2e.yml runs it there, and a
+/// missing Worker fails it. Other configurations skip it with that reason.
 final class EndToEndTests: XCTestCase {
     override func setUpWithError() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["ZZ_E2E"] == "1",
-                          "Set ZZ_E2E=1 and run the Local build against npm run dev:api.")
+        #if !ZZ_LOCAL
+        throw XCTSkip("The end-to-end run needs the Local configuration and npm run dev:api.")
+        #else
         continueAfterFailure = false
+        #endif
     }
 
     @MainActor

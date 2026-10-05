@@ -138,6 +138,10 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.uitests
         TEST_TARGET_NAME: zzThat
+      configs:
+        # The end-to-end run uses the Local build (runtime.md, End-to-end run).
+        Local:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ZZ_LOCAL
 schemes:
   zzThat:
     build:
