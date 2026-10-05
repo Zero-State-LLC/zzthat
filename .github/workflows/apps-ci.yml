@@ -112,6 +112,13 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Free disk space for the emulator
+        if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
+        # The API 35 image needs about 7.4 GB free for its data partition and the
+        # runner has about 6.8 GB, so remove toolchains this job never uses.
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /usr/local/lib/node_modules /usr/share/swift "$AGENT_TOOLSDIRECTORY/CodeQL"
+          df -h /
       - name: ML Kit read pipeline test on an emulator
         if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         uses: reactivecircus/android-emulator-runner@v2
