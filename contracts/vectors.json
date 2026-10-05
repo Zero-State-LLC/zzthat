@@ -467,21 +467,60 @@
       "expect": {
         "fail": "too-long"
       }
-    }
-  ],
-  "grammar_pending": [
+    },
     {
       "input": "zz-copper lantern-zz",
-      "note": "D-2026-10-04-10: U+00A0 is not a separator; today's parser splits on it",
+      "note": "D-2026-10-04-10: U+00A0 is White_Space, so it separates parts",
       "expect": {
-        "fail": "invalid-character"
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "zz-copper lantern-zz",
+      "note": "D-2026-10-04-10: U+2003 em space is White_Space",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
       }
     },
     {
       "input": "zz-Kite-zz",
-      "note": "D-2026-10-04-10: the Kelvin sign U+212A is not lowercased; today's parser reads it as k",
+      "note": "D-2026-10-04-10: NFC makes the Kelvin sign U+212A K, so it reads as k",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-kite-zz"
+      }
+    },
+    {
+      "input": "zz-cоpper-zz",
+      "note": "D-2026-10-04-10: Cyrillic o is not ASCII (UTS #39 ASCII-Only)",
       "expect": {
         "fail": "unsupported-script"
+      }
+    }
+  ],
+  "grammar_pending": [
+    {
+      "input": "ｚｚ－ｃｏｐｐｅｒ－ｚｚ",
+      "note": "D-2026-10-04-10: fullwidth forms map to ASCII before parsing",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-zz"
+      }
+    },
+    {
+      "input": "zz-café-zz",
+      "note": "D-2026-10-04-10: NFC makes e + U+0301 into a non-ASCII letter",
+      "expect": {
+        "fail": "unsupported-script"
+      }
+    },
+    {
+      "input": "zz-copper﻿lantern-zz",
+      "note": "D-2026-10-04-10: U+FEFF is not White_Space, so it stays in the part",
+      "expect": {
+        "fail": "invalid-character"
       }
     }
   ],
@@ -889,7 +928,7 @@
       ]
     },
     {
-      "input": "\u005A\u005A@AGENTSMITH-\u005A\u005A",
+      "input": "ZZ@AGENTSMITH-ZZ",
       "note": "D-2026-10-04-03: zz@agentsmith-zz written all in capitals (Section 2.2a G7: the Z letters are JSON escapes)",
       "candidates": [
         {

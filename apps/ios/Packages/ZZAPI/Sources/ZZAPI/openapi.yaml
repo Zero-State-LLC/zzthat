@@ -887,7 +887,7 @@ components:
         visibility:
           type: string
           enum: [public, private]
-          description: free_public is always public, and private there is 400 malformed. enterprise and logistics default to private (spec.md FR-035).
+          description: free_public is always public, and private there is 400 malformed. It defaults to public; only enterprise and logistics records can be private (spec.md FR-035).
         record: { $ref: "#/components/schemas/EverydayRecord" }
         single_use: { type: boolean, default: false }
         expires_at:
