@@ -148,8 +148,9 @@ private fun LinkRow(text: String, tag: String, onClick: () -> Unit) {
 }
 
 /**
- * Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`,
- * verbatim, the one FR-042 exception.
+ * Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`, then
+ * the third-party notices the build generates (T087), verbatim, the one
+ * FR-042 exception.
  */
 @Composable
 fun LicensesScreen(texts: List<String>, demo: Boolean) {
@@ -163,8 +164,14 @@ fun LicensesScreen(texts: List<String>, demo: Boolean) {
     }
 }
 
-/** `assets/licenses/NOTICE` and `assets/licenses/OFL.txt`, from the pin (design.md, Sync). */
-fun bundledLicenses(context: Context): List<String> = ZZLicenses.FILES.mapNotNull { name ->
+/** The third-party notices in `assets/licenses`, written at build time by the app's `generateThirdPartyNotices` task (T087). */
+const val THIRD_PARTY_NOTICES = "third-party-notices.txt"
+
+/**
+ * `assets/licenses/NOTICE` and `assets/licenses/OFL.txt`, from the pin
+ * (design.md, Sync), then `assets/licenses/third-party-notices.txt` (T087).
+ */
+fun bundledLicenses(context: Context): List<String> = (ZZLicenses.FILES + THIRD_PARTY_NOTICES).mapNotNull { name ->
     try {
         context.assets.open("${ZZLicenses.FOLDER}/$name").bufferedReader(Charsets.UTF_8).use { it.readText() }
     } catch (error: Exception) {

@@ -357,9 +357,19 @@ class SnapshotTest {
         ),
     )
 
-    /** The Licenses screen shows exactly the bundled files (FR-042). */
+    /**
+     * The Licenses screen shows exactly the bundled files (FR-042): `NOTICE`
+     * and `OFL.txt` from the pin, then the third-party notices this build
+     * generated (T087), each as given.
+     */
     @Test
     fun theLicensesAreBundled() {
-        assertEquals(2, bundledLicenses(context).size)
+        val pinned = File(System.getProperty("zz.apps"), "android/core-design/src/main/assets/licenses")
+        val expected = listOf(
+            File(pinned, "NOTICE").readText(),
+            File(pinned, "OFL.txt").readText(),
+            File(System.getProperty("zz.notices")).readText(),
+        )
+        assertEquals(expected, bundledLicenses(context))
     }
 }
