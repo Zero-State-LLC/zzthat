@@ -1,5 +1,5 @@
 {
-  "about": "Shared test vectors for the zz code library on every platform (TypeScript, Swift, Kotlin). The grammar, classifier, and matching-key rows copy docs/SPEC.md Section 2.2a (G9, G1a, G10). The scanner and check-word rows are the rules decided on 2026-10-04 (#74) in spec 003 and spec 004. A platform passes when every row passes. Do not edit a row to match a bug. Rows whose note starts with a D-2026-10-04 id follow an INFERRED reading in docs/SPEC.md Section 9a that waits for Michael and Danny's review. The grammar_pending rows need the parser change in spec 005 T035, and today's src/lib/grammar.ts fails them, so no platform runs them yet. T035 moves them into grammar and deletes grammar_pending.",
+  "about": "Shared test vectors for the zz code library on every platform (TypeScript, Swift, Kotlin). The grammar, classifier, and matching-key rows copy docs/SPEC.md Section 2.2a (G9, G1a, G10). The scanner and check-word rows are the rules decided on 2026-10-04 (#74) in spec 003 and spec 004. A platform passes when every row passes. Do not edit a row to match a bug. Rows whose note starts with a D-2026-10-04 id follow an INFERRED reading in docs/SPEC.md Section 9a that waits for Michael and Danny's review. The spec 005 T035 parser change moved the former grammar_pending rows into grammar, so every platform runs every grammar row.",
   "grammar": [
     {
       "input": "zz-copper-lantern-sky-zz",
@@ -203,6 +203,37 @@
     },
     {
       "input": "zz-ai@ agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-ai-@agentsmith-zz",
+        "tag": "ai",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz@ agentsmith zz",
+      "note": "D-2026-10-04-04: the @ touching the opening zz is read as separate, then a lone @ joins the next part",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "(zz)@ agentsmith (zz)",
+      "note": "D-2026-10-04-04: a circled opening marker gives the same handle",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz ai@ agentsmith zz",
+      "note": "D-2026-10-04-04: the tag@ split runs on the parts, so spaces give the same code as hyphens",
       "expect": {
         "kind": "handle",
         "canonical": "zz-ai-@agentsmith-zz",
@@ -498,9 +529,7 @@
       "expect": {
         "fail": "unsupported-script"
       }
-    }
-  ],
-  "grammar_pending": [
+    },
     {
       "input": "ｚｚ－ｃｏｐｐｅｒ－ｚｚ",
       "note": "D-2026-10-04-10: fullwidth forms map to ASCII before parsing",
@@ -790,6 +819,17 @@
     },
     {
       "input": "zz@-AgentSmith-neo-zz",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-@agentsmith-neo-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "zz@ AgentSmith neo zz",
+      "note": "D-2026-10-04-04: the grammar reads the @ after zz@ as separate, so spaces give the same handle",
       "candidates": [
         {
           "kind": "code",
