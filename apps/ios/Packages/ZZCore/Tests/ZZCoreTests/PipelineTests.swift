@@ -36,6 +36,20 @@ struct PipelineTests {
         #expect(candidate.boxes.count == 2)
     }
 
+    /// Two codes on two lines: each candidate gets only its own line's box.
+    @Test func eachCandidateIsBoxedOnItsOwnLine() throws {
+        let top = CGRect(x: 0.1, y: 0.1, width: 0.8, height: 0.1)
+        let bottom = CGRect(x: 0.2, y: 0.5, width: 0.6, height: 0.1)
+        let lines = [
+            RecognizedLine(text: "zz-river-maple-sky-zz", confidence: 0.9, box: top),
+            RecognizedLine(text: "zz-b2-4-zz", confidence: 0.6, box: bottom),
+        ]
+        let result = ReadPipeline(classifyList: nil, checkList: nil).read(lines: lines)
+        #expect(result.candidates.map(\.canonical) == ["zz-river-maple-sky-zz", "zz-b2-4-zz"])
+        #expect(result.candidates.map(\.boxes) == [[top], [bottom]])
+        #expect(result.candidates.map { Bands.candidateConfidence($0.rows) } == [0.9, 0.6])
+    }
+
     @Test func severalCandidatesNeverAutoOpen() throws {
         let list = try Self.fixture7()
         let line = RecognizedLine(text: "zz-copper-lantern-sky-zz and zz-copper-sky-river-zz", confidence: 1,

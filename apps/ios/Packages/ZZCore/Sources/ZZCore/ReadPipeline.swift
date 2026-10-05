@@ -145,9 +145,11 @@ public struct ReadPipeline: Sendable {
     static func boxes(for range: Range<Int>, lines: [RecognizedLine], lineRanges: [Range<Int>]) -> [CGRect] {
         var boxes: [CGRect] = []
         for (index, lineRange) in lineRanges.enumerated() {
-            let overlap = max(range.lowerBound, lineRange.lowerBound)..<min(range.upperBound, lineRange.upperBound)
-            guard !overlap.isEmpty else { continue }
-            let local = (overlap.lowerBound - lineRange.lowerBound)..<(overlap.upperBound - lineRange.lowerBound)
+            // A candidate on another line has no overlap with this one.
+            let lower = max(range.lowerBound, lineRange.lowerBound)
+            let upper = min(range.upperBound, lineRange.upperBound)
+            guard lower < upper else { continue }
+            let local = (lower - lineRange.lowerBound)..<(upper - lineRange.lowerBound)
             let line = lines[index]
             let pieces = line.pieces.filter { $0.range.overlaps(local) }
             if pieces.isEmpty {
