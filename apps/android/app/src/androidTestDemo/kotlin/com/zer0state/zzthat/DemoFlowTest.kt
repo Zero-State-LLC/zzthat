@@ -159,6 +159,8 @@ class DemoFlowTest {
         waitFor("demo.badge")
         tap("nav.account")
         tap("account.licenses")
+        // The back arrow of a pushed screen is named common.back (zzThis #78).
+        rule.onNodeWithTag("nav.back").assertContentDescriptionEquals(rule.activity.getString(R.string.common_back))
         // The texts are read off the main thread.
         rule.waitUntil(10_000) { rule.onAllNodes(hasText(runs.first())).fetchSemanticsNodes().isNotEmpty() }
         // Items: the Demo badge, the heading, then every run.

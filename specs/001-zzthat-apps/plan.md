@@ -25,7 +25,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | On-device storage | Session tokens, last canonical read, public resolves for 60 seconds online and 360 seconds offline (FR-041), drafts labeled "Not a code yet." | FR-041, ZQ16, ZQ26. zzThis spec 005 FR-018. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
 | Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
-| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `1b11138767d7a8c137dc042a9cdd2104db374876`. ZQ19. |
+| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `0a65f6ef0e5c50439087cca0acbafc354aaeed7c`. ZQ19. |
 | Design and strings | Pinned copy via `scripts/sync-zzthis.sh`, one sha in `contracts/ZZTHIS-API-PIN`, with fonts and `copy.json` | design.md. Not a submodule. |
 | Recognition engines | Apple Vision on iOS, ML Kit text recognition on Android, one still photo | runtime.md, Read pipeline [INFERRED] |
 | Builds | Demo, Local, and Release, with XcodeGen and Gradle flavors | runtime.md, Build configurations |

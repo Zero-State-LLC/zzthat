@@ -89,7 +89,7 @@ class SnapshotTest {
      * The chrome a screen has in the app: its title bar (title, back arrow on
      * a pushed screen, text action) and, inside a tab, the tab bar.
      */
-    private class Chrome(val title: Int?, val tab: Tab?, val back: Int? = null, val action: Pair<Int, String>? = null)
+    private class Chrome(val title: Int?, val tab: Tab?, val back: Boolean = false, val action: Pair<Int, String>? = null)
 
     private class Case(val name: String, val chrome: Chrome?, val content: @Composable () -> Unit)
 
@@ -99,7 +99,7 @@ class SnapshotTest {
             Box(modifier = Modifier.weight(1f)) {
                 Frame(
                     title = chrome.title?.let { stringResource(it) },
-                    back = chrome.back?.let { Back(it) {} },
+                    back = if (chrome.back) Back {} else null,
                     actions = { chrome.action?.let { (label, tag) -> BarAction(stringResource(label), tag) {} } },
                     content = content,
                 )
@@ -123,19 +123,19 @@ class SnapshotTest {
 
     private val account = R.string.nav_account to "nav.account"
     private val scanRoot = Chrome(R.string.nav_scan, Tab.SCAN, action = account)
-    private val type = Chrome(R.string.type_field_label, Tab.SCAN, back = R.string.nav_scan)
-    private val clarify = Chrome(R.string.scan_clarify_title, Tab.SCAN, back = R.string.nav_scan)
-    private val resolve = Chrome(R.string.nav_scan, Tab.SCAN, back = R.string.nav_scan)
+    private val type = Chrome(R.string.type_field_label, Tab.SCAN, back = true)
+    private val clarify = Chrome(R.string.scan_clarify_title, Tab.SCAN, back = true)
+    private val resolve = Chrome(R.string.nav_scan, Tab.SCAN, back = true)
     private val report = Chrome(null, null)
     private val createRoot = Chrome(R.string.nav_create, Tab.CREATE, action = account)
-    private val minted = Chrome(R.string.nav_create, Tab.CREATE, back = R.string.nav_create)
-    private val writeCheck = Chrome(R.string.minted_write_check, Tab.CREATE, back = R.string.nav_create)
+    private val minted = Chrome(R.string.nav_create, Tab.CREATE, back = true)
+    private val writeCheck = Chrome(R.string.minted_write_check, Tab.CREATE, back = true)
     private val codesRoot = Chrome(R.string.nav_my_codes, Tab.CODES, action = account)
-    private val detail = Chrome(R.string.nav_my_codes, Tab.CODES, back = R.string.nav_my_codes)
-    private val edit = Chrome(R.string.detail_edit, Tab.CODES, back = R.string.nav_my_codes)
+    private val detail = Chrome(R.string.nav_my_codes, Tab.CODES, back = true)
+    private val edit = Chrome(R.string.detail_edit, Tab.CODES, back = true)
     private val signIn = Chrome(null, null, action = R.string.common_cancel to "signin.cancel")
     private val accountSheet = Chrome(R.string.account_title, null, action = R.string.common_done to "account.done")
-    private val licenses = Chrome(R.string.account_licenses, null, back = R.string.account_title)
+    private val licenses = Chrome(R.string.account_licenses, null, back = true)
 
     // MARK: Fixtures
 
