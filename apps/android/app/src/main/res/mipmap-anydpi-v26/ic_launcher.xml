@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The placeholder icon (design.md, Sync; ZQ25), until Michael's square
+     artwork replaces it: the pinned zz code mark on the pinned light paper
+     color (ColorPaperLight, #F4EFE4). The inset keeps the 480 by 160 mark at
+     its 3:1 shape, about 60 by 20 dp of the 108 dp layer, inside the 66 dp
+     safe zone. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background>
+        <color android:color="#F4EFE4" />
+    </background>
+    <foreground>
+        <inset
+            android:drawable="@drawable/mark_zz_code"
+            android:insetBottom="40.7%"
+            android:insetLeft="22%"
+            android:insetRight="22%"
+            android:insetTop="40.7%" />
+    </foreground>
+</adaptive-icon>

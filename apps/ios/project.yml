@@ -1,0 +1,187 @@
+# XcodeGen project for the zzThat iOS app (runtime.md, Project structure).
+# Generate with `xcodegen generate` in apps/ios. The .xcodeproj is generated
+# and not committed. Every xcodebuild call passes -skipPackagePluginValidation
+# (runtime.md, Testing), because ZZAPI runs the Swift OpenAPI Generator plugin.
+#
+# Pinned tools: Xcode 26.6, XcodeGen 2.46.0, Swift 6. Pinned packages:
+# swift-openapi-generator 1.13.1, swift-openapi-runtime 1.12.2,
+# swift-openapi-urlsession 1.3.2, swift-http-types 1.8.0 (Packages/ZZAPI),
+# GoogleSignIn-iOS 10.0.0, swift-snapshot-testing 1.19.6 (tests only).
+name: zzThat
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.6"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  groupSortPosition: top
+configs:
+  Demo: debug
+  Local: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_EMIT_LOC_STRINGS: NO
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: NO
+    DEVELOPMENT_LANGUAGE: en
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  ZZCore:
+    path: Packages/ZZCore
+  ZZAPI:
+    path: Packages/ZZAPI
+  ZZDesign:
+    path: Packages/ZZDesign
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    exactVersion: 10.0.0
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.6
+targets:
+  zzThat:
+    type: application
+    platform: iOS
+    configFiles:
+      Demo: zzThat/Config/Demo.xcconfig
+      Local: zzThat/Config/Local.xcconfig
+      Release: zzThat/Config/Release.xcconfig
+    sources:
+      - path: zzThat
+        excludes:
+          - "Config/**"
+          - "Resources/Licenses/**"
+    dependencies:
+      - package: ZZCore
+      - package: ZZAPI
+      - package: ZZDesign
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        # Written by scripts/sync-zzthis.sh from zzThis copy.json
+        # scan.camera_purpose, and localized by InfoPlist.xcstrings.
+        INFOPLIST_KEY_NSCameraUsageDescription: "zzThat uses the camera to read a code you choose to scan. The photo stays on your phone."
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
+        MARKETING_VERSION: "0.0.0"
+        ENABLE_PREVIEWS: YES
+        # The version script edits the built Info.plist before signing.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Bundle the pinned wordlists, licenses, and third-party notices
+        basedOnDependencyAnalysis: false
+        script: |
+          # contracts/wordlists/*.txt (design.md, Sync) go to wordlists/, and the
+          # pinned NOTICE and OFL.txt to Licenses/, when the pin has them. Then
+          # Licenses/ThirdPartyNotices.txt is generated from the app's lock and
+          # the resolved package checkouts (tasks.md T087). The generator fails
+          # the build when a pinned package has no license file.
+          set -eu
+          resources="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          rm -rf "$resources/wordlists" "$resources/Licenses"
+          for list in "$SRCROOT"/../../contracts/wordlists/*.txt; do
+            [ -f "$list" ] || continue
+            mkdir -p "$resources/wordlists"
+            cp "$list" "$resources/wordlists/"
+          done
+          for name in NOTICE OFL.txt; do
+            file="$SRCROOT/zzThat/Resources/Licenses/$name"
+            [ -f "$file" ] || continue
+            mkdir -p "$resources/Licenses"
+            cp "$file" "$resources/Licenses/"
+          done
+          # Only the packages the app links (S4): the closure of this target's
+          # package products, checked against the linker's own input lists.
+          # Xcode writes the app's package lock into Packages/ZZAPI, and keeps
+          # the resolved checkouts in SourcePackages beside Build.
+          link_lists=""
+          for arch in $ARCHS; do
+            link_lists="$link_lists $OBJECT_FILE_DIR_normal/$arch/$PRODUCT_NAME.LinkFileList"
+          done
+          # shellcheck disable=SC2086
+          /usr/bin/python3 "$SRCROOT/scripts/third_party_notices.py" \
+            --project "$PROJECT_FILE_PATH" --target "$TARGET_NAME" \
+            --resolved "$SRCROOT/Packages/ZZAPI/Package.resolved" \
+            --source-packages "${BUILD_DIR%/Build/*}/SourcePackages" \
+            --built-products "$BUILT_PRODUCTS_DIR" \
+            --link-file-list $link_lists \
+            --cache "$TARGET_TEMP_DIR/third-party-notices" \
+            --out "$resources/Licenses/ThirdPartyNotices.txt"
+      - name: Version from apps/VERSION
+        basedOnDependencyAnalysis: false
+        # The built Info.plist is an input, so this runs after Xcode writes it.
+        inputFiles:
+          - $(SRCROOT)/../VERSION
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        script: |
+          # apps/VERSION is the user-visible version (runtime.md, Release step 1).
+          # The build number is CURRENT_PROJECT_VERSION, which CI sets from the run number.
+          set -eu
+          version=$(tr -d '[:space:]' < "$SRCROOT/../VERSION")
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+  zzThatTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: zzThatTests
+        excludes:
+          - "__Snapshots__/**"
+    dependencies:
+      - target: zzThat
+      - package: SnapshotTesting
+        product: SnapshotTesting
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.tests
+  zzThatUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: zzThatUITests
+    dependencies:
+      - target: zzThat
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.uitests
+        TEST_TARGET_NAME: zzThat
+      configs:
+        # The end-to-end run uses the Local build (runtime.md, End-to-end run);
+        # the demo flow uses the Demo build.
+        Local:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ZZ_LOCAL
+        Demo:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ZZ_DEMO
+schemes:
+  zzThat:
+    build:
+      targets:
+        zzThat: all
+        zzThatTests: [test]
+        zzThatUITests: [test]
+    run:
+      config: Demo
+    test:
+      config: Demo
+      gatherCoverageData: false
+      targets:
+        - zzThatTests
+        - zzThatUITests
+    profile:
+      config: Release
+    analyze:
+      config: Demo
+    archive:
+      config: Release

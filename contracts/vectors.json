@@ -1,0 +1,1188 @@
+{
+  "about": "Shared test vectors for the zz code library on every platform (TypeScript, Swift, Kotlin). The grammar, classifier, and matching-key rows copy docs/SPEC.md Section 2.2a (G9, G1a, G10). The scanner and check-word rows are the rules decided on 2026-10-04 (#74) in spec 003 and spec 004. A platform passes when every row passes. Do not edit a row to match a bug. Rows whose note starts with a D-2026-10-04 id follow an INFERRED reading in docs/SPEC.md Section 9a that waits for Michael and Danny's review. The spec 005 T035 parser change moved the former grammar_pending rows into grammar, so every platform runs every grammar row.",
+  "grammar": [
+    {
+      "input": "zz-copper-lantern-sky-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-sky-zz"
+      }
+    },
+    {
+      "input": "ZZ COPPER LANTERN SKY ZZ",
+      "note": "all in capitals",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-sky-zz"
+      }
+    },
+    {
+      "input": "zz-copper\tlantern-zz",
+      "note": "tab",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "zz−copper−lantern−zz",
+      "note": "U+2212 minus signs",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "(zz) camp bravo zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-camp-bravo-zz"
+      }
+    },
+    {
+      "input": "(zz)camp bravo(zz)",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-camp-bravo-zz"
+      }
+    },
+    {
+      "input": "zz-buzz-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-buzz-zz"
+      }
+    },
+    {
+      "input": "Zz-Copper--lantern  sky-zZ",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-sky-zz"
+      }
+    },
+    {
+      "input": "zz-copper\nlantern-sky-zz",
+      "note": "line break",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-sky-zz"
+      }
+    },
+    {
+      "input": "zz–copper–lantern–zz",
+      "note": "U+2013 dashes",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "(zz) camp bravo four two (zz)",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-camp-bravo-four-two-zz"
+      }
+    },
+    {
+      "input": "zz-hello-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-hello-zz"
+      }
+    },
+    {
+      "input": "zz-b2-smith-1-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-b2-smith-1-zz"
+      }
+    },
+    {
+      "input": "zz-1234ABCD-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-1234abcd-zz"
+      }
+    },
+    {
+      "input": "zz Guest WiFi connect zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-guest-wifi-connect-zz"
+      }
+    },
+    {
+      "input": "zz-fn-pay-agentsmith-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-fn-pay-agentsmith-zz"
+      }
+    },
+    {
+      "input": "zz-@agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-@AgentSmith.eth-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith.eth-zz",
+        "handle": "@agentsmith.eth",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-@acme_support-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@acme_support-zz",
+        "handle": "@acme_support",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz@-agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz@agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-zz",
+      "note": "32 letters after @",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-zz",
+        "handle": "@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-@agentsmith-neo-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-neo-zz",
+        "handle": "@agentsmith",
+        "qualifiers": ["neo"]
+      }
+    },
+    {
+      "input": "zz@-AgentSmith-neo-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-neo-zz",
+        "handle": "@agentsmith",
+        "qualifiers": ["neo"]
+      }
+    },
+    {
+      "input": "zz-ai@-agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-ai-@agentsmith-zz",
+        "tag": "ai",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-ai@ agentsmith-zz",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-ai-@agentsmith-zz",
+        "tag": "ai",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz@ agentsmith zz",
+      "note": "D-2026-10-04-04: the @ touching the opening zz is read as separate, then a lone @ joins the next part",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "(zz)@ agentsmith (zz)",
+      "note": "D-2026-10-04-04: a circled opening marker gives the same handle",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-@agentsmith-zz",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz ai@ agentsmith zz",
+      "note": "D-2026-10-04-04: the tag@ split runs on the parts, so spaces give the same code as hyphens",
+      "expect": {
+        "kind": "handle",
+        "canonical": "zz-ai-@agentsmith-zz",
+        "tag": "ai",
+        "handle": "@agentsmith",
+        "qualifiers": []
+      }
+    },
+    {
+      "input": "zz-vitalik.eth-zz",
+      "expect": {
+        "kind": "name",
+        "canonical": "zz-vitalik.eth-zz"
+      }
+    },
+    {
+      "input": "zz-Vitalik.ETH-zz",
+      "expect": {
+        "kind": "name",
+        "canonical": "zz-vitalik.eth-zz"
+      }
+    },
+    {
+      "input": "zz-one-two-three-four-five-six-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-one-two-three-four-five-six-zz"
+      }
+    },
+    {
+      "input": "zz-bravo-smith-one-two-three-four-zz",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-bravo-smith-one-two-three-four-zz"
+      }
+    },
+    {
+      "input": "zz",
+      "expect": {
+        "kind": "bare",
+        "canonical": "zz"
+      }
+    },
+    {
+      "input": "(zz)",
+      "expect": {
+        "kind": "bare",
+        "canonical": "zz"
+      }
+    },
+    {
+      "input": "ZZ",
+      "note": "capitals",
+      "expect": {
+        "kind": "bare",
+        "canonical": "zz"
+      }
+    },
+    {
+      "input": "(ZZ)",
+      "note": "capitals",
+      "expect": {
+        "kind": "bare",
+        "canonical": "zz"
+      }
+    },
+    {
+      "input": "zz-zz",
+      "expect": {
+        "fail": "no-content"
+      }
+    },
+    {
+      "input": "(zz) (zz)",
+      "expect": {
+        "fail": "no-content"
+      }
+    },
+    {
+      "input": "zz-",
+      "expect": {
+        "fail": "no-closing-marker"
+      }
+    },
+    {
+      "input": "",
+      "expect": {
+        "fail": "empty"
+      }
+    },
+    {
+      "input": "   ",
+      "note": "spaces only",
+      "expect": {
+        "fail": "empty"
+      }
+    },
+    {
+      "input": "                                                                                                                                                                                                                                                                                                            ",
+      "note": "300 spaces",
+      "expect": {
+        "fail": "empty"
+      }
+    },
+    {
+      "input": "copper",
+      "expect": {
+        "fail": "no-marker"
+      }
+    },
+    {
+      "input": "zzcopper-lantern-zz",
+      "expect": {
+        "fail": "no-marker"
+      }
+    },
+    {
+      "input": "zzz-x-zz",
+      "expect": {
+        "fail": "no-marker"
+      }
+    },
+    {
+      "input": "( zz ) camp ( zz )",
+      "expect": {
+        "fail": "no-marker"
+      }
+    },
+    {
+      "input": "zz-copper-lantern-sky",
+      "expect": {
+        "fail": "no-closing-marker"
+      }
+    },
+    {
+      "input": "zz-@agentsmith",
+      "expect": {
+        "fail": "no-closing-marker"
+      }
+    },
+    {
+      "input": "zz-zz-zz",
+      "expect": {
+        "fail": "marker-in-body"
+      }
+    },
+    {
+      "input": "zz-구리-등불-zz",
+      "note": "Korean words",
+      "expect": {
+        "fail": "unsupported-script"
+      }
+    },
+    {
+      "input": "zz-#tag-zz",
+      "expect": {
+        "fail": "reserved-symbol"
+      }
+    },
+    {
+      "input": "zz-pay-$5-zz",
+      "expect": {
+        "fail": "reserved-symbol"
+      }
+    },
+    {
+      "input": "zz-a/b-zz",
+      "expect": {
+        "fail": "reserved-symbol"
+      }
+    },
+    {
+      "input": "zz-x:y-zz",
+      "expect": {
+        "fail": "reserved-symbol"
+      }
+    },
+    {
+      "input": "zz-ai-agent-@smith-zz",
+      "expect": {
+        "fail": "misplaced-at"
+      }
+    },
+    {
+      "input": "zz-@agentsmith-@neo-zz",
+      "expect": {
+        "fail": "misplaced-at"
+      }
+    },
+    {
+      "input": "zz-@-zz",
+      "expect": {
+        "fail": "invalid-handle"
+      }
+    },
+    {
+      "input": "zz-@.agent-zz",
+      "expect": {
+        "fail": "invalid-handle"
+      }
+    },
+    {
+      "input": "zz-@agent.-zz",
+      "expect": {
+        "fail": "invalid-handle"
+      }
+    },
+    {
+      "input": "zz-@agent..smith-zz",
+      "expect": {
+        "fail": "invalid-handle"
+      }
+    },
+    {
+      "input": "zz-@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-zz",
+      "note": "33 letters after @",
+      "expect": {
+        "fail": "invalid-handle"
+      }
+    },
+    {
+      "input": "zz-acme_support-zz",
+      "expect": {
+        "fail": "invalid-character"
+      }
+    },
+    {
+      "input": "zz-example.com-zz",
+      "expect": {
+        "fail": "invalid-character"
+      }
+    },
+    {
+      "input": "zz-1.2-zz",
+      "expect": {
+        "fail": "invalid-character"
+      }
+    },
+    {
+      "input": "zz-.eth-zz",
+      "expect": {
+        "fail": "invalid-character"
+      }
+    },
+    {
+      "input": "zz-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-zz",
+      "note": "257 characters",
+      "expect": {
+        "fail": "too-long"
+      }
+    },
+    {
+      "input": "zz-𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰-zz",
+      "note": "D-2026-10-04-10: 256 UTF-16 code units (131 code points), so the guard passes",
+      "expect": {
+        "fail": "unsupported-script"
+      }
+    },
+    {
+      "input": "zz-𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰𐌰-zz",
+      "note": "D-2026-10-04-10: 258 UTF-16 code units (132 code points), so the guard fails",
+      "expect": {
+        "fail": "too-long"
+      }
+    },
+    {
+      "input": "zz-copper lantern-zz",
+      "note": "D-2026-10-04-10: U+00A0 is White_Space, so it separates parts",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "zz-copper lantern-zz",
+      "note": "D-2026-10-04-10: U+2003 em space is White_Space",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-lantern-zz"
+      }
+    },
+    {
+      "input": "zz-Kite-zz",
+      "note": "D-2026-10-04-10: NFC makes the Kelvin sign U+212A K, so it reads as k",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-kite-zz"
+      }
+    },
+    {
+      "input": "zz-cоpper-zz",
+      "note": "D-2026-10-04-10: Cyrillic o is not ASCII (UTS #39 ASCII-Only)",
+      "expect": {
+        "fail": "unsupported-script"
+      }
+    },
+    {
+      "input": "ｚｚ－ｃｏｐｐｅｒ－ｚｚ",
+      "note": "D-2026-10-04-10: fullwidth forms map to ASCII before parsing",
+      "expect": {
+        "kind": "plain",
+        "canonical": "zz-copper-zz"
+      }
+    },
+    {
+      "input": "zz-café-zz",
+      "note": "D-2026-10-04-10: NFC makes e + U+0301 into a non-ASCII letter",
+      "expect": {
+        "fail": "unsupported-script"
+      }
+    },
+    {
+      "input": "zz-copper﻿lantern-zz",
+      "note": "D-2026-10-04-10: U+FEFF is not White_Space, so it stays in the part",
+      "expect": {
+        "fail": "invalid-character"
+      }
+    }
+  ],
+  "classifier": {
+    "wordlist": ["copper", "lantern", "sky", "maple", "river", "harbor"],
+    "max_near_distance": 2,
+    "distance": "levenshtein",
+    "rows": [
+      {
+        "input": "zz-copper-lantern-sky-zz",
+        "class": "word",
+        "near_words": {}
+      },
+      {
+        "input": "zz-coper-lantern-sky-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["copper"]
+        }
+      },
+      {
+        "input": "zz-lanterns-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["lantern"]
+        }
+      },
+      {
+        "input": "zz-coppr-lantrn-sky-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["copper"],
+          "2": ["lantern"]
+        }
+      },
+      {
+        "input": "zz-skyy-maple-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["sky"]
+        }
+      },
+      {
+        "input": "zz-rivr-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["river"]
+        }
+      },
+      {
+        "input": "zz-lntrn-zz",
+        "class": "confirm",
+        "near_words": {
+          "1": ["lantern"]
+        }
+      },
+      {
+        "input": "zz-kopr-zz",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-hello-zz",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-b2-smith-1-zz",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-copper-4-zz",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-coper-4-zz",
+        "note": "D-2026-10-04-08: a digit part does not make the code field; coper is 1 from copper",
+        "class": "confirm",
+        "near_words": {
+          "1": ["copper"]
+        }
+      },
+      {
+        "input": "zz-bravo-five-six-zz",
+        "note": "D-2026-10-04-08: number words count as digits, so five and six are never near-words",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-@coper-zz",
+        "class": "handle",
+        "near_words": {}
+      },
+      {
+        "input": "zz",
+        "class": "bare",
+        "near_words": {}
+      },
+      {
+        "input": "zz-ocppr-zz",
+        "note": "D-2026-10-04-05: Levenshtein 3 from copper, past the limit",
+        "class": "field",
+        "near_words": {}
+      },
+      {
+        "input": "zz-mapper-zz",
+        "note": "D-2026-10-04-05: copper and maple are both 2 away, so list order",
+        "class": "confirm",
+        "near_words": {
+          "1": ["copper", "maple"]
+        }
+      }
+    ]
+  },
+  "match_key": [
+    {
+      "a": "zz-b2-smith-1-zz",
+      "b": "zz-b2-smith-l-zz",
+      "same_key": true
+    },
+    {
+      "a": "zz-bravo-one-two-three-four-zz",
+      "b": "zz-bravo-1234-zz",
+      "same_key": true
+    },
+    {
+      "a": "zz-bravo-smith-1234-zz",
+      "b": "zz-bravo-john-1234-zz",
+      "same_key": false
+    },
+    {
+      "a": "zz-bravo-l-2-zz",
+      "b": "zz-bravo-12-zz",
+      "note": "D-2026-10-04-09: fold before join, so l-2 becomes 12",
+      "same_key": true
+    },
+    {
+      "a": "zz-@b0b-zz",
+      "b": "zz-@bob-zz",
+      "note": "D-2026-10-04-09: the fold applies to handle parts",
+      "same_key": true
+    }
+  ],
+  "scanner": [
+    {
+      "input": "Box zz-copper-lantern-sky-zz goes to bay 4, zz.",
+      "note": "Section 2.2a G8 example",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "bare"
+        }
+      ]
+    },
+    {
+      "input": "LOST CAT zz-kathy-lost-cat-zz call 555 0100",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-kathy-lost-cat-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-copper-lantern\nsky-zz",
+      "note": "code across two lines",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-river-maple-sky-zz and zz-b2-4-zz",
+      "note": "the gap between two hyphenated codes is not a code",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-river-maple-sky-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-b2-4-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz river maple sky zz and zz b2 4 zz",
+      "note": "with spaces the gap cannot be told apart, so the person picks",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-river-maple-sky-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-and-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-b2-4-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-river-maple-sky-zz zz-river-maple-sky-zz",
+      "note": "same code twice is listed once",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-river-maple-sky-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "label zz-copper-lantern",
+      "note": "no closing marker",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz-copper-lantern"
+        }
+      ]
+    },
+    {
+      "input": "zz",
+      "candidates": [
+        {
+          "kind": "bare"
+        }
+      ]
+    },
+    {
+      "input": "(zz) camp bravo four two (zz)",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-camp-bravo-four-two-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "(zz)camp bravo(zz)",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-camp-bravo-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz@-AgentSmith-neo-zz",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-@agentsmith-neo-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "zz@ AgentSmith neo zz",
+      "note": "D-2026-10-04-04: the grammar reads the @ after zz@ as separate, so spaces give the same handle",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-@agentsmith-neo-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "Write zz-maple-river-harbor-zz.",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-maple-river-harbor-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz. zz-maple-river-harbor-zz",
+      "candidates": [
+        {
+          "kind": "bare"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-maple-river-harbor-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz is our mark and zz-maple-river-harbor-zz is a code",
+      "note": "a stray zz in running text",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-is-our-mark-and-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-maple-river-harbor-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-a-zz zz-b-zz",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-a-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-b-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-zz",
+      "note": "D-2026-10-04-11: an empty pair is one no-content candidate (Section 2.2a G3)",
+      "candidates": [
+        {
+          "kind": "invalid",
+          "reason": "no-content",
+          "text": "zz-zz"
+        }
+      ]
+    },
+    {
+      "input": "zz-#tag-zz",
+      "candidates": [
+        {
+          "kind": "invalid",
+          "reason": "reserved-symbol",
+          "text": "zz-#tag-zz"
+        }
+      ]
+    },
+    {
+      "input": "the buzz word",
+      "candidates": []
+    },
+    {
+      "input": "",
+      "candidates": []
+    },
+    {
+      "input": "zz@agentsmith-zz",
+      "note": "D-2026-10-04-03: the zz@ opener holds content",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-@agentsmith-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "see zz@bob",
+      "note": "D-2026-10-04-03: a cut-off zz@ opener is partial",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz@bob"
+        }
+      ]
+    },
+    {
+      "input": "see zz@bob.",
+      "note": "D-2026-10-05-06: a zz@ opener that ends a sentence is still partial, not bare",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz@bob"
+        }
+      ]
+    },
+    {
+      "input": "ai-zz@bob",
+      "note": "D-2026-10-04-03: a zz@ opener joined by a hyphen to the word before it reads forward only",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz@bob"
+        }
+      ]
+    },
+    {
+      "input": "zz copper zz@bob zz",
+      "note": "D-2026-10-04-03: zz@ opens a pair but never closes one",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz copper"
+        },
+        {
+          "kind": "code",
+          "canonical": "zz-@bob-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "ZZ@AGENTSMITH-ZZ",
+      "note": "D-2026-10-04-03: zz@agentsmith-zz written all in capitals (Section 2.2a G7: the Z letters are JSON escapes)",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-@agentsmith-zz",
+          "code_kind": "handle"
+        }
+      ]
+    },
+    {
+      "input": "(zz-copper-lantern-sky-zz)",
+      "note": "D-2026-10-04-06: brackets are set aside",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "See zz-copper-lantern-sky-zz: it is on the box",
+      "note": "D-2026-10-04-06: a colon after a closing zz is set aside",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "“zz-copper-lantern-sky-zz”",
+      "note": "D-2026-10-04-06: curly quotes are set aside",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "copper-lantern-sky-zz",
+      "note": "D-2026-10-04-06: only the closing marker, so partial (Retry)",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "copper-lantern-sky-zz"
+        }
+      ]
+    },
+    {
+      "input": "copper-lantern-sky-zz goes to bay 4",
+      "note": "D-2026-10-04-06: a marker joined by a hyphen to the word before it reads backward only, even with words after it",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "copper-lantern-sky-zz"
+        }
+      ]
+    },
+    {
+      "input": "zz \"copper lantern zz",
+      "note": "D-2026-10-04-06: a leading quote is set aside",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-zz",
+          "code_kind": "plain"
+        }
+      ]
+    },
+    {
+      "input": "zz-time:-zz",
+      "note": "D-2026-10-04-06: a colon inside a code stays for the grammar",
+      "candidates": [
+        {
+          "kind": "invalid",
+          "reason": "reserved-symbol",
+          "text": "zz-time:-zz"
+        }
+      ]
+    },
+    {
+      "input": "(zz) (zz)",
+      "note": "D-2026-10-04-11: an empty circled pair is one no-content candidate",
+      "candidates": [
+        {
+          "kind": "invalid",
+          "reason": "no-content",
+          "text": "(zz) (zz)"
+        }
+      ]
+    },
+    {
+      "input": "zz-copper-lantern-sky-zz zz",
+      "note": "D-2026-10-04-11: no empty pair forms when a marker is joined by a hyphen to a word outside it",
+      "candidates": [
+        {
+          "kind": "code",
+          "canonical": "zz-copper-lantern-sky-zz",
+          "code_kind": "plain"
+        },
+        {
+          "kind": "bare"
+        }
+      ]
+    },
+    {
+      "input": "zz. zz.",
+      "note": "D-2026-10-04-11: bare marks are not merged",
+      "candidates": [
+        {
+          "kind": "bare"
+        },
+        {
+          "kind": "bare"
+        }
+      ]
+    }
+  ],
+  "check_word": {
+    "wordlist": [
+      "copper",
+      "lantern",
+      "sky",
+      "maple",
+      "river",
+      "harbor",
+      "falcon"
+    ],
+    "data_words": 2,
+    "rule": "check index = (index(word1) + 2 * index(word2)) mod N, where N is the list length and is prime",
+    "issuable_codes": [
+      "zz-copper-lantern-sky-zz",
+      "zz-copper-sky-river-zz",
+      "zz-copper-maple-falcon-zz",
+      "zz-copper-river-lantern-zz",
+      "zz-copper-harbor-maple-zz",
+      "zz-copper-falcon-harbor-zz",
+      "zz-lantern-sky-harbor-zz",
+      "zz-lantern-maple-copper-zz",
+      "zz-lantern-river-sky-zz",
+      "zz-lantern-harbor-river-zz",
+      "zz-sky-lantern-river-zz",
+      "zz-sky-maple-lantern-zz",
+      "zz-sky-river-maple-zz",
+      "zz-sky-falcon-copper-zz",
+      "zz-maple-lantern-harbor-zz",
+      "zz-maple-sky-copper-zz",
+      "zz-maple-harbor-falcon-zz",
+      "zz-maple-falcon-lantern-zz",
+      "zz-river-lantern-falcon-zz",
+      "zz-river-sky-lantern-zz",
+      "zz-river-harbor-copper-zz",
+      "zz-river-falcon-sky-zz",
+      "zz-harbor-lantern-copper-zz",
+      "zz-harbor-maple-river-zz",
+      "zz-harbor-river-falcon-zz",
+      "zz-harbor-falcon-maple-zz",
+      "zz-falcon-sky-maple-zz",
+      "zz-falcon-maple-harbor-zz",
+      "zz-falcon-river-copper-zz",
+      "zz-falcon-harbor-sky-zz"
+    ],
+    "verify": [
+      {
+        "input": "zz-copper-lantern-sky-zz",
+        "result": "ok"
+      },
+      {
+        "input": "zz-copper-maple-sky-zz",
+        "result": "check-mismatch",
+        "note": "second word replaced"
+      },
+      {
+        "input": "zz-river-lantern-sky-zz",
+        "result": "check-mismatch",
+        "note": "first word replaced"
+      },
+      {
+        "input": "zz-copper-lantern-maple-zz",
+        "result": "check-mismatch",
+        "note": "check word replaced"
+      },
+      {
+        "input": "zz-lantern-copper-sky-zz",
+        "result": "check-mismatch",
+        "note": "first two words swapped"
+      },
+      {
+        "input": "zz-copper-sky-lantern-zz",
+        "result": "check-mismatch",
+        "note": "last two words swapped"
+      },
+      {
+        "input": "zz-copper-lantern-zz",
+        "result": "wrong-length"
+      },
+      {
+        "input": "zz-copper-lantern-sky-maple-zz",
+        "result": "wrong-length"
+      }
+    ]
+  }
+}

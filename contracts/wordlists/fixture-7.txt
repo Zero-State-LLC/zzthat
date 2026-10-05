@@ -1,0 +1,7 @@
+copper
+lantern
+sky
+maple
+river
+harbor
+falcon

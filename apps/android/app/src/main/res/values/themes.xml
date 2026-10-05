@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The platform theme only frames the window. Compose draws every color
+     from the pinned tokens (core-design). -->
+<resources>
+    <style name="Theme.ZZThat" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

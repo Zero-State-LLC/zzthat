@@ -1,0 +1,30 @@
+zzThis third-party notices
+
+DRAFT. This text waits for Danny's legal yes before the build pull request
+merges (spec 005 T036).
+
+zzThis includes the third-party materials below. Each is licensed under its
+own terms, not under LICENSE.
+
+1. EFF Long Wordlist
+
+   Files:    packages/zz-core/wordlists/source/eff_large_wordlist.txt (copy)
+             packages/zz-core/wordlists/proto-v0.txt (adapted)
+   Source:   Electronic Frontier Foundation, EFF Long Wordlist
+             https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt
+   License:  Creative Commons Attribution 3.0 United States (CC BY 3.0 US)
+             https://creativecommons.org/licenses/by/3.0/us/
+   Changes:  proto-v0.txt is adapted from the EFF Long Wordlist: its words are
+             filtered and reordered. The filters, their counts, and every
+             removed word are in packages/zz-core/wordlists/proto-v0.report.md.
+
+2. IBM Plex fonts
+
+   Files:    design/fonts/*.ttf and design/fonts/OFL.txt
+   Source:   IBM Corp., npm packages @ibm/plex-sans 1.1.0,
+             @ibm/plex-sans-condensed 2.0.0, and @ibm/plex-mono 2.5.0
+             https://github.com/IBM/plex
+   License:  SIL Open Font License, Version 1.1 (design/fonts/OFL.txt)
+   Changes:  none to the font data. The packages ship WOFF files; the TTF
+             files are the original font tables unwrapped from WOFF by
+             scripts/build-fonts.mjs. Reserved Font Name: Plex.

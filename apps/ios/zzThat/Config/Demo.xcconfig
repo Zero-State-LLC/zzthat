@@ -1,0 +1,9 @@
+// Demo: the in-memory demo API, no network call, buttons labeled Demo.
+#include "Shared.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.zer0state.zzthat.demo
+ZZ_DISPLAY_NAME = zzThat Demo
+ZZ_BUILD = demo
+ZZ_API_ORIGIN =
+INFOPLIST_FILE = zzThat/Config/Info-Demo.plist
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) ZZ_DEMO

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>$(ZZ_DISPLAY_NAME)</string>
+	<key>ZZBuild</key>
+	<string>$(ZZ_BUILD)</string>
+	<key>ZZAPIOrigin</key>
+	<string>$(ZZ_API_ORIGIN)</string>
+	<key>ZZSupportEmail</key>
+	<string>$(ZZ_SUPPORT_EMAIL)</string>
+	<key>ZZPrivacyURL</key>
+	<string>$(ZZ_PRIVACY_URL)</string>
+	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync), the same list in
+	     all three Info plists. BundleTests fails when a bundled TTF is not
+	     listed here, or a listed one is not bundled. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>IBMPlexMono-Bold.ttf</string>
+		<string>IBMPlexMono-Medium.ttf</string>
+		<string>IBMPlexMono-Regular.ttf</string>
+		<string>IBMPlexMono-SemiBold.ttf</string>
+		<string>IBMPlexSans-Bold.ttf</string>
+		<string>IBMPlexSans-Medium.ttf</string>
+		<string>IBMPlexSans-Regular.ttf</string>
+		<string>IBMPlexSans-SemiBold.ttf</string>
+		<string>IBMPlexSansCondensed-Bold.ttf</string>
+		<string>IBMPlexSansCondensed-Medium.ttf</string>
+		<string>IBMPlexSansCondensed-Regular.ttf</string>
+		<string>IBMPlexSansCondensed-SemiBold.ttf</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
