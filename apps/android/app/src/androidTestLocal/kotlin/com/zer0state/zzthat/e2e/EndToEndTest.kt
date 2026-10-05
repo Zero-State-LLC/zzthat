@@ -2,6 +2,7 @@ package com.zer0state.zzthat.e2e
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
@@ -62,10 +63,13 @@ class EndToEndTest {
 
     @Test
     fun developerSignInCreateRerollRevokeAndDelete() {
-        // Sign in with developer sign-in from Create.
+        // Sign in with developer sign-in from Create. A fresh install starts signed out.
         tap("tab.create")
-        tap("create.sign_in")
-        tap("signin.dev")
+        rule.waitUntil(15_000) { exists("create.sign_in") || exists("create.title") }
+        if (exists("create.sign_in")) {
+            tap("create.sign_in")
+            tap("signin.dev")
+        }
         // Create a code titled E2E.
         rule.waitUntil(15_000) { exists("create.title") }
         rule.onNodeWithTag("create.title").performTextInput("E2E")
@@ -96,8 +100,10 @@ class EndToEndTest {
         rule.waitUntil(15_000) { exists("account.signed_in_with") }
         tap("account.done")
         tap("tab.codes")
-        rule.waitUntil(15_000) { rule.onAllNodes(hasTestTagPrefix("codes.row.")).fetchSemanticsNodes().isNotEmpty() }
-        rule.onAllNodes(hasTestTagPrefix("codes.row.")).onFirst().performClick()
+        // The row of this run's code, found by its words.
+        val row = hasTestTagPrefix("codes.row.") and hasContentDescription(code)
+        rule.waitUntil(15_000) { rule.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodes(row).onFirst().performClick()
         tap("detail.revoke")
         tap("revoke.confirm.confirm")
         rule.waitUntil(15_000) { !exists("detail.revoke") }
