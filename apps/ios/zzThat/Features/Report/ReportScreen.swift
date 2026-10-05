@@ -18,8 +18,10 @@ struct ReportState: Hashable {
     var phase: Phase = .editing
     var offline = false
     var demo = false
+    /// After a 429, Send waits for `Retry-After` (FR-033).
+    var waiting = false
 
-    var canSend: Bool { reason != nil && !offline && phase != .sending && phase != .sent }
+    var canSend: Bool { reason != nil && !offline && !waiting && phase != .sending && phase != .sent }
 }
 
 struct ReportScreen: View {
@@ -120,6 +122,11 @@ struct ReportRoute: View {
             switch await app.service.report(canonical: canonical, reason: reason, note: state.note) {
             case .success: state.phase = .sent
             case .failure(.noConnection): state.phase = .failure(.errorNoConnection)
+            case .failure(.rateLimited(let seconds)):
+                state.phase = .failure(.resolveRateLimited)
+                state.waiting = true
+                try? await Task.sleep(for: .seconds(max(seconds, 1)))
+                state.waiting = false
             case .failure(let failure): state.phase = .failure(CopyKey(failure.message(for: .report)))
             }
         }

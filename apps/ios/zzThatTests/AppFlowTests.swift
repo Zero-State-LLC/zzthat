@@ -121,7 +121,9 @@ struct OwnerFlowTests {
         let app = try await Self.signedInDemo()
         let create = CreateModel()
         create.title = "Lost cat"
+        let before = app.ownerRevision
         let minted = try #require(await create.mint(app: app))
+        #expect(app.ownerRevision > before, "My codes reads the list again after a mint")
         let model = MintedModel(code: minted)
         Self.cached(minted.canonical, in: app)
         await model.reroll(app: app)

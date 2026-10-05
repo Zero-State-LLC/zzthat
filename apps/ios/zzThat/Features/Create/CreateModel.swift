@@ -54,6 +54,7 @@ final class CreateModel {
         let trimmedBody = body.trimmingCharacters(in: .whitespacesAndNewlines)
         switch await app.service.mint(title: trimmedTitle, body: trimmedBody) {
         case .success(let code):
+            app.ownerMinted()
             app.drafts.discard()
             title = ""
             body = ""

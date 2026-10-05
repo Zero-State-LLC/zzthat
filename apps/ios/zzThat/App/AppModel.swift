@@ -164,4 +164,9 @@ final class AppModel {
         cache.remove(canonical)
         ownerRevision += 1
     }
+
+    /// A new code was minted, so My codes reads the list again.
+    func ownerMinted() {
+        ownerRevision += 1
+    }
 }
