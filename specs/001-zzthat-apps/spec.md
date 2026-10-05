@@ -6,8 +6,8 @@ Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
-zzThis pin: `a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `74636f033a28be794d0f2c0959e3bec6d5afd6a0`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/74636f033a28be794d0f2c0959e3bec6d5afd6a0/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/74636f033a28be794d0f2c0959e3bec6d5afd6a0/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -160,7 +160,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `74636f033a28be794d0f2c0959e3bec6d5afd6a0` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|

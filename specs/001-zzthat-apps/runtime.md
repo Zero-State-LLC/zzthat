@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build contract for the iOS and And
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: specification, deepened 2026-10-04 for a one-shot build. Danny accepts spec 001 before the trees below are created.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `74636f033a28be794d0f2c0959e3bec6d5afd6a0`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 
