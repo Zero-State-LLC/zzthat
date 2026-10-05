@@ -96,13 +96,14 @@ fun ScanScreen(
 
 /**
  * `scan.take_photo` opens the system camera when the phone has one. The
- * system photo picker is offered on every build (FR-012); on a phone without
- * a camera it is the main button.
+ * system photo picker, `scan.choose_photo` (Danny, #43 A1), is offered on
+ * every build (FR-012); on a phone without a camera it is the main button.
  */
 @Composable
 fun CaptureButtons(retake: Boolean, cameraAvailable: Boolean, demo: Boolean, onTakePhoto: () -> Unit, onPickPhoto: () -> Unit) {
     val palette = LocalPalette.current
     val label = stringResource(if (retake) R.string.scan_retry else R.string.scan_take_photo)
+    val choose = stringResource(R.string.scan_choose_photo)
     if (cameraAvailable || demo) {
         Row(horizontalArrangement = Arrangement.spacedBy(ZZSpace.SpaceXs), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.weight(1f)) {
@@ -116,7 +117,7 @@ fun CaptureButtons(retake: Boolean, cameraAvailable: Boolean, demo: Boolean, onT
                     .background(palette.panel, ChipShape)
                     .border(ZZSpace.RuleHair, palette.ruleStrong, ChipShape)
                     .clickable(role = Role.Button, onClick = onPickPhoto)
-                    .semantics { contentDescription = label },
+                    .semantics { contentDescription = choose },
             ) {
                 Icon(
                     painter = painterResource(android.R.drawable.ic_menu_gallery),
@@ -127,7 +128,7 @@ fun CaptureButtons(retake: Boolean, cameraAvailable: Boolean, demo: Boolean, onT
             }
         }
     } else {
-        ZZButton(label, "scan.photo_picker", onClick = onPickPhoto)
+        ZZButton(choose, "scan.photo_picker", onClick = onPickPhoto)
     }
 }
 
