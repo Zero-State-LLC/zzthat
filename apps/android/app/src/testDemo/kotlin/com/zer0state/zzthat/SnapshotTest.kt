@@ -99,7 +99,7 @@ class SnapshotTest {
 
     /** The pipeline as the Demo build runs it: the bundled lists, with the demo server's `wordlist_version` (fixture-7). */
     private fun candidates(photo: DemoPhoto.Photo): List<ReadCandidate> {
-        val lists = WordListLoader.load(File(System.getProperty("zz.wordlists")))
+        val lists = WordListLoader.load(File(requireNotNull(System.getProperty("zz.wordlists"))))
         val lines = photo.lines.map { (text, box) -> RecognizedLine(text, 0.97, box) }
         return ReadPipeline.of(lists, DemoApi.DISCOVERY.wordlistVersion).read(lines).candidates
     }

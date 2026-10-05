@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -31,7 +32,11 @@ class MainActivity : ComponentActivity() {
             val root = viewModel<RootViewModel>()
             LaunchedEffect(Unit) { app.start() }
             // GET /v1 again on return to the foreground (spec.md, API contract).
-            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { (application as ZZThatApplication).refreshDiscovery() }
+            // Launch reads it in start(), so the first resume does not.
+            val resumes = remember { intArrayOf(0) }
+            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                if (resumes[0]++ > 0) (application as ZZThatApplication).refreshDiscovery()
+            }
             ZZTheme {
                 Root(app, root.models, root.reader, reducedMotion)
             }
