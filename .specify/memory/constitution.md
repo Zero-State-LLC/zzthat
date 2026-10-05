@@ -6,7 +6,7 @@ This file is the governing contract for every zzThat spec, plan, and task under 
 
 zzThat is the iOS and Android apps portion of zzThis. The product rules live in the zzThis repository. This file adapts those rules to the apps. It does not replace them.
 
-Source pin: zzThis at `14039ed168da3a851900566ace64c05f34e821a6` (2026-10-05), recorded in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist. Later zzThis changes do not change this repo until a pull request moves the pin.
+Source pin: zzThis at `a8b34d8e0efd1cd8d43e052a4f529c1c8b0492c2` (2026-10-05), recorded in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist. Later zzThis changes do not change this repo until a pull request moves the pin.
 
 ## Labels used in every artifact
 
