@@ -21,10 +21,6 @@ info:
     Cache-Control: no-store too (spec.md FR-028).
     Sign-in: POST /v1/auth/nonce, then the provider's own sign-in with that
     nonce, then POST /v1/auth/token with the ID token (spec.md FR-020).
-    Every operation may return 503 not-ready (spec.md Environment, FR-022).
-    Every operation that writes may return 500 failed.
-    Times are RFC 3339 UTC with exactly three fractional digits and Z, as
-    Date.prototype.toISOString() writes them (spec.md Data model).
     Adding an enum value is a breaking change in contract 1.
 servers:
   - url: https://api.example.invalid
@@ -72,7 +68,6 @@ paths:
                 photo_reads: false
         "400": { $ref: "#/components/responses/ContractVersion" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/openapi.json:
     get:
       tags: [meta]
@@ -93,7 +88,6 @@ paths:
               schema: { type: object }
         "400": { $ref: "#/components/responses/ContractVersion" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/auth/nonce:
     post:
       tags: [auth]
@@ -114,8 +108,6 @@ paths:
               schema: { $ref: "#/components/schemas/Nonce" }
         "400": { $ref: "#/components/responses/ContractVersion" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/auth/token:
     post:
       tags: [auth]
@@ -144,8 +136,6 @@ paths:
         "400": { $ref: "#/components/responses/Error" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/auth/refresh:
     post:
       tags: [auth]
@@ -153,13 +143,7 @@ paths:
       security: []
       summary: Rotate a refresh token. The web client sends {} and the cookie.
       description: |
-        Rotation is one guarded update (spec.md FR-021, FR-031). When two
-        calls send the same refresh token, one gets 200 and the other takes
-        the reuse path. Reusing a revoked refresh token revokes every token
-        in its family and returns 401. There is no grace window.
-        Each client runs at most one refresh at a time. A request that gets
-        a 401 while a refresh runs waits for it, then retries once. The
-        client signs out only when this call returns 401.
+        Reusing a revoked refresh token revokes every token in its family and returns 401.
       parameters:
         - { $ref: "#/components/parameters/Contract" }
         - { $ref: "#/components/parameters/RefreshCookie" }
@@ -179,19 +163,8 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/TokenResponse" }
         "400": { $ref: "#/components/responses/ContractVersion" }
-        "401":
-          description: The refresh token is not usable. For client web, Set-Cookie clears __Host-zz_refresh with Max-Age=0.
-          headers:
-            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
-            Cache-Control: { $ref: "#/components/headers/NoStore" }
-            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-              example: { error: unauthorized }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/auth/revoke:
     post:
       tags: [auth]
@@ -216,8 +189,6 @@ paths:
         "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/me:
     get:
       tags: [auth]
@@ -239,7 +210,6 @@ paths:
         "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
     delete:
       tags: [auth]
       operationId: deleteMe
@@ -248,16 +218,16 @@ paths:
       parameters: [{ $ref: "#/components/parameters/Contract" }]
       responses:
         "204":
-          description: Account closed. Audit rows stay. For a web session, Set-Cookie clears __Host-zz_refresh with Max-Age=0.
+          description: Account closed. Audit rows stay.
           headers:
-            X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
-            Cache-Control: { $ref: "#/components/headers/NoStore" }
-            Set-Cookie: { $ref: "#/components/headers/RefreshCookie" }
+            {
+              X-ZZ-Contract: { $ref: "#/components/headers/Contract" },
+              Cache-Control: { $ref: "#/components/headers/NoStore" },
+            }
         "400": { $ref: "#/components/responses/ContractVersion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/codes:
     post:
       tags: [codes]
@@ -288,7 +258,7 @@ paths:
         "422": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
+        "503": { $ref: "#/components/responses/Error" }
   /v1/codes/{id}/reroll:
     post:
       tags: [codes]
@@ -296,11 +266,9 @@ paths:
       summary: Retire an unresolved code and mint another for the same record.
       description: |
         No row, or a row the caller does not own, is the one not-found body.
-        reroll-cap is only for the caller's own code when no re-rolls remain,
-        the code was already resolved, or the code is no longer active, such
-        as the loser of two racing re-rolls. A handle has rerolls_remaining 0,
-        so its re-roll is reroll-cap. forbidden is suspension, decided before
-        the id is read. There is no 409.
+        reroll-cap is only for the caller's own code when no re-rolls remain
+        or the code was already resolved. forbidden is suspension, decided
+        before the id is read. There is no 409.
       security: [{ bearer: [] }]
       parameters:
         - { $ref: "#/components/parameters/Contract" }
@@ -322,7 +290,6 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/me/codes:
     get:
       tags: [codes]
@@ -352,7 +319,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/codes/{id}/revoke:
     post:
       tags: [codes]
@@ -360,9 +326,7 @@ paths:
       summary: Revoke a code.
       description: |
         No row, or a row the caller does not own, is the one not-found body.
-        The caller's own code that is already revoked returns 200 revoked
-        again. The caller's own used or expired code is the one not-found
-        body. forbidden is suspension, decided before the id is read.
+        forbidden is suspension, decided before the id is read.
       security: [{ bearer: [] }]
       parameters:
         - { $ref: "#/components/parameters/Contract" }
@@ -388,18 +352,13 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/resolve/{code}:
     get:
       tags: [codes]
       operationId: resolveCode
-      security: [{}, { bearer: [] }]
+      security: []
       summary: Resolve a canonical code.
       description: |
-        The bearer token is optional. It is needed only for a private record
-        (spec.md FR-035). An unusable bearer counts as no bearer and never
-        gets 401 (spec.md FR-021). The everyday apps and the web client send
-        no Authorization here (spec.md FR-008).
         Edge-cache only an active, reusable, public, unauthenticated 200.
         Cache-Control is then public, max-age=60, stale-while-revalidate=300.
         The Workers Cache API key is
@@ -431,7 +390,7 @@ paths:
                 record:
                   title: Lost cat
                   body: Answers on this page.
-                  updated_at: "2026-10-04T00:00:00.000Z"
+                  updated_at: "2026-10-04T00:00:00Z"
                 share:
                   text: zz-kathy-lost-cat-zz
                   url: null
@@ -439,8 +398,6 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/records/{id}:
     get:
       tags: [records]
@@ -465,7 +422,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/records/{id}/versions:
     post:
       tags: [records]
@@ -503,12 +459,11 @@ paths:
         "422": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
         "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/reads:
     post:
       tags: [reads]
       operationId: submitRead
-      security: [{}, { bearer: [] }]
+      security: []
       summary: Upload a retry photo after the person confirms. 503 not-ready while photo_reads is false.
       parameters: [{ $ref: "#/components/parameters/Contract" }]
       requestBody:
@@ -547,13 +502,12 @@ paths:
         "400": { $ref: "#/components/responses/Error" }
         "413": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
+        "503": { $ref: "#/components/responses/Error" }
   /v1/reports:
     post:
       tags: [reports]
       operationId: createReport
-      security: [{}, { bearer: [] }]
+      security: []
       summary: Report a code. The call must not reveal whether it exists.
       parameters: [{ $ref: "#/components/parameters/Contract" }]
       requestBody:
@@ -578,8 +532,6 @@ paths:
                   id: { type: string }
         "400": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Failed" }
-        "503": { $ref: "#/components/responses/NotReady" }
   /v1/audit:
     get:
       tags: [audit]
@@ -596,7 +548,6 @@ paths:
           schema: { type: string }
         - name: since
           in: query
-          description: Send the form the server writes. UTC, RFC 3339, with exactly three fractional digits and Z (spec.md Data model).
           schema: { type: string, format: date-time }
         - name: limit
           in: query
@@ -622,7 +573,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Error" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "503": { $ref: "#/components/responses/NotReady" }
 components:
   parameters:
     Contract:
@@ -662,8 +612,7 @@ components:
         Web client only. Cookie name __Host-zz_refresh.
         Attributes on issue: HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000.
         refresh_token in the body is null when this cookie is set.
-        Revoke, a 401 from refresh, and the 204 from DELETE /v1/me clear it
-        with Max-Age=0. Absent for ios and android.
+        Revoke clears it with Max-Age=0. Absent for ios and android.
       required: false
       schema: { type: string }
   securitySchemes:
@@ -708,7 +657,7 @@ components:
           schema: { $ref: "#/components/schemas/RateLimitedError" }
           example: { error: rate-limited }
     Unauthorized:
-      description: No usable bearer token (bad, expired, or for a missing or deleted account), ID token, nonce, or refresh token.
+      description: No usable bearer token, ID token, nonce, or refresh token.
       headers:
         X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
         Cache-Control: { $ref: "#/components/headers/NoStore" }
@@ -733,15 +682,6 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { error: failed }
-    NotReady:
-      description: The plain-code issuer, the photo reader, or the configuration is not ready (spec.md Environment, FR-004, FR-022). Nothing was stored.
-      headers:
-        X-ZZ-Contract: { $ref: "#/components/headers/Contract" }
-        Cache-Control: { $ref: "#/components/headers/NoStore" }
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/Error" }
-          example: { error: not-ready }
   schemas:
     NotFoundError:
       type: object
@@ -862,10 +802,7 @@ components:
         providers:
           type: array
           items: { type: string, enum: [apple, google, dev] }
-        created_at:
-          type: string
-          format: date-time
-          description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+        created_at: { type: string, format: date-time }
     EverydayRecord:
       type: object
       required: [title, body]
@@ -884,16 +821,9 @@ components:
         handle:
           type: string
           description: Required when kind is handle. Ignored for plain. The server does not invent a different handle.
-        visibility:
-          type: string
-          enum: [public, private]
-          description: free_public is always public, and private there is 400 malformed. enterprise and logistics default to private (spec.md FR-035).
         record: { $ref: "#/components/schemas/EverydayRecord" }
         single_use: { type: boolean, default: false }
-        expires_at:
-          type: [string, "null"]
-          format: date-time
-          description: Send the form the server writes. UTC, RFC 3339, with exactly three fractional digits and Z (spec.md Data model).
+        expires_at: { type: [string, "null"], format: date-time }
     Code:
       type: object
       required:
@@ -915,10 +845,7 @@ components:
         record_id: { type: string }
         scope: { type: string, enum: [enterprise, logistics, free_public] }
         rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
-        created_at:
-          type: string
-          format: date-time
-          description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+        created_at: { type: string, format: date-time }
     OwnedCode:
       type: object
       required:
@@ -941,10 +868,7 @@ components:
         record_id: { type: string }
         scope: { type: string, enum: [enterprise, logistics, free_public] }
         rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
-        created_at:
-          type: string
-          format: date-time
-          description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+        created_at: { type: string, format: date-time }
         title:
           type: string
           description: The record's current title.
@@ -964,18 +888,15 @@ components:
         version: { type: integer }
         title: { type: string }
         body: { type: string }
-        updated_at:
-          type: string
-          format: date-time
-          description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+        updated_at: { type: string, format: date-time }
     Resolve:
       type: object
       required: [view, canonical, record, share]
       properties:
         view:
           type: string
-          enum: [public, owner, viewer]
-          description: public for a public record. owner or viewer only for a private record read with that bearer token (spec.md FR-035).
+          enum: [public, owner]
+          description: Always public in contract 1 (spec.md FR-008).
         canonical: { type: string }
         record:
           type: object
@@ -983,10 +904,7 @@ components:
           properties:
             title: { type: string }
             body: { type: string }
-            updated_at:
-              type: string
-              format: date-time
-              description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+            updated_at: { type: string, format: date-time }
         share:
           type: object
           required: [text, url]
@@ -1020,7 +938,4 @@ components:
         target_type: { type: string }
         target_id: { type: string }
         result: { type: string }
-        created_at:
-          type: string
-          format: date-time
-          description: UTC, RFC 3339, with exactly three fractional digits and Z, such as 2026-10-04T00:00:00.000Z (spec.md Data model).
+        created_at: { type: string, format: date-time }

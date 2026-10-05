@@ -11,7 +11,7 @@
   <a href="https://github.com/orgs/Zero-State-LLC/projects/25">Board</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthat/issues">Issues</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis">zzThis</a> ·
-  <a href="https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/docs/SPEC.md">zzThis spec pin</a>
+  <a href="https://github.com/Zero-State-LLC/zzthis/blob/484100308376bce01c88f30f871dff3e13082fe0/docs/SPEC.md">zzThis spec pin</a>
 </p>
 
 <p align="center">
@@ -58,22 +58,21 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 |---|---|
 | [`.specify/memory/constitution.md`](.specify/memory/constitution.md) | Governing rules for every spec in this repo |
 | [`specs/README.md`](specs/README.md) | Spec index, zzThis pin, and the issue map |
-| [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, and the app rules for the pinned API contract |
+| [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, and the proposed API contract |
 | [`specs/001-zzthat-apps/runtime.md`](specs/001-zzthat-apps/runtime.md) | Build contract: structure, screens, auth, storage, release |
 | [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md) | How the apps consume zzthis `design/` |
-| [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ26, decided 2026-10-04. ZQ27 (CI spend) is OPEN for Danny. |
+| [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ21, decided 2026-10-04 |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
 | [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | Pinned copy of zzthis `specs/005-v1-api/openapi.yaml` |
-| [`scripts/lint-specs.py`](scripts/lint-specs.py) | Spec lint, over the files `git ls-files` lists |
-| [`.gitignore`](.gitignore) | Generated and local paths, never committed or linted |
+| [`scripts/lint-specs.py`](scripts/lint-specs.py) | Spec lint |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Spec lint on pull requests and on `main` |
 | [`.github/workflows/project-collaboration.yml`](.github/workflows/project-collaboration.yml) | Adds new issues and pull requests to the board |
 | [`AGENTS.md`](AGENTS.md) | Contract for coding agents |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to open a change |
 | [`README.md`](README.md) | This file |
 
-zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `889a4a7e9631cd76639f43a36ea27da301ea2f14`, recorded in `contracts/ZZTHIS-API-PIN`.
+zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `484100308376bce01c88f30f871dff3e13082fe0`, recorded in `contracts/ZZTHIS-API-PIN`.
 
 | zzThis path | Role for these apps |
 |---|---|
@@ -83,12 +82,12 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
-| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `889a4a7e9631cd76639f43a36ea27da301ea2f14` |
+| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `484100308376bce01c88f30f871dff3e13082fe0` |
 | `specs/005-v1-api` and `docs/ONE-SHOT-BRIEF.md` | The `/v1` contract and the one-shot build brief |
 
 ## Architecture
 
-The apps are thin clients [DANNY 2026-10-04]. One zzThis server owns codes, records, grants, and the audit log. Revocation, single use, expiry, and rate limits are enforced there [ZZTHIS SPEC]. Nothing in that server is built. The diagram is the client view of contract 1, the pinned zzThis spec 005 OpenAPI, limited to what zzThat calls.
+The apps are thin clients [DANNY 2026-10-04]. One zzThis server owns codes, records, grants, and the audit log. Revocation, single use, expiry, and rate limits are enforced there [ZZTHIS SPEC]. Nothing in that server is built. The diagram is the client view of the zzThis proposal, limited to what zzThat calls.
 
 ```mermaid
 flowchart LR
@@ -127,7 +126,7 @@ Work is tracked as GitHub issues and on the [zzThat board](https://github.com/or
 
 - [ ] Platform scaffold, SwiftUI and Compose ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 - [ ] Grammar vectors on both platforms ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
-- [ ] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [ ] API client generated from the OpenAPI proposal ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
 ### Phase 2: Everyday flows
 

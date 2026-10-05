@@ -2,11 +2,9 @@
 """Lint the zzThat spec tree. No network. No app build."""
 
 from pathlib import Path
-import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-TEXT_SUFFIXES = (".md", ".yml", ".yaml")
 REQUIRED = [
     "README.md",
     "CONTRIBUTING.md",
@@ -42,37 +40,11 @@ RUNTIME_HEADINGS = [
 ]
 errors = []
 
-
-def list_text_paths():
-    """Tracked files plus untracked files that .gitignore does not exclude.
-
-    Ignored build output (DerivedData, build/, .gradle/, .zzthis-pin/) is
-    never linted. A failed git call is an error, not a silent skip.
-    """
-    try:
-        result = subprocess.run(
-            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-        )
-    except (OSError, subprocess.CalledProcessError) as exc:
-        errors.append(f"cannot list files with git ls-files: {exc}")
-        return []
-    names = {name for name in result.stdout.decode("utf-8").split("\0") if name}
-    paths = []
-    for name in sorted(names):
-        path = ROOT / name
-        if path.suffix in TEXT_SUFFIXES and path.is_file():
-            paths.append(path)
-    return paths
-
-
 for rel in REQUIRED:
     if not (ROOT / rel).is_file():
         errors.append(f"missing {rel}")
 
-text_paths = list_text_paths()
+text_paths = list(ROOT.rglob("*.md")) + list(ROOT.rglob("*.yml")) + list(ROOT.rglob("*.yaml"))
 for path in text_paths:
     if ".git" in path.parts:
         continue

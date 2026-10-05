@@ -1,6 +1,6 @@
 # Design consumption: zzThat apps
 
-The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, the zz code mark, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `889a4a7e9631cd76639f43a36ea27da301ea2f14`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
+The apps do not define a visual system or their own sentences. Colors, type, spacing, fonts, logos, strings, and screen patterns come from [Zero-State-LLC/zzthis](https://github.com/Zero-State-LLC/zzthis) at one pin: `484100308376bce01c88f30f871dff3e13082fe0`, recorded in `contracts/ZZTHIS-API-PIN`. The same pin covers the OpenAPI file, the shared test vectors, and the wordlist. It is a pinned copy, not a git submodule. Do not track `main`.
 
 ## Sync
 
@@ -10,33 +10,27 @@ The apps do not define a visual system or their own sentences. Colors, type, spa
 2. Copy each file in the table into place.
 3. Generate the string catalogs from `copy.json` (runtime.md, Localization).
 4. Write the sha to `contracts/ZZTHIS-API-PIN` and to `apps/DESIGN-PIN`, one line each, the same full sha.
-5. Replace the old sha, which the script reads from `contracts/ZZTHIS-API-PIN` before step 4, with the new sha in every file that states the current pin: `specs/001-zzthat-apps/spec.md`, `runtime.md`, `design.md`, `plan.md`, `README.md`, `specs/README.md`, and the Source pin line of `.specify/memory/constitution.md`. On that line, when the new sha differs from the old one, it also replaces the date in parentheses after the sha with the day of the sync (UTC, `YYYY-MM-DD`) [INFERRED]. Do not rewrite `decisions.md` or `checklists/requirements.md`, which record the pin used at the time. `lint-specs.py` checks spec.md, runtime.md, and design.md. At the committed pin this step replaces the sha with itself and leaves the date alone, so the SC-10 check still finds no difference.
 
 `pin-design.sh` at this pin takes a relative destination inside the checkout. It rejects an absolute path and any `..` segment, and it writes `PIN` inside that directory.
 
-CI runs the sync at the committed pin and fails on any difference (SC-10). The check compares copied files byte for byte. It compares generated catalogs by running the generator again. The placeholder icon is outside the check (see the placeholder icon paragraph below). To move the pin, run the script with the new sha, run `python3 scripts/lint-specs.py`, and commit everything it changed in one pull request.
+CI runs the sync at the committed pin and fails on any difference (SC-10). To move the pin, run the script with the new sha and commit everything it changed in one pull request.
 
 | From zzThis at the pin | Into zzThat |
 |---|---|
 | `design/generated/Tokens.swift` | `apps/ios/Packages/ZZDesign/Sources/ZZDesign/Tokens.swift` |
 | `design/generated/Tokens.kt` | `apps/android/core-design/src/main/kotlin/llc/zerostate/zzthis/design/Tokens.kt` |
-| `design/fonts/*.ttf` | `apps/ios/zzThat/Resources/Fonts/`, names unchanged, each listed under `UIAppFonts`. `apps/android/core-design/src/main/res/font/`, renamed to lowercase with each hyphen as an underscore (`IBMPlexSans-Regular.ttf` becomes `ibmplexsans_regular.ttf`) [INFERRED]. Only TTF files go in `res/font`. |
-| `design/fonts/OFL.txt` and the zzThis root `NOTICE` | `apps/ios/zzThat/Resources/Licenses/` and `apps/android/core-design/src/main/assets/licenses/`. Never `res/font`, which accepts only font files. The Licenses screen shows both (runtime.md, Screens). |
-| `design/brand/mark-zz-code.webp` | `apps/android/app/src/main/res/drawable/mark_zz_code.webp`, copied. The placeholder app icon (design/UX.md, App icon; ZQ25) is built from it once (see the placeholder icon paragraph below). |
-| `design/copy.json` | `apps/ios/zzThat/Resources/Localizable.xcstrings`, `apps/ios/zzThat/Resources/InfoPlist.xcstrings`, and `apps/android/app/src/main/res/values/strings.xml`, generated. `InfoPlist.xcstrings` maps `NSCameraUsageDescription` to `scan.camera_purpose`. The sync also writes that key's English text as the `INFOPLIST_KEY_NSCameraUsageDescription` value in `project.yml`. |
+| `design/fonts/` (IBM Plex TTF files and `OFL.txt`) | `apps/ios/zzThat/Resources/Fonts/`, and `apps/android/core-design/src/main/res/font/` with lowercase names and underscores |
+| `design/brand/logo-on-light.svg`, `zzthis-logo-on-light.png` | iOS asset catalog and Android drawables, light |
+| `design/brand/logo-on-dark.svg`, `zzthis-logo-on-dark.webp` | iOS asset catalog and Android drawables, dark |
+| `design/brand/mark-zz-code.webp` | The placeholder app icon: the mark centered on the paper color (design/UX.md, App icon; ZQ25) |
+| `design/copy.json` | `apps/ios/zzThat/Resources/Localizable.xcstrings` and `apps/android/app/src/main/res/values/strings.xml`, generated |
 | `specs/005-v1-api/openapi.yaml` | `contracts/zzthis-v1.openapi.yaml`, and `apps/ios/Packages/ZZAPI/Sources/ZZAPI/openapi.yaml` for the build plugin |
 | `specs/003-wordlist-checkword/vectors.json` | `contracts/vectors.json` |
 | `packages/zz-core/wordlists/*.txt` | `contracts/wordlists/`, bundled in both apps |
 
 `tokens.json` stays in zzThis. The apps compile the Swift and Kotlin files, not the JSON.
 
-The apps do not copy the zzThis logos (`design/brand/logo-on-*.svg`, `zzthis-logo-on-*`), because no screen shows the wordmark.
-
-The placeholder icon is composed once, committed, and kept out of the pin check until Michael's square artwork replaces it (ZQ25) [INFERRED]. Android: a hand-written adaptive icon at `apps/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml`. Its background is #F4EFE4, the pinned light paper color (`ColorPaperLight` in Tokens.kt). Its foreground is `@drawable/mark_zz_code` in an `<inset>` of 22% on the left and right and 40.7% on the top and bottom. The 480 by 160 mark then keeps its 3:1 shape, at about 60 by 20 dp of the 108 dp layer, inside the 66 dp safe zone. iOS: one opaque 1024 by 1024 PNG in `Assets.xcassets/AppIcon.appiconset`, made once on macOS: the mark, 720 pixels wide, centered on #F4EFE4. The mark's own background is #fefefe, so a faint band around it is expected.
-
-The fonts come into zzThis `design/fonts/` from the npm packages `@ibm/plex-sans` 1.1.0, `@ibm/plex-sans-condensed` 2.0.0, and `@ibm/plex-mono` 2.5.0, with `OFL.txt` (zzThis spec 005 T030). zzThat copies them from the pin and never downloads fonts itself.
-
-The fonts, `NOTICE`, `pin-zzthis.sh`, and the wordlist files arrive with the zzThis build (zzThis spec 005 T029, T030, and T033). So do the new copy keys `scan.camera_purpose`, `provider.apple`, `provider.google`, `provider.dev`, and `account.licenses`, each marked INFERRED for Michael's review. In the one-shot build, zzThat pins the zzThis build branch head, then moves the pin to the zzThis merge commit before it merges (zzThis `docs/ONE-SHOT-BRIEF.md`).
+The fonts, `pin-zzthis.sh`, and the wordlist files arrive with the zzThis build (zzThis spec 005 T029, T030, and T033). In the one-shot build, zzThat pins the zzThis build branch head, then moves the pin to the zzThis merge commit before it merges (zzThis `docs/ONE-SHOT-BRIEF.md`).
 
 ## Patterns
 
