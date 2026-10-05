@@ -2,26 +2,21 @@ import Testing
 @testable import ZZCore
 
 /// Every `grammar` row of contracts/vectors.json (Section 2.2a G9, SC-1).
-/// The `grammar_pending` rows wait only for the TypeScript parser change in
-/// zzThis spec 005 T035. This parser already has the D-2026-10-04-10
-/// character sets, so it runs them too, with the same check.
+/// zzThis spec 005 T035 moved the former `grammar_pending` rows into
+/// `grammar` and deleted that section, so `grammar` is every grammar row.
 @Suite("Grammar vectors")
 struct GrammarVectorTests {
     static let rows = Row.list(Vectors.rows("grammar"))
-    static let pendingRows = Row.list(Vectors.rows("grammar_pending"))
 
     @Test func rowsAreLoaded() {
         #expect(!Self.rows.isEmpty)
-        #expect(!Self.pendingRows.isEmpty)
+        // A row parked outside `grammar` would not run here, so a section
+        // like the old `grammar_pending` must not come back unnoticed.
+        #expect(Vectors.root["grammar_pending"] == nil)
     }
 
     @Test(arguments: rows)
     func row(_ row: Row) throws {
-        try Self.check(row)
-    }
-
-    @Test(arguments: pendingRows)
-    func pendingRow(_ row: Row) throws {
         try Self.check(row)
     }
 

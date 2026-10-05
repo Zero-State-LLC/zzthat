@@ -147,108 +147,123 @@ public enum Scanner {
 
     // MARK: Rules 4 to 8
 
+    /// Rules 4 to 8, in the order of zzThis packages/zz-core/src/scanner.ts
+    /// at the pin, so every platform finds the same candidates. Positions are
+    /// kept alongside, for the boxes and the band rows.
     static func candidates(_ tokens: [Token], _ s: [Unicode.Scalar]) -> [ScanCandidate] {
-        func joinedByHyphen(_ left: Int, _ right: Int) -> Bool {
-            guard left >= 0, right < tokens.count else { return false }
-            let gap = s[tokens[left].end..<tokens[right].start]
+        /// The separators written before a token. Pieces of one token split
+        /// around a circled marker have none between them.
+        func before(_ index: Int) -> ArraySlice<Unicode.Scalar> {
+            index > 0 ? s[tokens[index - 1].end..<tokens[index].start] : []
+        }
+        func hyphenRun(_ index: Int) -> Bool {
+            let gap = before(index)
             return !gap.isEmpty && gap.allSatisfy(isHyphen)
         }
-        func joinedBackToWord(_ index: Int) -> Bool {
-            index > 0 && joinedByHyphen(index - 1, index) && tokens[index - 1].isWord
+        /// A marker joined by a hyphen to the word just before it.
+        func joinedToWordBefore(_ index: Int) -> Bool {
+            index > 0 && index < tokens.count && hyphenRun(index) && tokens[index - 1].isWord
         }
-        func joinedForwardToWord(_ index: Int) -> Bool {
-            index + 1 < tokens.count && joinedByHyphen(index, index + 1) && tokens[index + 1].isWord
+        /// A marker joined by a hyphen to the word just after it.
+        func joinedToWordAfter(_ index: Int) -> Bool {
+            index + 1 < tokens.count && hyphenRun(index + 1) && tokens[index + 1].isWord
         }
-        /// The text of tokens first...last: their cores, with the original
-        /// separators between them kept (rule 6).
-        func text(_ first: Int, _ last: Int) -> String {
+        /// Rule 5: two markers in a row form a pair unless an exception holds.
+        func formsPair(_ a: Int, _ b: Int) -> Bool {
+            if tokens[b].isOpener || tokens[a].endsClause { return false }
+            let between = (a + 1)..<b
+            if between.contains(where: { tokens[$0].endsClause }) { return false }
+            let outerBefore = joinedToWordBefore(a)
+            let outerAfter = joinedToWordAfter(b)
+            if outerBefore, outerAfter { return false }
+            let empty = between.isEmpty && !tokens[a].hasContentAfterAt
+            return !(empty && (outerBefore || outerAfter))
+        }
+        /// Rule 6: the grammar input drops the set-aside characters and keeps
+        /// the separators as written. `to` is exclusive.
+        func spanText(_ from: Int, _ to: Int) -> String {
             var out: [Unicode.Scalar] = []
-            for index in first...last {
+            for index in from..<to {
+                if index > from { out.append(contentsOf: before(index)) }
                 out.append(contentsOf: s[tokens[index].coreStart..<tokens[index].coreEnd])
-                if index < last { out.append(contentsOf: s[tokens[index].end..<tokens[index + 1].start]) }
             }
             return Scalars.string(out)
         }
-        func words(_ first: Int, _ last: Int) -> [Range<Int>] {
-            guard first <= last else { return [] }
-            var ranges: [Range<Int>] = []
-            for index in first...last {
+        func span(_ from: Int, _ to: Int) -> Range<Int> {
+            tokens[from].coreStart..<max(tokens[from].coreStart, tokens[to - 1].coreEnd)
+        }
+        /// Every part between the markers, the check word included; an
+        /// opener's text after its @ counts.
+        func words(_ from: Int, _ to: Int) -> [Range<Int>] {
+            (from..<to).compactMap { index in
                 let token = tokens[index]
-                if token.hasContentAfterAt {
-                    ranges.append((token.coreStart + 3)..<token.coreEnd)
-                } else if token.isWord {
-                    ranges.append(token.coreStart..<token.coreEnd)
-                }
+                if token.hasContentAfterAt { return (token.coreStart + 3)..<token.coreEnd }
+                return token.isWord ? token.coreStart..<token.coreEnd : nil
             }
-            return ranges
+        }
+        /// Rule 7, forward: to the clause end, the next marker, or the end.
+        func forwardEnd(_ start: Int) -> Int {
+            for index in start..<tokens.count {
+                if index > start, tokens[index].isMarker { return index }
+                if tokens[index].endsClause { return index + 1 }
+            }
+            return tokens.count
+        }
+        /// Rule 7, backward: to the clause start, the previous marker, or the start.
+        func backwardStart(_ end: Int) -> Int {
+            var start = end
+            while start > 0, !tokens[start - 1].isMarker, !tokens[start - 1].endsClause { start -= 1 }
+            return start
+        }
+
+        struct Found {
+            let start: Int
+            let candidate: ScanCandidate
+        }
+        func partial(_ from: Int, _ to: Int) -> Found {
+            Found(start: from, candidate: ScanCandidate(kind: .partial(text: spanText(from, to)),
+                                                        range: span(from, to), wordRanges: words(from, to)))
         }
 
         let markers = tokens.indices.filter { tokens[$0].isMarker }
-        var found: [ScanCandidate] = []
+        var found: [Found] = []
         var paired = Set<Int>()
-
-        // Rule 5: two markers in a row form a pair unless an exception holds.
-        for (a, b) in zip(markers, markers.dropFirst()) {
-            if tokens[b].isOpener || tokens[a].endsClause { continue }
-            let between = (a + 1)..<b
-            if between.contains(where: { tokens[$0].endsClause }) { continue }
-            let nothingBetween = between.allSatisfy { tokens[$0].isEmpty } && !tokens[a].hasContentAfterAt
-            if nothingBetween, joinedBackToWord(a) || joinedForwardToWord(b) { continue }
-            if joinedBackToWord(a), joinedForwardToWord(b) { continue }
-            paired.insert(a)
-            paired.insert(b)
-            let input = text(a, b)
-            let range = tokens[a].coreStart..<tokens[b].coreEnd
+        for (a, b) in zip(markers, markers.dropFirst()) where formsPair(a, b) {
+            let input = spanText(a, b + 1)
             let kind: ScanCandidateKind
             switch Grammar.parse(input) {
             case .success(let code) where code.kind != .bare: kind = .code(code)
             case .success: kind = .invalid(reason: .noContent, text: input)
             case .failure(let reason): kind = .invalid(reason: reason, text: input)
             }
-            found.append(ScanCandidate(kind: kind, range: range, wordRanges: words(a, b)))
+            found.append(Found(start: a, candidate: ScanCandidate(kind: kind, range: span(a, b + 1),
+                                                                  wordRanges: words(a, b + 1))))
+            paired.insert(a)
+            paired.insert(b)
         }
-
-        // Rule 7: a marker in no pair is partial or bare.
-        for (position, m) in markers.enumerated() where !paired.contains(m) {
+        for m in markers where !paired.contains(m) {
             let token = tokens[m]
-            if !token.isOpener, joinedBackToWord(m) {
-                // Backward reading only: back to the clause start, the
-                // previous marker, or the start of the text.
-                var first = m - 1
-                while first > 0, !tokens[first - 1].isMarker, !tokens[first - 1].endsClause { first -= 1 }
-                while first < m - 1, tokens[first].isEmpty { first += 1 }
-                found.append(ScanCandidate(kind: .partial(text: text(first, m)),
-                                           range: tokens[first].coreStart..<token.coreEnd,
-                                           wordRanges: words(first, m - 1)))
+            // A zz or (zz) joined by a hyphen to a word before it reads back only.
+            if !token.isOpener, joinedToWordBefore(m) {
+                found.append(partial(backwardStart(m), m + 1))
                 continue
             }
-            let nextMarker = position + 1 < markers.count ? markers[position + 1] : tokens.count
-            let wordFollows = token.hasContentAfterAt
-                || ((m + 1)..<nextMarker).first(where: { !tokens[$0].isEmpty || tokens[$0].endsClause })
-                    .map { tokens[$0].isWord } ?? false
-            if !token.endsClause, wordFollows {
-                // Forward reading: to the clause end, the next marker, or the end.
-                var last = m
-                while last + 1 < nextMarker {
-                    last += 1
-                    if tokens[last].endsClause { break }
-                }
-                while last > m, tokens[last].isEmpty { last -= 1 }
-                found.append(ScanCandidate(kind: .partial(text: text(m, last)),
-                                           range: token.coreStart..<tokens[last].coreEnd,
-                                           wordRanges: words(m, last)))
+            // A zz@ token holds its own word, which comes before any clause end.
+            let wordFollows = !token.endsClause && m + 1 < tokens.count && tokens[m + 1].isWord
+            if token.hasContentAfterAt || wordFollows {
+                found.append(partial(m, forwardEnd(m)))
                 continue
             }
-            found.append(ScanCandidate(kind: .bare, range: token.coreStart..<token.coreEnd,
-                                       wordRanges: [token.coreStart..<token.coreEnd]))
+            found.append(Found(start: m, candidate: ScanCandidate(kind: .bare, range: token.coreStart..<token.coreEnd,
+                                                                  wordRanges: [token.coreStart..<token.coreEnd])))
         }
 
-        // Rule 8: reading order, each canonical code once.
-        found.sort { ($0.range.lowerBound, $0.range.upperBound) < ($1.range.lowerBound, $1.range.upperBound) }
+        // Rule 8: reading order, each canonical code once. Bare marks,
+        // partials, and invalid candidates each keep their own entry.
         var seen = Set<String>()
-        return found.filter { candidate in
-            guard case .code(let code) = candidate.kind else { return true }
-            return seen.insert(code.canonical).inserted
+        return found.sorted { $0.start < $1.start }.compactMap { item in
+            if case .code(let code) = item.candidate.kind, !seen.insert(code.canonical).inserted { return nil }
+            return item.candidate
         }
     }
 }

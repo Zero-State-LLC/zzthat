@@ -1,14 +1,15 @@
 // The v1 text grammar, zzThis docs/SPEC.md Section 2.2a, at the pin.
 //
-// The structure follows zzThis src/lib/grammar.ts at the pin, the parser the
-// server runs. G2 steps 1, 2, 4, and 6 use the character sets decided in
-// D-2026-10-04-10 (2026-10-05): the 256 guard counts the raw input in UTF-16
-// code units, the fullwidth forms U+FF01 to U+FF5E map to ASCII, the text is
+// The structure follows zzThis packages/zz-core/src/grammar.ts at the pin,
+// the parser the server runs. G2 steps 1, 2, 4, and 6 use the character sets
+// of D-2026-10-04-10: the 256 guard counts the raw input in UTF-16 code
+// units, the fullwidth forms U+FF01 to U+FF5E map to ASCII, the text is
 // normalized to NFC, whitespace is the Unicode White_Space set, lowercasing
 // has no locale rules, and a letter that is still not ASCII fails with
-// unsupported-script. zzThis spec 005 T035 makes the same change to
-// grammar.ts. The G2 step 5 `@` rewrite stays as Section 2.2a writes it;
-// the D-2026-10-04-04 reading on split parts waits for its G9 rows (T035).
+// unsupported-script. G2 step 5 runs on the split parts (D-2026-10-04-04):
+// an `@` touching the opening zz is read as separate, a first part
+// `tag@rest` becomes `tag` and `@rest`, and a part that is exactly `@`
+// joins the part after it.
 
 import Foundation
 
@@ -80,7 +81,9 @@ public enum Grammar {
         }
         // G2 step 6: the separators are White_Space and the hyphen (the
         // dashes became hyphens in step 3). Nothing else separates.
-        let parts = Scalars.split(body, where: Scalars.isSeparator).map(Scalars.string)
+        let split = Scalars.split(body, where: Scalars.isSeparator).map(Scalars.string)
+        // G2 step 5 on the split parts (D-2026-10-04-04).
+        let parts = joinLoneAt(splitTagAt(split))
         if let fault = earlyFault(parts) { return .failure(fault) }
         return classify(parts, variant: opened.variant)
     }
@@ -101,32 +104,39 @@ public enum Grammar {
         return Array(narrowed.precomposedStringWithCanonicalMapping.unicodeScalars)
     }
 
-    /// G2 steps 2 to 5 on the mapped text.
+    /// G2 steps 2 to 4 on the mapped text. Step 5 runs on the split parts.
     static func normalize(_ input: [Unicode.Scalar]) -> [Unicode.Scalar] {
         // Step 2: every White_Space character is a space, and the ends are trimmed.
         let spaced = Scalars.trimmed(input).map { Scalars.isWhiteSpace($0) ? " " : $0 }
         // Step 3: the dashes U+2010 to U+2015 and U+2212 are hyphens.
         let hyphens = spaced.map { Scalars.isDash($0) ? "-" : $0 }
         // Step 4: the Unicode lowercase mapping, with no locale rules.
-        var text = Array(Scalars.string(hyphens).lowercased().unicodeScalars)
-        // Step 5, as grammar.ts writes it: replace(/^zz@-?/, "zz-@")
-        if Scalars.hasPrefix(text, "zz@") {
-            var rest = Array(text.dropFirst(3))
-            if rest.first == "-" { rest.removeFirst() }
-            text = Scalars.of("zz-@") + rest
+        return Array(Scalars.string(hyphens).lowercased().unicodeScalars)
+    }
+
+    /// G2 step 5 (D-2026-10-04-04): a first part `tag@rest`, where the tag
+    /// is a plain part, becomes `tag` and `@rest`.
+    static func splitTagAt(_ parts: [String]) -> [String] {
+        guard let first = parts.first else { return parts }
+        let scalars = Array(first.unicodeScalars)
+        guard let at = scalars.firstIndex(of: "@"), at >= 1, isPlain(Scalars.string(scalars[..<at])) else {
+            return parts
         }
-        // Step 5, then replace(/^zz-([a-z0-9]+)@[\s-]*/, "zz-$1-@")
-        if Scalars.hasPrefix(text, "zz-") {
-            var index = 3
-            while index < text.count, Scalars.isPlainScalar(text[index]) { index += 1 }
-            if index > 3, index < text.count, text[index] == "@" {
-                let group = Array(text[3..<index])
-                var after = index + 1
-                while after < text.count, Scalars.isSeparator(text[after]) { after += 1 }
-                text = Scalars.of("zz-") + group + Scalars.of("-@") + Array(text[after...])
+        return [Scalars.string(scalars[..<at]), Scalars.string(scalars[at...])] + parts.dropFirst()
+    }
+
+    /// G2 step 5 (D-2026-10-04-04): a part that is exactly `@` joins the part
+    /// after it. Alone, it stays `@` and fails with invalid-handle.
+    static func joinLoneAt(_ parts: [String]) -> [String] {
+        var joined: [String] = []
+        for part in parts {
+            if joined.last == "@" {
+                joined[joined.count - 1] = "@" + part
+            } else {
+                joined.append(part)
             }
         }
-        return text
+        return joined
     }
 
     private struct Opened {
@@ -137,6 +147,10 @@ public enum Grammar {
     private static func opening(_ text: [Unicode.Scalar]) -> Opened? {
         if Scalars.hasPrefix(text, "(zz)") {
             return Opened(variant: .circled, rest: Array(text.dropFirst(4)))
+        }
+        // An @ touching the opening zz is read as separate (D-2026-10-04-04).
+        if Scalars.hasPrefix(text, "zz@") {
+            return Opened(variant: .dash, rest: Array(text.dropFirst(2)))
         }
         if text.count >= 3, text[0] == "z", text[1] == "z",
            Scalars.isSeparator(text[2]) {
