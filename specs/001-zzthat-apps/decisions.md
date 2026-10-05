@@ -63,3 +63,14 @@ Danny answered the build's stop-and-ask items in a [comment on #43](https://gith
 | C4 | Keep the ML Kit Accept threshold at 0.80 for v1, and treat it as Q37 data. | [DANNY 2026-10-05 #43] |
 | C5 | The zzThis contract adds `info.license.identifier` `LicenseRef-Proprietary`. | [DANNY 2026-10-05 #43] |
 | C6 | Keep the `USE_BIOMETRIC` and `USE_FINGERPRINT` permissions that Credential Manager adds. | [DANNY 2026-10-05 #43] |
+
+## Delegated decisions on #43 (2026-10-05)
+
+Danny delegated the remaining calls in a [comment on #43](https://github.com/Zero-State-LLC/zzthat/pull/43#issuecomment-6004261491) on 2026-10-05 at 22:17 UTC, and asked that each be run through Jev. Jev was not reachable from the build, so each call below follows established practice. Merges still need Danny's yes. Store finalization stays held for his legal details (B2), because legal facts are not the build's to decide.
+
+| ID | Decision | Source |
+|---|---|---|
+| S1 | Policy changes are posted on the policy page with an updated effective date, and material changes are also noted in the app's release notes. This follows the usual policy practice that California's CalOPPA writes down: a policy states its effective date and how people learn of material changes. | [DELEGATED 2026-10-05, zzThat #43]. Jev not reachable; decided by established practice. |
+| S2 | Report notes are listed in the store forms as user content (Google Play "Other user-generated content", App Store "Other User Content"), not linked to the person, used for app functionality (abuse review), and deleted one year after the report is closed (B3). The server stores a report without the reporter's account. | [DELEGATED 2026-10-05, zzThat #43]. Jev not reachable; decided by established practice. |
+| S3 | The IP-based rate-limit HMAC keeps the drafted form categories: "Device or other IDs" on Google Play and "Other Data Types" on the App Store. Neither form lists an IP-specific type, so the closest listed type is used rather than leaving the data out. | [DELEGATED 2026-10-05, zzThat #43]. Jev not reachable; decided by established practice. |
+| S4 | The third-party notices (T087) keep every package the lock pins, including test and build tools. Listing more than ships is safe, and trimming risks missing a dependency that ships. | [DELEGATED 2026-10-05, zzThat #43]. Jev not reachable; decided by established practice. |

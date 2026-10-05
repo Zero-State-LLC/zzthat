@@ -65,7 +65,7 @@ The zzThat apps use the zzThis server, which runs on Cloudflare.
 - **Your pages** stay until you change them or delete your account. Each change is kept as a new version.
 - **Photos sent for a server read** (not offered today) are deleted 30 days after upload.
 - **Sign-in data:** the one-time values used to sign in are deleted after use or when they expire. Refresh tokens last 30 days, and expired ones are deleted 30 days after they expire.
-- **Reports** are deleted one year after the operator closes them (B3, [DANNY 2026-10-05 #43]).
+- **Reports**, including any note you add, are deleted one year after the operator closes them (B3, [DANNY 2026-10-05 #43]). A report is not linked to you.
 - **A record of account actions** (for example, that a code was created or revoked) is kept after an account is deleted. It holds no page text.
 
 ## Deleting your account
@@ -80,15 +80,20 @@ You can delete your account in the app: Account, then Delete account. You can al
 
 If you sign in again later, you start with a new, empty account. The words of deleted codes are not used again.
 
+## Changes to this policy
+
+We post every change on this page and update the effective date at the top. When a change is material, the app's release notes say so too.
+
 ## Contact
 
 Questions: support@zer0state.com
 
 ---
 
-## Open items for Danny
+## Held for Danny
 
-1. Held for Danny (B2): the legal name and address of the company that publishes the apps, the effective date, a children's section (the default store ratings are Apple 12+ and Google Play Teen, FR-031), and EU and California rights.
-2. How changes to the policy are announced.
-3. The privacy page URL. The apps link to the zzThis marketing site's privacy page (ZQ25), which does not exist until Danny publishes this.
-4. Confirm the `support@zer0state.com` mailbox exists before submission (ZQ25).
+Decided by delegation and applied here: how policy changes are announced (S1), [DELEGATED 2026-10-05, zzThat #43].
+
+1. Held (B2): the legal name and address of the company that publishes the apps, the effective date, a children's section (the default store ratings are Apple 12+ and Google Play Teen, FR-031), and EU and California rights. These are legal facts, so the build does not decide them.
+2. Before publishing: the privacy page URL. The apps link to the zzThis marketing site's privacy page (ZQ25), which does not exist until Danny publishes this.
+3. Before submission: the `support@zer0state.com` mailbox exists (ZQ25).

@@ -37,8 +37,9 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 | Data type | Collected | Shared | Ephemeral | Required or optional | Purposes |
 |---|---|---|---|---|---|
 | Personal info: User IDs (the account ID and the Google subject ID) | Yes | No | No | Optional. Scanning and typing work without an account; creating codes needs sign-in. | App functionality, Account management |
-| App activity: Other user-generated content (page titles and messages, and report notes) | Yes | No | No | Optional | App functionality. Reports: Fraud prevention, security, and compliance |
-| The IP-based rate-limit HMAC (B4b). The form has no IP-specific type; Device or other IDs is the closest listed type, which Danny confirms when he enters the form. | Yes | No | No | Required for signed-out use and reports | Fraud prevention, security, and compliance |
+| App activity: Other user-generated content: page titles and messages | Yes | No | No | Optional | App functionality |
+| App activity: Other user-generated content: report notes (S2, [DELEGATED 2026-10-05, zzThat #43]) | Yes | No | No | Optional | App functionality (abuse review) |
+| Device or other IDs: the IP-based rate-limit HMAC (B4b; the category is S3, [DELEGATED 2026-10-05, zzThat #43]) | Yes | No | No | Required for signed-out use and reports | Fraud prevention, security, and compliance |
 
 Not collected: name, email address, phone number, address, location, photos and videos (read on the phone only), audio, files, contacts, calendar, messages, financial info, health and fitness, web browsing, crash logs, diagnostics, and the advertising ID. Codes a person looks up are not listed as collected (B4a, [DANNY 2026-10-05 #43]): the server keeps nothing from a lookup (FR-027).
 
@@ -49,15 +50,16 @@ These match the privacy manifest, which declares no tracking and no tracking dom
 | Category | Data type | Linked to the user | Used for tracking | Purpose |
 |---|---|---|---|---|
 | Identifiers | User ID | Yes | No | App Functionality |
-| User Content | Other User Content (page titles and messages, and report notes) | Yes for pages. Reports are stored without the reporter. | No | App Functionality |
-| Other Data | Other Data Types: the IP-based rate-limit HMAC (B4b) | No | No | App Functionality (Apple counts preventing fraud and keeping the service secure here) |
+| User Content | Other User Content: page titles and messages | Yes | No | App Functionality |
+| User Content | Other User Content: report notes (S2, [DELEGATED 2026-10-05, zzThat #43]) | No. Reports are stored without the reporter. | No | App Functionality (abuse review) |
+| Other Data | Other Data Types: the IP-based rate-limit HMAC (B4b; the category is S3, [DELEGATED 2026-10-05, zzThat #43]) | No | No | App Functionality (Apple counts preventing fraud and keeping the service secure here) |
 
 Data Used to Track You: none. The apps contain no analytics, no advertising identifier, and no crash reporter that uploads (runtime.md, Privacy).
 
-## Open items for Danny
+App Store Connect takes one linked answer per data type. Pages are linked, so Other User Content is entered as linked; the report-note row records that the notes themselves are not linked.
 
-Decided on #43 and applied here: the account deletion link (B1), report retention (B3), codes looked up are not collected (B4a), and the rate-limit HMAC disclosure (B4b).
+## Held for Danny
 
-1. **Held (B2).** Store finalization waits for the legal name and address, the effective date, a children's section, and EU and California rights.
-2. **Report notes.** Reports are stored without the reporter. Danny confirms that the User Content rows should still mention report notes.
-3. **Form categories.** Neither form has an IP-specific type for the rate-limit HMAC. Danny confirms Device or other IDs on Google Play and Other Data Types on the App Store when he enters them.
+Decided on #43 and applied here: the account deletion link (B1), report retention (B3), codes looked up are not collected (B4a), and the rate-limit HMAC disclosure (B4b). Decided by delegation and applied here: report notes (S2) and the HMAC's form categories (S3), [DELEGATED 2026-10-05, zzThat #43].
+
+1. **Held (B2).** Store finalization waits for the legal name and address, the effective date, a children's section, and EU and California rights. These are legal facts, so the build does not decide them.
