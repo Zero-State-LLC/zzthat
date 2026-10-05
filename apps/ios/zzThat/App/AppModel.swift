@@ -64,7 +64,7 @@ final class AppModel {
                         connectivity: connectivity, bundledLists: Self.loadBundledLists())
     }
 
-    static func loadBundledLists(bundle: Bundle = .main) -> [WordList] {
+    nonisolated static func loadBundledLists(bundle: Bundle = .main) -> [WordList] {
         guard let folder = bundle.url(forResource: "wordlists", withExtension: nil) else { return [] }
         return (try? WordListLoader.load(directory: folder)) ?? []
     }
