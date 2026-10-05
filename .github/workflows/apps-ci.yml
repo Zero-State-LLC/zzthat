@@ -77,11 +77,16 @@ jobs:
         run: ./gradlew :core-api:openApiGenerate
       - name: Compile the generated client
         run: ./gradlew :core-api:compileKotlin
-      - name: JVM unit tests
+      - name: JVM unit tests (plain Kotlin modules)
+        run: ./gradlew :core-grammar:test :core-api:test
+      # The Android modules (app, core-auth, core-design, core-storage) are not
+      # written yet and are left out of settings.gradle.kts. Every step below
+      # runs only once app/build.gradle.kts exists, so the job does not fail on
+      # modules that are not there; it is not a claim that Android is done.
+      - name: Android unit tests
+        if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         run: >-
           ./gradlew
-          :core-grammar:test
-          :core-api:test
           :core-auth:testDebugUnitTest
           :core-storage:testDebugUnitTest
           :core-design:testDebugUnitTest
@@ -89,6 +94,7 @@ jobs:
           :app:testLocalDebugUnitTest
           :app:testProdDebugUnitTest
       - name: Paparazzi snapshots (demo flavor)
+        if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         run: ./gradlew :app:verifyPaparazziDemoDebug
       - name: Upload Paparazzi differences
         if: failure()
@@ -98,11 +104,13 @@ jobs:
           path: apps/android/app/build/paparazzi/failures
           if-no-files-found: ignore
       - name: Enable KVM
+        if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: ML Kit read pipeline test on an emulator
+        if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

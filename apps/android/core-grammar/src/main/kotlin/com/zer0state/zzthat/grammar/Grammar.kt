@@ -106,7 +106,10 @@ object Grammar {
         } else {
             lowered
         }
-        return TAG_AT.replaceFirst(opened) { "zz-${it.groupValues[1]}-@" }
+        // Regex.replaceFirst takes only a String replacement, so the first
+        // match is replaced by its range.
+        val tagAt = TAG_AT.find(opened) ?: return opened
+        return opened.replaceRange(tagAt.range, "zz-${tagAt.groupValues[1]}-@")
     }
 
     private fun opening(text: String): Pair<CodeVariant, String>? {
