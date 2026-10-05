@@ -276,12 +276,12 @@ The apps are analytics-free.
 
 ### Triggers and runners (ZQ27)
 
-zzThat is a private repo, so hosted macOS minutes are spend. Danny picks the CI spend path in ZQ27, which is OPEN. Until he answers, the workflows follow its no-spend default [INFERRED]:
+zzThat is a private repo on GitHub Team, so hosted minutes come out of the organization's included minutes, and a macOS minute costs about ten Linux minutes. ZQ27 sets this path, decided 2026-10-05 and accepted by Danny on #39 (decisions.md, #40):
 
 - `apps-ci.yml` triggers on `pull_request` with types `opened`, `synchronize`, `reopened`, and `labeled`, and on `workflow_dispatch`. The `labeled` type is what lets adding the `ios-ci` label start the `ios` job. Adding any label also reruns the other jobs.
 - Both `apps-ci.yml` and `apps-e2e.yml` set workflow-level `concurrency` with the group `${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}` and `cancel-in-progress: true`, so a new push cancels the run it replaces (ZQ27).
 - `apps-ci.yml`, `android` job: `ubuntu-latest`, on every pull request. It uses JDK 21 (temurin) and the pinned Gradle wrapper. It runs `:core-api:openApiGenerate`, then every module's JVM unit tests (`:core-grammar`, `:core-api`, and the local unit tests of the Android modules), then Paparazzi. It then enables KVM and runs only the ML Kit read-pipeline instrumented test, on an x86_64 `google_apis` API 35 emulator, with `reactivecircus/android-emulator-runner@v2`.
-- `apps-ci.yml`, `checks` job [INFERRED]: `ubuntu-latest`, on every pull request, with no label gate. It runs the pin check, the string check (T082), and the manifest check (T075). It does not wait for the `android` job.
+- `apps-ci.yml`, `checks` job: `ubuntu-latest`, on every pull request, with no label gate. It runs the pin check, the string check (T082), and the manifest check (T075). It does not wait for the `android` job.
 - `apps-ci.yml`, `ios` job: runs only on `workflow_dispatch` or when the PR has the `ios-ci` label. A skipped `ios` job does not fail a check. It uses `macos-26` and selects Xcode 26.6. App tests and snapshots run on `-destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'`. Snapshot references are recorded on that same destination. On the dev Mac, use the stock iPhone 17 simulator, not a renamed or custom one.
 - Every `xcodebuild` call, in CI and on the dev Mac, passes `-skipPackagePluginValidation`. Without it, the `ZZAPI` build plugin stops a headless build at plug-in validation.
 - No job needs a live server. Neither `apps-ci.yml` nor `apps-e2e.yml` is a required check. The required check is `ci.yml` (`build`).
