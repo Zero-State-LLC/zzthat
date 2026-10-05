@@ -61,7 +61,7 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`specs/001-zzthat-apps/spec.md`](specs/001-zzthat-apps/spec.md) | What the apps do, and the app rules for the pinned API contract |
 | [`specs/001-zzthat-apps/runtime.md`](specs/001-zzthat-apps/runtime.md) | Build contract: structure, screens, auth, storage, release |
 | [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md) | How the apps consume zzthis `design/` |
-| [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ26, decided 2026-10-04. ZQ27 (CI spend) is OPEN for Danny. |
+| [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ28: ZQ1 to ZQ26 decided 2026-10-04, ZQ27 (CI spend) and ZQ28 (toolchain pins) decided 2026-10-05 by established practice. |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
 | [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | Pinned copy of zzthis `specs/005-v1-api/openapi.yaml` |

@@ -8,7 +8,7 @@ The phases run in this order in one build, after the zzThis build branch exists 
 
 ## Phase 0: Decisions
 
-ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 is decided with ZQ18. ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided by best practice with Danny's yes on zzThis #74. ZQ27, the CI spend path, is OPEN for Danny. The build follows its no-spend default until he answers. See [decisions.md](decisions.md).
+ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 is decided with ZQ18. ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided by best practice with Danny's yes on zzThis #74. ZQ27, the CI spend path, was decided by established practice on 2026-10-05, as Danny asked on zzThis #75. See [decisions.md](decisions.md).
 
 ## Phase 1: Scaffold ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 
@@ -18,9 +18,9 @@ ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-Stat
 - [ ] T006 The Demo, Local, and Release configurations from runtime.md, with the bundle and application ids (ZQ24).
 - [ ] T007 Register the pinned fonts and wire the pinned token files, light and dark.
 - [ ] T003 Test targets: `ZZCore` tests, the app tests and UI tests, `:core-grammar` tests, Paparazzi.
-- [ ] T004 `.github/workflows/apps-ci.yml` with the `ios`, `android`, and `checks` jobs, on the ZQ27 default triggers (runtime.md, Testing): `pull_request` with types `opened`, `synchronize`, `reopened`, and `labeled`, plus `workflow_dispatch`, so adding the `ios-ci` label starts the `ios` job. The `android` job uses JDK 21 (temurin) and the pinned Gradle wrapper, and runs `:core-api:openApiGenerate`, then every module's JVM unit tests, then Paparazzi and the ML Kit test. The `checks` job runs the pin check, the string check, and the manifest check on `ubuntu-latest` on every pull request. Every `xcodebuild` step passes `-skipPackagePluginValidation`.
+- [ ] T004 `.github/workflows/apps-ci.yml` with the `ios`, `android`, and `checks` jobs, on the ZQ27 triggers (runtime.md, Testing): `pull_request` with types `opened`, `synchronize`, `reopened`, and `labeled`, plus `workflow_dispatch`, so adding the `ios-ci` label starts the `ios` job. The `android` job uses JDK 21 (temurin) and the pinned Gradle wrapper, and runs `:core-api:openApiGenerate`, then every module's JVM unit tests, then Paparazzi and the ML Kit test. The `checks` job runs the pin check, the string check, and the manifest check on `ubuntu-latest` on every pull request. Every `xcodebuild` step passes `-skipPackagePluginValidation`.
 
-Done when: both apps launch in Demo with the three tabs, the pinned fonts, and the pinned colors, and `apps-ci.yml` passes. Under the ZQ27 default, the iOS half is the dev Mac run pasted into the PR body.
+Done when: both apps launch in Demo with the three tabs, the pinned fonts, and the pinned colors, and `apps-ci.yml` passes. Under ZQ27, the iOS half is the dev Mac run pasted into the PR body.
 
 ## Phase 2: Core library ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
 
@@ -106,7 +106,7 @@ Done when: `apps-ci.yml` passes with the string check and the manifest check.
 ## Phase 10: Whole-system check
 
 - [ ] T085 One snapshot per screen state, light and dark, on both platforms (SC-13).
-- [ ] T086 `.github/workflows/apps-e2e.yml` on the ZQ27 default triggers, and the end-to-end run in runtime.md, once per platform (SC-12). The builder opens the draft PR, adds the `run-e2e` label, and links the apps-e2e.yml run in the PR body. Under the default, the builder runs the iOS end-to-end test on the dev Mac, with `-skipPackagePluginValidation`, and pastes the command, the commit sha, and the log tail into the PR body. Evidence with no Actions run is listed under "could not verify".
+- [ ] T086 `.github/workflows/apps-e2e.yml` on the ZQ27 triggers, and the end-to-end run in runtime.md, once per platform (SC-12). The builder opens the draft PR, adds the `run-e2e` label, and links the apps-e2e.yml run in the PR body. Under ZQ27, the builder runs the iOS end-to-end test on the dev Mac, with `-skipPackagePluginValidation`, and pastes the command, the commit sha, and the log tail into the PR body. Evidence with no Actions run is listed under "could not verify".
 
 Done when: both end-to-end runs pass against the local zzThis Worker at the pin, with the evidence T086 names.
 

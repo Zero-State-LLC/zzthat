@@ -30,7 +30,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Recognition engines | Apple Vision on iOS, ML Kit text recognition on Android, one still photo | runtime.md, Read pipeline [INFERRED] |
 | Builds | Demo, Local, and Release, with XcodeGen and Gradle flavors | runtime.md, Build configurations |
 | Privacy | Analytics-free. No crash upload of codes, photos, or tokens. | runtime.md |
-| CI | Spec lint and the pinned OpenAPI check in `.github/workflows/ci.yml` (`build`, the required check). The build adds `apps-ci.yml`: an `android` job and a `checks` job (pin, strings, manifests) on `ubuntu-latest` on every pull request, and an `ios` job on `macos-26` only on `workflow_dispatch` or the `ios-ci` label. It adds `apps-e2e.yml`: `workflow_dispatch`, and pull request runs gated on the `run-e2e` label, with no schedule. iOS evidence comes from the dev Mac. Neither file is a required check. | ZQ27 default, OPEN for Danny (runtime.md, Testing). Named here before they land. |
+| CI | Spec lint and the pinned OpenAPI check in `.github/workflows/ci.yml` (`build`, the required check). The build adds `apps-ci.yml`: an `android` job and a `checks` job (pin, strings, manifests) on `ubuntu-latest` on every pull request, and an `ios` job on `macos-26` only on `workflow_dispatch` or the `ios-ci` label. It adds `apps-e2e.yml`: `workflow_dispatch`, and pull request runs gated on the `run-e2e` label, with no schedule. iOS evidence comes from the dev Mac. Neither file is a required check. | ZQ27, decided 2026-10-05 (runtime.md, Testing). Named here before they land. |
 
 ## Constitution check
 
@@ -51,7 +51,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 
 The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks.md), Phase 1 to Phase 11.
 
-1. Done: spec 001 is merged, and ZQ22 to ZQ26 are decided (zzThis #74). Danny still accepts the zzThis build intent. ZQ27, the CI spend path, is OPEN, and the build follows its default.
+1. Done: spec 001 is merged, and ZQ22 to ZQ26 are decided (zzThis #74). Danny still accepts the zzThis build intent. ZQ27, the CI spend path, is decided.
 2. The zzThis build branch exists, with the fonts, `pin-zzthis.sh`, and the wordlist files. Pin to its head.
 3. Scaffold, then the core library on both platforms against `contracts/vectors.json`.
 4. API client, accounts, scan and resolve, create, share and manage, offline, privacy and strings.
@@ -68,7 +68,7 @@ The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks
 - Public resolve without a session (ZQ6) disagrees with the inferred "every call is authenticated" line in Section 10.6. The not-found collapse for private records has to stay.
 - The re-roll cap of 3 is in zzThis spec 005 FR-006. Replaced words are never reissued (zzThis Q36, decided in zzThis on 2026-10-04, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)).
 - Rate-limit numbers are still the starting table (ZQ20). The cache lifetime is not: Q26 is zzThis spec 005 FR-018, and FR-041 sets the app's 60 and 360 seconds.
-- The Kotlin OpenAPI generator's 3.1 support is partial. The contract avoids the constructs it handles worst. The `apps-ci.yml` `android` job generates the Kotlin client on every pull request, so a problem there is a red check. Under the ZQ27 default, the Swift client is generated only when the `ios` job runs (`workflow_dispatch` or the `ios-ci` label) and in the dev Mac run that the PR body quotes.
+- The Kotlin OpenAPI generator's 3.1 support is partial. The contract avoids the constructs it handles worst. The `apps-ci.yml` `android` job generates the Kotlin client on every pull request, so a problem there is a red check. Under ZQ27, the Swift client is generated only when the `ios` job runs (`workflow_dispatch` or the `ios-ci` label) and in the dev Mac run that the PR body quotes.
 - Handwriting recognition quality on each platform is unmeasured. No accuracy number is a release criterion (FR-029).
 - A purge clears only the data center that handled the write. Other data centers keep their copy until `max-age` ends, so 60 seconds at the edge is the normal worst case, not only when a purge fails [ZZTHIS SPEC] spec 005 FR-019(c). The app still drops its copy when `Cache-Control` says so, and at once after the owner's own write (FR-041).
 - The age rating is a filing default. It is not a legal opinion.

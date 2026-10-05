@@ -17,7 +17,7 @@ Product behavior that is already specified lives in [zzThis](https://github.com/
 
 | ID | Feature | Built? | specify | clarify | plan | checklist | tasks | analyze |
 |---|---|---|---|---|---|---|---|---|
-| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done, deepened 2026-10-04 | ZQ1 to ZQ26 decided, ZQ27 OPEN for Danny ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/specs/analysis-2026-10-04.md) (in zzThis) |
+| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done, deepened 2026-10-04 | ZQ1 to ZQ28 decided ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/specs/analysis-2026-10-04.md) (in zzThis) |
 
 Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature of this repo [ZZTHIS SPEC].
 

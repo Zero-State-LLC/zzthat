@@ -5,7 +5,7 @@ Status: not built. Specification only. No application source in this change.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
-Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ26 decided 2026-10-04. ZQ27 is OPEN for Danny).
+Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
 zzThis pin: `889a4a7e9631cd76639f43a36ea27da301ea2f14`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
 Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/docs/ONE-SHOT-BRIEF.md).
 
@@ -365,7 +365,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided the same day by best practice, with Danny's yes on zzThis #74. The zzThis questions this spec relies on (Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37) were decided in zzThis on 2026-10-04 too. Sync follows [design.md](design.md). Q18 keeps v1 reading on the device, so v1 does not upload photos. ZQ27, the CI spend path, is OPEN for Danny. The build follows its no-spend default until he answers (decisions.md).
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided the same day by best practice, with Danny's yes on zzThis #74. The zzThis questions this spec relies on (Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37) were decided in zzThis on 2026-10-04 too. Sync follows [design.md](design.md). Q18 keeps v1 reading on the device, so v1 does not upload photos. ZQ27, the CI spend path, and ZQ28, the toolchain pins, were decided on 2026-10-05 by established practice (decisions.md).
 
 ## Workflows
 
@@ -374,5 +374,5 @@ ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ
 | Governing workflows | anti-slop-code, production-systems, google-developer-style |
 | Product owner | Michael Chung (zzmojo) |
 | Operator | Danny |
-| CI to reuse | `.github/workflows/ci.yml` (spec lint and the pin check, the required check). The build adds `.github/workflows/apps-ci.yml` (both platforms' tests, snapshots, strings, pin) and `.github/workflows/apps-e2e.yml` (manual, and on PRs with the `run-e2e` label, not a merge gate). Triggers and runners follow the ZQ27 default until Danny answers ZQ27 (runtime.md, Testing). Both are named in plan.md. |
+| CI to reuse | `.github/workflows/ci.yml` (spec lint and the pin check, the required check). The build adds `.github/workflows/apps-ci.yml` (both platforms' tests, snapshots, strings, pin) and `.github/workflows/apps-e2e.yml` (manual, and on PRs with the `run-e2e` label, not a merge gate). Triggers, runners, and required checks follow ZQ27 (runtime.md, Testing). Both are named in plan.md. |
 | Human gates | Store submission, spend, production credentials, privacy-policy publication (constitution IX) |
