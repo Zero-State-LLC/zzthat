@@ -30,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -133,11 +132,12 @@ fun BarAction(text: String, tag: String, onClick: () -> Unit) {
 
 /**
  * The three tabs: Scan, Create, My codes (runtime.md, Navigation), with the
- * Material core icons nearest the iOS symbols (Danny, #43 C3). The core set
- * has no camera, so Scan shows the search glass.
+ * Material icons nearest the iOS symbols (Danny, #43 C3). Scan shows the
+ * Material photo_camera icon, copied into the app (PhotoCameraIcon.kt),
+ * because the core set has no camera.
  */
 enum class Tab(val label: Int, val tag: String, val icon: ImageVector) {
-    SCAN(R.string.nav_scan, "tab.scan", Icons.Filled.Search),
+    SCAN(R.string.nav_scan, "tab.scan", PhotoCameraIcon),
     CREATE(R.string.nav_create, "tab.create", Icons.Filled.Create),
     CODES(R.string.nav_my_codes, "tab.codes", Icons.AutoMirrored.Filled.List),
 }
