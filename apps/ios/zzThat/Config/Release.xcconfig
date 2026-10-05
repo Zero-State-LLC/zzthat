@@ -1,0 +1,17 @@
+// Release: Apple and Google sign-in only. ZZ_API_ORIGIN, the Google client
+// ids, the support contact, and the privacy link are injected at build time
+// (for example ZZ_API_ORIGIN=https://... on the xcodebuild command line). They
+// are not committed. Developer sign-in is compiled out (FR-048).
+#include "Shared.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.zer0state.zzthat
+ZZ_DISPLAY_NAME = zzThat
+ZZ_BUILD = release
+ZZ_API_ORIGIN =
+ZZ_SUPPORT_EMAIL =
+ZZ_PRIVACY_URL =
+// Placeholders until Danny creates the Google clients. The app hides the
+// Google button while either value is still "unset" (runtime.md, iOS Google setup).
+ZZ_GOOGLE_IOS_CLIENT_ID = unset
+ZZ_GOOGLE_REVERSED_CLIENT_ID = unset
+INFOPLIST_FILE = zzThat/Config/Info-Release.plist

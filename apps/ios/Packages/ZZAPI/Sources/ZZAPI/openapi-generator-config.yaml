@@ -1,0 +1,8 @@
+# Swift OpenAPI Generator configuration (runtime.md, API client step 1).
+# The input is openapi.yaml beside this file, which scripts/sync-zzthis.sh
+# copies from the pinned contract. Nothing generated is committed.
+generate:
+  - types
+  - client
+accessModifier: public
+namingStrategy: idiomatic
