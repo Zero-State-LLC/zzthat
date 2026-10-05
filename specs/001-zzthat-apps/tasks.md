@@ -2,43 +2,43 @@
 
 Feature: [spec.md](spec.md) · Plan: [plan.md](plan.md) · Build contract: [runtime.md](runtime.md) · Visuals: [design.md](design.md)
 
-Workflows for every implementing task: anti-slop-code, production-systems, google-developer-style. Spec lint and the pin check: `.github/workflows/ci.yml`. App tests: `.github/workflows/apps-ci.yml`. End-to-end: `.github/workflows/apps-e2e.yml`.
+Workflows for every implementing task: anti-slop-code, production-systems, google-developer-style. A named workflow skill that is not installed where the build runs is style guidance only, and the PR body says so [INFERRED]. Spec lint and the pin check: `.github/workflows/ci.yml`. App tests: `.github/workflows/apps-ci.yml`. End-to-end: `.github/workflows/apps-e2e.yml`.
 
 The phases run in this order in one build, after the zzThis build branch exists (zzThis `docs/ONE-SHOT-BRIEF.md`, Order). iOS and Android can run in parallel from Phase 2 on. Each phase ends with a "done when" line. No task adds a backend or a resolver.
 
 ## Phase 0: Decisions
 
-ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 is decided with ZQ18. ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided by best practice with Danny's yes on zzThis #74. See [decisions.md](decisions.md).
+ZQ1 to ZQ21 were decided on 2026-10-04 (issues [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21)). ZQ22 is decided with ZQ18. ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided by best practice with Danny's yes on zzThis #74. ZQ27, the CI spend path, is OPEN for Danny. The build follows its no-spend default until he answers. See [decisions.md](decisions.md).
 
 ## Phase 1: Scaffold ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
 
-- [ ] T001 The trees in runtime.md: XcodeGen `project.yml` and the three Swift packages; the Gradle modules with a version catalog. No web target, no server module, no resolver.
+- [ ] T001 The trees in runtime.md: XcodeGen `project.yml` and the three Swift packages; the Gradle modules with a version catalog. No web target, no server module, no resolver. Keep the root `.gitignore` in sync with the generated paths in runtime.md. `scripts/lint-specs.py` lists files with `git ls-files --cached --others --exclude-standard`, so ignored build output is never linted.
 - [ ] T002 Minimums iOS 17 and Android 8.0 (API 26) (ZQ21).
-- [ ] T005 `scripts/sync-zzthis.sh` from design.md. Run it at the pin. Commit the copied files and the generated catalogs.
+- [ ] T005 `scripts/sync-zzthis.sh` from design.md, Sync steps 1 to 5. Step 5 rewrites the old sha in the files that name the pin, and the date on the constitution's Source pin line when the sha changes. Run it at the pin. Commit the copied files and the generated catalogs.
 - [ ] T006 The Demo, Local, and Release configurations from runtime.md, with the bundle and application ids (ZQ24).
 - [ ] T007 Register the pinned fonts and wire the pinned token files, light and dark.
 - [ ] T003 Test targets: `ZZCore` tests, the app tests and UI tests, `:core-grammar` tests, Paparazzi.
-- [ ] T004 `.github/workflows/apps-ci.yml` with the `ios` and `android` jobs, the pin check, and the string check.
+- [ ] T004 `.github/workflows/apps-ci.yml` with the `ios`, `android`, and `checks` jobs, on the ZQ27 default triggers (runtime.md, Testing): `pull_request` with types `opened`, `synchronize`, `reopened`, and `labeled`, plus `workflow_dispatch`, so adding the `ios-ci` label starts the `ios` job. The `android` job uses JDK 21 (temurin) and the pinned Gradle wrapper, and runs `:core-api:openApiGenerate`, then every module's JVM unit tests, then Paparazzi and the ML Kit test. The `checks` job runs the pin check, the string check, and the manifest check on `ubuntu-latest` on every pull request. Every `xcodebuild` step passes `-skipPackagePluginValidation`.
 
-Done when: both apps launch in Demo with the three tabs, the pinned fonts, and the pinned colors, and `apps-ci.yml` passes.
+Done when: both apps launch in Demo with the three tabs, the pinned fonts, and the pinned colors, and `apps-ci.yml` passes. Under the ZQ27 default, the iOS half is the dev Mac run pasted into the PR body.
 
 ## Phase 2: Core library ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
 
 - [ ] T020 Grammar, classifier, matching key, scanner, and check word in `ZZCore` and `:core-grammar`. Every row of `contracts/vectors.json` passes on both. Do not edit a row to match a bug (FR-007, FR-039).
 - [ ] T021 The list loader for `contracts/wordlists/`. Local check word only when the versions match (FR-044).
-- [ ] T022 Band logic with the values in one constants file (FR-025). One test per band trigger in zzThis spec 004.
+- [ ] T022 Band logic with the values in one constants file (FR-025). One test per band trigger in zzThis spec 004. The band function takes (token, line index, line confidence) rows, not recognizer objects. A word takes its line's confidence, and a candidate takes the lowest line among its words (runtime.md, Read pipeline step 2). Shared band rows run in `ZZCore` (`swift test`) and in the `:core-grammar` JVM tests, and both give the same band: all lines at 0.80 is accept, one line at 0.79 is clarify, and a code wrapped across lines at 0.90 and 0.45 is retry.
 - [ ] T023 The read pipeline: Vision on iOS, ML Kit on Android (runtime.md, Read pipeline).
 
 Done when: every vector row passes on both platforms, and a rendered image of `zz-copper-lantern-sky-zz` yields that one candidate on both.
 
 ## Phase 3: API client ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
-- [ ] T015 Generate both clients from `contracts/zzthis-v1.openapi.yaml` (runtime.md, API client). No hand-edited types.
-- [ ] T010 The middleware: `/v1`, `X-ZZ-Contract: 1`, the bearer rule, one refresh on 401, no HTTP cache (FR-049).
+- [ ] T015 Generate both clients from `contracts/zzthis-v1.openapi.yaml` (runtime.md, API client). No hand-edited types. On Android, run `:core-api:openApiGenerate`, then `:core-api:compileKotlin`, on the pinned contract right after T001, before any other Android task. Record the generator version in the PR. Generator configuration (`typeMappings`, an `openapiNormalizer` rule, or ignoring the cookie parameter) is allowed and is not hand-writing types.
+- [ ] T010 The middleware and interceptor: `/v1`, exactly one `X-ZZ-Contract: 1` set by replacing, the bearer rule, the single-flight refresh on 401, no HTTP cache (FR-049). Tests on each platform: a captured request has exactly one `X-ZZ-Contract` field, with value `1`, for one bearer route and one public route (iOS: a stub `ClientTransport`; Android: the OkHttp test server). Two concurrent calls with an expired token make exactly one `/v1/auth/refresh` call, and both succeed.
 - [ ] T017 The demo implementation of the generated API for Demo builds.
-- [ ] T011 Fixture tests for each row of the spec error table. The 404 body is exactly `{ "error": "not-found" }` for unknown, expired, used, revoked, and a signed-out private read. The 429 body is exactly `{ "error": "rate-limited" }`. Neither has another field.
+- [ ] T011 Fixture tests for each row of the spec error table. The 404 body is exactly `{ "error": "not-found" }` for unknown, expired, used, revoked, and a signed-out private read. The 429 body is exactly `{ "error": "rate-limited" }`. Neither has another field. A 400 `malformed` on resolve shows `type.malformed`. A 400 `malformed` on mint, a record version, and a report each shows `error.nothing_saved` and keeps the fields. Success fixtures for Code, OwnedCode, Resolve, Account, and OwnerRecord carry one timestamp with milliseconds (`.123Z`) and one without (`Z`). Both decode on both platforms.
 - [ ] T012 Resolve sends the canonical string, no photo, and no `Authorization` header (FR-016).
-- [ ] T013 A response without `X-ZZ-Contract`, or a 400 `contract-version`, shows `error.update_app`.
+- [ ] T013 Only a 400 `contract-version` shows `error.update_app`. Any other response without `X-ZZ-Contract`, which the Swift client throws as `ClientError`, shows `error.unavailable`, or follows the offline rules when there is no connection. Until the pin declares 500 and 503 on every operation, iOS maps an undocumented 500 on a write to `error.nothing_saved` and an undocumented 503 to `error.unavailable`, as in the spec error table.
 - [ ] T014 On 429, wait for `Retry-After` and show one message that does not say whether the code exists (FR-033).
 - [ ] T016 Moving the pin replaces the OpenAPI copy and regenerates both clients in one pull request.
 
@@ -46,9 +46,9 @@ Done when: the fixture tests cover every error row on both platforms.
 
 ## Phase 4: Accounts ([#29](https://github.com/Zero-State-LLC/zzthat/issues/29))
 
-- [ ] T070 Sign-in per runtime.md, Auth: Apple and Google on iOS, Google on Android, developer sign-in in Local builds (FR-040, FR-048).
+- [ ] T070 Sign-in per runtime.md, Auth: Apple and Google on iOS, Google on Android, developer sign-in in Local builds (FR-040, FR-048). Android draws Google's `SignInButton` in an `AndroidView`.
 - [ ] T073 Delete account with `DELETE /v1/me`, then local cleanup (FR-034).
-- [ ] T078 The Account screen with the support contact and privacy link from build settings (FR-047).
+- [ ] T078 The Account screen with the support contact and privacy link from build settings (FR-047), and the Licenses screen that shows the bundled `NOTICE` and `OFL.txt` verbatim, the one FR-042 exception.
 
 Done when: in a Local build against `npm run dev:api`, developer sign-in, sign-out, and deletion work on both platforms.
 
@@ -64,7 +64,7 @@ Done when: the Scan, Pick, Clarify, Type, and Resolve snapshots exist for each s
 
 ## Phase 6: Create ([#25](https://github.com/Zero-State-LLC/zzthat/issues/25))
 
-- [ ] T030 Create calls mint and shows the canonical form and the check word (FR-017). No field for code words.
+- [ ] T030 Create calls mint and shows the canonical form and the check word (FR-017). No field for code words. The title takes 1 to 120 and the body 0 to 4000 Unicode code points after trimming (DEP-005). A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body.
 - [ ] T031 The unavailable state while `free_public` is false or mint is `not-ready` (FR-018, SC-8).
 - [ ] T032 "Get different words" until `reroll-cap` (FR-017).
 - [ ] T033 Write check: the read pipeline on the person's photo, compared with the minted code (FR-037). No upload.
@@ -76,14 +76,14 @@ Done when: in a Local build, a code is minted, re-rolled to the cap, and checked
 
 - [ ] T050 Share sends `share.text` and never a URL (FR-020).
 - [ ] T051 My codes with titles and paging (FR-021).
-- [ ] T052 Code detail and Edit record from `GET /v1/records/{id}`; revoke; versions (FR-021).
+- [ ] T052 Code detail and Edit record by code id (FR-021, runtime.md, Navigation): the row from My codes, or a paged lookup in `GET /v1/me/codes` (`limit` 50, following `next_cursor`), then `GET /v1/records/{record_id}`. Revoke with the code id, and show Revoke only when the row's `status` is `active`. Versions with `record_id`, with the same field limits and 400 rule as T030. No matching row shows the one not-found state.
 - [ ] T053 A public resolve of a revoked code shows the same not-found state as an unknown code.
 
 Done when: the snapshots for these screens exist, and the Local build edits and revokes a code.
 
 ## Phase 8: Offline ([#28](https://github.com/Zero-State-LLC/zzthat/issues/28))
 
-- [ ] T060 The FR-041 cache with a fake clock: 60 seconds online, 360 seconds offline, the offline label.
+- [ ] T060 The FR-041 cache with a fake clock: 60 seconds online, 360 seconds offline, the offline label. The entry is dropped after a 2xx from revoke, re-roll, and a record version, and `DELETE /v1/me` clears every entry.
 - [ ] T061 Issue, re-roll, and revoke are refused offline. They are not queued as successes.
 - [ ] T062 `no-store` responses are never written (FR-023).
 - [ ] T063 Keep the last canonical text. Delete the photo when the scan ends (FR-004).
@@ -93,29 +93,29 @@ Done when: the fake-clock tests pass on both platforms.
 
 ## Phase 9: Privacy, abuse, strings ([#29](https://github.com/Zero-State-LLC/zzthat/issues/29))
 
-- [ ] T071 The iOS camera purpose string and the system photo picker (FR-011, FR-012).
+- [ ] T071 The iOS camera purpose string and the system photo picker on every build (FR-011, FR-012). `NSCameraUsageDescription` comes from `scan.camera_purpose` through the generated `InfoPlist.xcstrings` and the `INFOPLIST_KEY_NSCameraUsageDescription` build setting. It is never hand-written. A unit check fails when the built Info.plist lacks the key. Android needs no camera permission, because `TakePicture` needs none.
 - [ ] T072 No location and no microphone permission (FR-013, FR-014).
 - [ ] T074 The Report sheet with the four reasons and every screen state.
 - [ ] T075 Analytics-free manifests (runtime.md, Privacy).
 - [ ] T076 Accessibility from runtime.md.
-- [ ] T077 Catalogs generated from `copy.json` only. No sentence in a layout file (FR-042).
-- [ ] T082 The string check on the catalogs: no em dash, and the demo and check word terms of FR-030 (SC-7).
+- [ ] T077 Catalogs generated from `copy.json` only: `Localizable.xcstrings`, `InfoPlist.xcstrings`, and `strings.xml`. No sentence in a layout file (FR-042).
+- [ ] T082 The string check on every generated catalog, `InfoPlist.xcstrings` included: no em dash, and the demo and check word terms of FR-030 (SC-7).
 
 Done when: `apps-ci.yml` passes with the string check and the manifest check.
 
 ## Phase 10: Whole-system check
 
 - [ ] T085 One snapshot per screen state, light and dark, on both platforms (SC-13).
-- [ ] T086 `.github/workflows/apps-e2e.yml` and the end-to-end run in runtime.md, once per platform, linked in the PR (SC-12).
+- [ ] T086 `.github/workflows/apps-e2e.yml` on the ZQ27 default triggers, and the end-to-end run in runtime.md, once per platform (SC-12). The builder opens the draft PR, adds the `run-e2e` label, and links the apps-e2e.yml run in the PR body. Under the default, the builder runs the iOS end-to-end test on the dev Mac, with `-skipPackagePluginValidation`, and pastes the command, the commit sha, and the log tail into the PR body. Evidence with no Actions run is listed under "could not verify".
 
-Done when: both end-to-end runs pass against the local zzThis Worker at the pin.
+Done when: both end-to-end runs pass against the local zzThis Worker at the pin, with the evidence T086 names.
 
 ## Phase 11: Store readiness ([#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
 
-- [ ] T080 Draft the privacy disclosure from the spec privacy table. Do not publish it.
-- [ ] T081 Put the FR-031 listing text and the 12+ and Teen rating into the store draft. Do not submit.
+- [ ] T080 Draft the privacy policy at `apps/store/privacy-policy-draft.md` from the spec privacy table and zzThis spec 005 FR-026 at the pin. It is a draft for Danny. Do not add it to the zzThis site, and do not publish it (ZQ25, FR-031).
+- [ ] T081 Put the FR-031 listing text and the 12+ and Teen rating into `apps/store/listing-draft.md`. Do not submit.
 - [ ] T083 Stop for Danny's yes before any store submission, developer-account purchase, bundle id registration, or production credential.
-- [ ] T084 The release pipeline from runtime.md: `apps/VERSION`, app CI that tests and does not upload, and drafts of the privacy manifest and Data safety form. No production URL in the tree.
+- [ ] T084 The release pipeline from runtime.md: `apps/VERSION`, app CI that tests and does not upload, and drafts of the privacy manifest and Data safety form (`apps/store/data-safety-draft.md`). No production URL in the tree.
 
 ## Later, not in the first release
 
@@ -126,4 +126,4 @@ Done when: both end-to-end runs pass against the local zzThis Worker at the pin.
 - A web client. It is built in zzThis, not in this repo (ZQ1, FR-001).
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
-- Live video scanning and the photo upload, after zzThis Q18.
+- Live video scanning, and the photo upload, when zzThis turns `photo_reads` on (v2).
