@@ -19,6 +19,11 @@ final class DemoFlowTests: XCTestCase {
         let flow = DemoFlow(app: app)
         XCTAssertTrue(app.staticTexts["demo.badge"].waitForExistence(timeout: 10))
 
+        // A1: the photo picker has its own name, not the camera button's.
+        let picker = app.buttons["scan.photo_picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        XCTAssertEqual(picker.label, Copy.text("scan.choose_photo"))
+
         // Scan the fixture photo on the device. Its check word verifies against
         // the bundled fixture-7 list, so the one candidate in Accept opens at once.
         flow.tap("scan.take_photo")

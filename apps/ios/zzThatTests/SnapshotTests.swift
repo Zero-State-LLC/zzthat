@@ -55,7 +55,7 @@ struct SnapshotTests {
             let view = NavigationStack { testCase.view() }
                 .environment(\.colorScheme, scheme)
             assertSnapshot(of: view,
-                           as: .image(precision: 0.995, perceptualPrecision: 0.98, layout: .device(config: Self.iPhone17),
+                           as: .image(precision: 1, perceptualPrecision: 0.98, layout: .device(config: Self.iPhone17),
                                       traits: Self.traits(style)),
                            named: "\(testCase.name)-\(style == .dark ? "dark" : "light")")
         }

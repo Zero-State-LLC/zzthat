@@ -84,6 +84,7 @@ enum CopyKey: String, CaseIterable, Sendable {
     case scanCameraOff = "scan.camera_off"
     case scanCameraPurpose = "scan.camera_purpose"
     case scanCheckMismatch = "scan.check_mismatch"
+    case scanChoosePhoto = "scan.choose_photo"
     case scanClarifyAsWritten = "scan.clarify_as_written"
     case scanClarifyTitle = "scan.clarify_title"
     case scanNoCode = "scan.no_code"

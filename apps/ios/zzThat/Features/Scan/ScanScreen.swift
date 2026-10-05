@@ -49,8 +49,9 @@ struct ScanScreen: View {
 }
 
 /// `scan.take_photo` opens the camera when the phone has one. The system
-/// photo picker is offered on every build (FR-012); on a phone without a
-/// camera, such as the simulator, it is the main button.
+/// photo picker, `scan.choose_photo` (A1, [DANNY 2026-10-05 #43]), is
+/// offered on every build (FR-012); on a phone without a camera, such as
+/// the simulator, it is the main button.
 struct CaptureButtons: View {
     @Environment(\.colorScheme) private var scheme
     let retake: Bool
@@ -76,12 +77,12 @@ struct CaptureButtons: View {
                         .overlay(RoundedRectangle(cornerRadius: ZZRadius.radiusChip)
                             .strokeBorder(palette.ruleStrong, lineWidth: ZZSpace.ruleHair))
                 }
-                .accessibilityLabel(Text(label))
+                .accessibilityLabel(Text(.scanChoosePhoto))
                 .accessibilityIdentifier("scan.photo_picker")
             }
         } else {
             PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-                Text(label)
+                Text(.scanChoosePhoto)
             }
             .buttonStyle(.zzPrimary)
             .accessibilityIdentifier("scan.photo_picker")
