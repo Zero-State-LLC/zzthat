@@ -4,8 +4,4 @@
 ZZ_SUPPORT_EMAIL = support@zer0state.com
 // The marketing site's privacy page (ZQ25). Not published yet; Danny publishes it.
 ZZ_PRIVACY_URL = https:/$()/zero-state-llc.github.io/zzthis/privacy/
-// Placeholders until Danny creates the Google clients. The app hides the
-// Google button while either value is still "unset" (runtime.md, iOS Google setup).
-ZZ_GOOGLE_IOS_CLIENT_ID = unset
-ZZ_GOOGLE_REVERSED_CLIENT_ID = unset
 CODE_SIGN_ENTITLEMENTS = zzThat/Config/zzThat.entitlements

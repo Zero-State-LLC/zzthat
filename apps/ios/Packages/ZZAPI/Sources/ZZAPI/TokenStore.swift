@@ -28,8 +28,9 @@ public actor TokenStore {
     private var inFlight: Task<String?, any Error>?
     private var signedOutHandler: (@Sendable () -> Void)?
 
-    public init(storage: any RefreshTokenStorage) {
+    public init(storage: any RefreshTokenStorage, refresher: Refresher? = nil) {
         self.storage = storage
+        self.refresher = refresher
     }
 
     public func setRefresher(_ refresher: @escaping Refresher) {

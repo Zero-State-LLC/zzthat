@@ -53,14 +53,41 @@ public struct ZZService: Sendable {
     /// the contract middleware, so it never recurses into the 401 retry.
     public static func live(origin: URL, tokens: TokenStore,
                             transport: (any ClientTransport)? = nil) async -> ZZService {
+        let parts = clients(origin: origin, transport: transport)
+        await tokens.setRefresher(refresher(parts.refresh))
+        return ZZService(api: parts.client(tokens), tokens: tokens)
+    }
+
+    /// The same live service, built without waiting, for the app's launch.
+    /// The token store is made here, so it holds the refresher from the start.
+    public static func live(origin: URL, storage: any RefreshTokenStorage,
+                            transport: (any ClientTransport)? = nil) -> ZZService {
+        let parts = clients(origin: origin, transport: transport)
+        let tokens = TokenStore(storage: storage, refresher: refresher(parts.refresh))
+        return ZZService(api: parts.client(tokens), tokens: tokens)
+    }
+
+    /// A build with no API origin: every call fails with `unavailable`, so
+    /// the app shows `error.unavailable` and never invents data.
+    public static func unconfigured(storage: any RefreshTokenStorage) -> ZZService {
+        live(origin: URL(string: "https://origin.invalid")!, storage: storage, transport: UnconfiguredTransport())
+    }
+
+    private static func clients(origin: URL, transport: (any ClientTransport)?)
+        -> (refresh: Client, client: @Sendable (TokenStore) -> Client) {
         let transport = transport ?? URLSessionTransport(
             configuration: .init(session: URLSession(configuration: sessionConfiguration())))
         let configuration = Configuration(dateTranscoder: LenientISO8601Transcoder())
-        let refreshClient = Client(serverURL: origin, configuration: configuration, transport: transport,
-                                   middlewares: [ContractMiddleware()])
-        let client = Client(serverURL: origin, configuration: configuration, transport: transport,
-                            middlewares: [ContractMiddleware(), AuthMiddleware(tokens: tokens)])
-        await tokens.setRefresher { refreshToken in
+        let refresh = Client(serverURL: origin, configuration: configuration, transport: transport,
+                             middlewares: [ContractMiddleware()])
+        return (refresh, { tokens in
+            Client(serverURL: origin, configuration: configuration, transport: transport,
+                   middlewares: [ContractMiddleware(), AuthMiddleware(tokens: tokens)])
+        })
+    }
+
+    private static func refresher(_ refreshClient: Client) -> TokenStore.Refresher {
+        { refreshToken in
             switch try await refreshClient.refreshToken(.init(
                 headers: .init(xZZContract: ._1), body: .json(.init(refreshToken: refreshToken)))) {
             case .ok(let ok):
@@ -76,7 +103,6 @@ public struct ZZService: Sendable {
             case .undocumented(let status, let payload): throw APIFailure.from(undocumented: status, payload)
             }
         }
-        return ZZService(api: client, tokens: tokens)
     }
 
     private static func run<T: Sendable>(_ body: () async throws -> Result<T, APIFailure>) async -> Result<T, APIFailure> {
@@ -343,6 +369,13 @@ public struct ZZService: Sendable {
             case .undocumented(let status, let payload): return .failure(.from(undocumented: status, payload))
             }
         }
+    }
+}
+
+struct UnconfiguredTransport: ClientTransport {
+    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL,
+              operationID: String) async throws -> (HTTPResponse, HTTPBody?) {
+        throw APIFailure.unavailable
     }
 }
 

@@ -57,11 +57,12 @@ final class ResolveCache: @unchecked Sendable {
             .appendingPathComponent("resolve-cache.json")
     }
 
-    /// Keeps a resolve. The caller passes only a cacheable response.
-    func store(_ response: ResolveResponse) {
+    /// Keeps a resolve under the canonical code the app asked for. A
+    /// response that is not cacheable is never written (FR-041, FR-023).
+    func store(_ response: ResolveResponse, for canonical: String) {
         guard response.cacheable else { return }
         let record = response.record
-        let entry = Entry(canonical: record.canonical, title: record.record.title, body: record.record.body,
+        let entry = Entry(canonical: canonical, title: record.record.title, body: record.record.body,
                           updatedAt: record.record.updatedAt, shareText: record.share.text, fetchedAt: clock.now())
         lock.withLock {
             entries[entry.canonical] = entry

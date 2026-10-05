@@ -125,6 +125,9 @@ struct LimitedField: View {
     let limit: Int
     var multiline = false
     var identifier: String
+    /// Title and body count after trimming (DEP-005). The report note counts
+    /// as typed (the contract's maxLength).
+    var countsTrimmed = true
 
     var body: some View {
         let palette = Palette(scheme)
@@ -148,7 +151,7 @@ struct LimitedField: View {
             .accessibilityLabel(Text(label))
             .accessibilityIdentifier(identifier)
             .onChange(of: text) { _, new in
-                let limited = FieldLimits.limit(new, to: limit)
+                let limited = FieldLimits.limit(new, to: limit, trimmed: countsTrimmed)
                 if limited != new { text = limited }
             }
         }
@@ -161,14 +164,14 @@ enum FieldLimits {
     static let reportNote = 500
 
     /// Code points after trimming, as the server counts them (FR-007).
-    static func count(_ text: String) -> Int {
-        text.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.count
+    static func count(_ text: String, trimmed: Bool = true) -> Int {
+        (trimmed ? text.trimmingCharacters(in: .whitespacesAndNewlines) : text).unicodeScalars.count
     }
 
-    /// Drops whole characters from the end until the trimmed text fits.
-    static func limit(_ text: String, to max: Int) -> String {
+    /// Drops whole characters from the end until the text fits.
+    static func limit(_ text: String, to max: Int, trimmed: Bool = true) -> String {
         var text = text
-        while count(text) > max, !text.isEmpty { text.removeLast() }
+        while count(text, trimmed: trimmed) > max, !text.isEmpty { text.removeLast() }
         return text
     }
 

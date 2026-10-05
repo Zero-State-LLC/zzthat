@@ -13,7 +13,7 @@
 	<key>ZZPrivacyURL</key>
 	<string>$(ZZ_PRIVACY_URL)</string>
 	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync). The pin
-	     889a4a7 has no design/fonts yet, so the list is empty; a test fails
+	     d6143be has no design/fonts yet, so the list is empty; a test fails
 	     when a bundled TTF is missing here. -->
 	<key>UIAppFonts</key>
 	<array/>

@@ -10,4 +10,8 @@ ZZ_BUILD = release
 ZZ_API_ORIGIN =
 ZZ_SUPPORT_EMAIL =
 ZZ_PRIVACY_URL =
+// Placeholders until Danny creates the Google clients. The app hides the
+// Google button while either value is still "unset" (runtime.md, iOS Google setup).
+ZZ_GOOGLE_IOS_CLIENT_ID = unset
+ZZ_GOOGLE_REVERSED_CLIENT_ID = unset
 INFOPLIST_FILE = zzThat/Config/Info-Release.plist

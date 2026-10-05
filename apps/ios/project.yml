@@ -55,12 +55,7 @@ targets:
       - path: zzThat
         excludes:
           - "Config/**"
-      # The pinned wordlists (design.md, Sync), bundled as a folder. The pin
-      # 889a4a7 has none yet, so the folder may be missing.
-      - path: ../../contracts/wordlists
-        type: folder
-        optional: true
-        buildPhase: resources
+          - "Resources/Licenses/**"
     dependencies:
       - package: ZZCore
       - package: ZZAPI
@@ -84,6 +79,26 @@ targets:
         # The version script edits the built Info.plist before signing.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
     postBuildScripts:
+      - name: Bundle the pinned wordlists and licenses
+        basedOnDependencyAnalysis: false
+        script: |
+          # contracts/wordlists/*.txt (design.md, Sync) go to wordlists/, and the
+          # pinned NOTICE and OFL.txt to Licenses/, when the pin has them. The pin
+          # d6143be has neither yet, so both folders may be missing.
+          set -eu
+          resources="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          rm -rf "$resources/wordlists" "$resources/Licenses"
+          for list in "$SRCROOT"/../../contracts/wordlists/*.txt; do
+            [ -f "$list" ] || continue
+            mkdir -p "$resources/wordlists"
+            cp "$list" "$resources/wordlists/"
+          done
+          for name in NOTICE OFL.txt; do
+            file="$SRCROOT/zzThat/Resources/Licenses/$name"
+            [ -f "$file" ] || continue
+            mkdir -p "$resources/Licenses"
+            cp "$file" "$resources/Licenses/"
+          done
       - name: Version from apps/VERSION
         basedOnDependencyAnalysis: false
         inputFiles:
