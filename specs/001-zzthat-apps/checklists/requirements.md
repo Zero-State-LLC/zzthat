@@ -10,7 +10,7 @@ Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decid
 - [x] Functional requirements have IDs FR-001 to FR-049, and each row has a source tag.
 - [x] Out of scope is stated, including web, zzThing, and a backend in this repo.
 - [x] ZQ1 to ZQ21 are decided in `decisions.md`, with a GitHub issue each (#1 to #21).
-- [x] ZQ22 is decided with ZQ18. ZQ23 to ZQ26 are open with defaults, each with a GitHub issue (#33 to #36) on the family board.
+- [x] ZQ22 is decided with ZQ18, and ZQ23 to ZQ26 are decided with Danny's yes on zzThis #74. Each has a GitHub issue (#32 to #36).
 - [x] Every task group TG1 to TG9 has a GitHub issue (#22 to #30) and tasks in `tasks.md`.
 - [x] The API section points at the pinned OpenAPI file instead of restating it, and maps DEP-001 to DEP-012 to zzThis spec 005.
 - [x] Create stays gated on free public codes (DEP-001, FR-018, SC-8). The local Worker turns the flag on for tests.

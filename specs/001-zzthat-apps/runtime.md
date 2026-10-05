@@ -147,10 +147,10 @@ Share is the system share sheet with `share.text` only (FR-020). It is not its o
 | API | The in-memory demo implementation. No network. | `http://localhost:8787` from the iOS simulator, `http://10.0.2.2:8787` from the Android emulator | `ZZ_API_ORIGIN` build setting, injected at build, not committed |
 | Sign-in | Buttons labeled Demo. They do not call. | Developer sign-in (FR-048), plus Apple and Google once client ids are set | Apple and Google only |
 | Plain HTTP | None | Only to localhost or 10.0.2.2 (iOS `NSAllowsLocalNetworking`; an Android network security config in the local flavor) | None |
-| Bundle and application id | `llc.zerostate.zzthat.demo` | `llc.zerostate.zzthat.local` | `llc.zerostate.zzthat` (ZQ24) |
+| Bundle and application id | `com.zer0state.zzthat.demo` | `com.zer0state.zzthat.local` | `com.zer0state.zzthat` (ZQ24) |
 | Display name | zzThat Demo | zzThat Local | zzThat |
 
-Google client ids and the support contact are build settings with placeholder values until Danny creates the clients and Michael supplies the contact. They are not secrets, but Release values are still injected rather than committed.
+Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `support@zer0state.com`, and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
 
 ## Pinned files
 
