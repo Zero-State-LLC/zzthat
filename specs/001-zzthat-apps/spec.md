@@ -5,15 +5,15 @@ Status: not built. Specification only. No application source in this change.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
-Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ26, 2026-10-04).
-zzThis pin: `484100308376bce01c88f30f871dff3e13082fe0`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/484100308376bce01c88f30f871dff3e13082fe0/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/484100308376bce01c88f30f871dff3e13082fe0/docs/ONE-SHOT-BRIEF.md).
+Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ26 decided 2026-10-04. ZQ27 is OPEN for Danny).
+zzThis pin: `889a4a7e9631cd76639f43a36ea27da301ea2f14`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
 zzThat is the free everyday-use app for zz codes: handwritten codes such as `zz-kathy-lost-cat-zz` that a person can write on a lost-pet flyer, a moving box, a garage-sale item, or a note, and that another person can scan [MICHAEL 2026-10-02]. It is the apps portion of zzThis. The phone apps are API clients of one central server [ZZTHIS SPEC] [DANNY 2026-10-04].
 
-zzThis Section 12.2 still lists the apps as a product the site repo does not build [ZZTHIS SPEC]. zzThis issues #57 (Q33) and #58 (Q39) are unanswered there. This spec keeps their scope default (iOS and Android together, web later) and their launch default (the first public store release). Danny names [zzthis](https://github.com/Zero-State-LLC/zzthis) as the home of that later web client and of the central server, and points "Try zzThat" at the zzThis marketing page [DANNY 2026-10-04]. The rest of ZQ1 to ZQ21 are in [decisions.md](decisions.md). This spec is the iOS and Android product spec.
+zzThis Section 12.2 still lists the apps as a product the site repo does not build [ZZTHIS SPEC]. zzThis issues #57 (Q33) and #58 (Q39) were resolved in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)) with the defaults this spec keeps: iOS and Android together, web later, and the first public store release as the launch. Danny names [zzthis](https://github.com/Zero-State-LLC/zzthis) as the home of that later web client and of the central server, and points "Try zzThat" at the zzThis marketing page [DANNY 2026-10-04]. The rest of ZQ1 to ZQ21 are in [decisions.md](decisions.md). This spec is the iOS and Android product spec.
 
 ## Users
 
@@ -80,7 +80,7 @@ As a person with a code, I share it so someone else can scan or type it [INFERRE
 Acceptance:
 
 1. The share sheet sends the canonical code as text (FR-020, ZQ9).
-2. It does not send an https URL. `share.url` in the proposed resolve body stays null.
+2. It does not send an https URL. `share.url` in the contract 1 resolve body stays null (zzThis spec 005 FR-015).
 
 ### US5. Manage my codes (P2)
 
@@ -89,7 +89,7 @@ As a signed-in owner, I list my codes, add a record version, or revoke a code [Z
 Acceptance:
 
 1. Revoke and new record versions call the zzThis server [DANNY 2026-10-04].
-2. My codes uses `GET /v1/me/codes`, which carries each record's title. Code detail and Edit record read the current title and body with `GET /v1/records/{id}` [ZZTHIS SPEC] spec 005 FR-030. The app does not keep a private ledger of issued codes as the source of truth.
+2. My codes uses `GET /v1/me/codes`, which carries each record's title. Code detail and Edit record find the code's row by code id, then read the current title and body with `GET /v1/records/{record_id}`, using that row's `record_id` [ZZTHIS SPEC] spec 005 FR-030 (runtime.md, Navigation). The app does not keep a private ledger of issued codes as the source of truth.
 3. A public resolve of a revoked code is not-found. The owner's own list may show a revoked state only when the server returns that state to the owner [INFERRED].
 
 ### US6. Offline behaviour (P2)
@@ -115,7 +115,7 @@ Acceptance:
 | FR-005 | A photo is uploaded only after the person confirms a retry or hard case. The confirm sentence is: "Send this photo so we can read the code? It leaves your phone only for this retry, and it may be kept for review of this read. It is not used to train a model." | [ZZTHIS SPEC] Section 10.3 and the object-storage label "photos for retries and review". The sentence is ZQ14. |
 | FR-006 | Every reading is parsed with the v1 text grammar, and the client sends only the canonical form. | [ZZTHIS SPEC] Section 2.2a and spec 004 FR-008 |
 | FR-007 | The apps do not publish a second grammar. iOS and Android both pass every G9 vector in zzThis Section 2.2a. | [ZZTHIS SPEC] |
-| FR-008 | Snapping to the wordlist and local check-word verification follow zzThis specs 003 and 004. Until that library and list exist, the app must not show a local check word as passed. | [ZZTHIS SPEC]. The algorithm and list size are open there (Q30, Q31, Q32). |
+| FR-008 | Snapping to the wordlist and local check-word verification follow zzThis specs 003 and 004. Until that library and list exist, the app must not show a local check word as passed. | [ZZTHIS SPEC]. The algorithm, list size, and word source were decided in zzThis on 2026-10-04 (Q30 to Q32, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). A local pass still needs the library and a matching list version (FR-044). |
 | FR-009 | The app does not ask the server for nearby live codes. A miss is not-found. | [ZZTHIS SPEC] spec 002 FR-001 and FR-012. ZQ13 keeps suggestions off. |
 | FR-010 | Unknown, expired, used, and revoked codes share one not-found presentation. | [ZZTHIS SPEC] spec 002 FR-011 |
 | FR-011 | On iOS the camera permission is requested when the person starts a scan, with a purpose string. On Android the app opens the system camera app and declares no camera permission. Whenever the camera is not available, typed entry remains available. | [INFERRED] |
@@ -128,11 +128,11 @@ Acceptance:
 | FR-018 | Until the server exposes a free public scope, create shows an honest unavailable state and does not issue. | [ZZTHIS SPEC] spec 002 FR-016 (free public is v2). ZQ3 is [#3](https://github.com/Zero-State-LLC/zzthat/issues/3). |
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
-| FR-021 | Revoke and new record versions use the server. My codes uses `GET /v1/me/codes`. Code detail and Edit record use `GET /v1/records/{id}`. | [ZZTHIS SPEC] spec 005 US3 and FR-030 |
+| FR-021 | Revoke and new record versions use the server. My codes uses `GET /v1/me/codes`. Code detail and Edit record take a code id. They find that code's row in `GET /v1/me/codes` (`limit` 50, following `next_cursor`), then read `GET /v1/records/{record_id}`. Revoke uses the code id. Versions use `record_id`. No matching row shows the one not-found state. | [ZZTHIS SPEC] spec 005 US3 and FR-030. Contract 1 has no single-code read, so the lookup by code id is [INFERRED]. |
 | FR-022 | The app may show a briefly cached signed record without a connection. It cannot issue, revoke, or mark a code used offline. | [ZZTHIS SPEC] Section 10.5 |
 | FR-023 | The app does not cache single-use or short-expiry codes for a later resolve. | [INFERRED] from the edge rule in [ZZTHIS SPEC] Section 10.2 |
 | FR-024 | The app may keep a local draft of a title and body, labeled "Not a code yet." That draft has no code words, is not issued, is not resolved, and is not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. ZQ11: words come from mint, not from the draft. |
-| FR-025 | Capture uses the spec 004 decision bands with the prototype values in zzThis spec 004, Client read pipeline (accept at 0.80, retry below 0.50). They are parameters in one file per platform, not constants spread through the code. | [ZZTHIS SPEC] spec 004. Thresholds stay zzThis Q37. |
+| FR-025 | Capture uses the spec 004 decision bands with the prototype values in zzThis spec 004, Client read pipeline (accept at 0.80, retry below 0.50). They are parameters in one file per platform, not constants spread through the code. | [ZZTHIS SPEC] spec 004. The thresholds are zzThis Q37, decided as parameters in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). |
 | FR-026 | When a photo or a block of text holds several code candidates, the person chooses one. | [ZZTHIS SPEC] spec 004 FR-013 [MICHAEL 2026-10-03] |
 | FR-027 | A bare mark is reported as a bare mark and is not resolved in v1. The app offers typed entry. | [ZZTHIS SPEC] spec 004 FR-011 |
 | FR-028 | The app displays server results for a reserved handle and for a check-word mismatch. It does not rewrite the code into a different live code. | [ZZTHIS SPEC] spec 002 FR-019 and FR-021 |
@@ -140,7 +140,7 @@ Acceptance:
 | FR-030 | User-facing copy says "demo", not "mock", and "check word", not "checksum", and it contains no em dash. | [MICHAEL 2026-10-03] [DANNY 2026-10-04] [DANNY 2026-10-03] |
 | FR-031 | Store submission, store spend, and a privacy-policy URL require Danny's yes. Listing text is the everyday-use sentences in ZQ15, without the web sentence. The age rating to file is Apple 12+ and Google Play Teen, and Danny may change it before submission. | [MICHAEL 2026-10-02] for the sentences. The rating is [INFERRED]. Constitution IX. |
 | FR-032 | Every call uses the `/v1` prefix and sends `X-ZZ-Contract: 1`. Tests use fixtures and the local zzThis Worker (`npm run dev:api` at the pin), not a deployed server. | ZQ19. [ZZTHIS SPEC] spec 005 FR-001. |
-| FR-033 | On HTTP 429 the app waits for `Retry-After` and shows one wait message that does not say whether the code exists. | [ZZTHIS SPEC] spec 002 error states. Limits are ZQ20, proposed for the server. |
+| FR-033 | On HTTP 429 the app waits for `Retry-After` and shows one wait message that does not say whether the code exists. | [ZZTHIS SPEC] spec 002 error states. Limits are zzThis spec 005 FR-011, which adopted the ZQ20 numbers. |
 | FR-034 | The app offers account deletion in the app before store submission. It calls `DELETE /v1/me`, which also revokes the Sign in with Apple token on the server. | [INFERRED] store practice. [ZZTHIS SPEC] spec 005 FR-023. |
 | FR-035 | The app offers a report with reason `spam`, `harassment`, `personal-data`, or `other`. It does not keep a block list. | [ZZTHIS SPEC] Section 2.3 for server-side abuse. The report action is ZQ8 [INFERRED]. |
 | FR-036 | The resolved view is a screen in the app: a title and a body. | [ZZTHIS SPEC] "useful page", tagged [BRIEF]. ZQ5 and ZQ12. |
@@ -148,8 +148,8 @@ Acceptance:
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
 | FR-039 | The same G9 input yields the same canonical form, or the same failure reason, on iOS and on Android. | [ZZTHIS SPEC] Section 2.2a. The two implementations are [INFERRED] until a shared package exists (zzThis Q29). |
 | FR-040 | Sign-in follows zzThis spec 005 FR-020 and FR-021: the app gets a nonce from `POST /v1/auth/nonce`, signs in with the platform's own provider sign-in using that nonce, and sends the ID token to `POST /v1/auth/token`. iOS offers Sign in with Apple and Google. Android offers Google through Credential Manager (ZQ23). Access tokens last exactly 900 seconds. Refresh tokens rotate. The refresh token lives in the Keychain on iOS, and on Android it is encrypted with an Android Keystore key and kept in DataStore. The app sends no redirect URI. | ZQ7 and ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ22 is the same yes. [INFERRED] storage. |
-| FR-041 | The app keeps a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300`. Online, it uses that copy for 60 seconds after the fetch and then fetches again before showing. Offline, it shows the copy, labeled offline, until 360 seconds after the fetch, and then the not-on-this-device state. Every other `/v1` response sends `no-store` and is never kept. The app does not invent a longer lifetime. | zzThis spec 005 FR-018, FR-019, and FR-028 [DANNY 2026-10-04] (Q26). ZQ26. |
-| FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. | [ZZTHIS SPEC] design/UX.md |
+| FR-041 | The app keeps a resolve only when its `Cache-Control` is `public, max-age=60, stale-while-revalidate=300`. Online, it uses that copy for 60 seconds after the fetch and then fetches again before showing. Offline, it shows the copy, labeled offline, until 360 seconds after the fetch, and then the not-on-this-device state. Every other `/v1` response sends `no-store` and is never kept. The app does not invent a longer lifetime. After a 2xx from `POST /v1/codes/{id}/revoke`, `POST /v1/codes/{id}/reroll`, or `POST /v1/records/{id}/versions`, the app deletes the cache entry for that code's canonical form. `DELETE /v1/me` clears every entry. | zzThis spec 005 FR-018, FR-019, and FR-028 [DANNY 2026-10-04] (Q26). ZQ26. Dropping the entry on the owner's own writes is [INFERRED]. |
+| FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. The one exception is verbatim third-party license text: the Licenses screen shows the bundled `NOTICE` and `OFL.txt` exactly as pinned, and the copy rules (FR-030) do not apply to it. | [ZZTHIS SPEC] design/UX.md. The license text exception is [INFERRED], because a license must be shown as written. |
 | FR-043 | Fonts are the IBM Plex files from zzThis `design/fonts/` at the pin. Colors and type come from the pinned token files. | [ZZTHIS SPEC] design/README.md |
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
 | FR-045 | The app offers the photo upload (FR-005) only when `GET /v1` reports `photo_reads: true`. It is false in v1, so v1 never uploads a photo. When it is offered, the file is JPEG only and at most 8388608 bytes (8 MiB). The server checks the JPEG signature (bytes FF D8 FF). Another type is 400 `malformed`. A larger body is 413 `payload-too-large` and is not stored. | [ZZTHIS SPEC] spec 005 US5 and FR-013 |
@@ -160,22 +160,22 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `484100308376bce01c88f30f871dff3e13082fe0` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `889a4a7e9631cd76639f43a36ea27da301ea2f14` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
-| `GET /v1` | Launch, return to foreground, and before Create | Hide Create unless `free_public` is true (FR-018). Use `wordlist_version` (FR-044) and `photo_reads` (FR-045). `auth_providers` decides the sign-in buttons. |
+| `GET /v1` | Launch, return to foreground, and before Create | Show the Unavailable state on Create unless `free_public` is true (FR-018). Create is never hidden. Use `wordlist_version` (FR-044) and `photo_reads` (FR-045). `auth_providers` decides the sign-in buttons. |
 | `POST /v1/auth/nonce`, `POST /v1/auth/token` | Sign in | FR-040 |
-| `POST /v1/auth/refresh` | Once after a 401 | A second 401 signs the person out |
+| `POST /v1/auth/refresh` | After a 401, at most one at a time (runtime.md, API client step 8) | A request that gets a 401 during a refresh waits for it, then retries once. The person is signed out only when the refresh itself returns 401. |
 | `POST /v1/auth/revoke` | Sign out | Then delete the local tokens |
 | `GET /v1/me`, `DELETE /v1/me` | Account, Delete confirm | FR-034 |
 | `GET /v1/resolve/{code}` | Scan, Type | No `Authorization` (FR-016). Cache per FR-041. |
 | `POST /v1/codes` | Create | `scope` `free_public`, `kind` `plain`, title and body. No code string. |
 | `POST /v1/codes/{id}/reroll` | Get different words | Hide the button at `reroll-cap` |
 | `GET /v1/me/codes` | My codes | Cursor paging, 50 per page |
-| `GET /v1/records/{id}` | Code detail, Edit record | Owner only |
-| `POST /v1/records/{id}/versions` | Save in Edit record | |
-| `POST /v1/codes/{id}/revoke` | Revoke confirm | |
+| `GET /v1/records/{id}` | Code detail, Edit record | Owner only. `{id}` is the `record_id` from the code's `GET /v1/me/codes` row (FR-021). |
+| `POST /v1/records/{id}/versions` | Save in Edit record | `{id}` is that `record_id` |
+| `POST /v1/codes/{id}/revoke` | Revoke confirm | `{id}` is the code id |
 | `POST /v1/reads` | Not in v1 | Only after FR-005, and only when `photo_reads` is true (FR-045). JPEG only, at most 8 MiB |
 | `POST /v1/reports` | Report | Allowed signed out. The answer never says whether the code exists. |
 
@@ -191,7 +191,7 @@ The DEP ids were zzThat proposals. zzThis spec 005 adopted them on 2026-10-04.
 | DEP-002 | `GET /v1/me/codes` | US3, FR-030 |
 | DEP-003 | `POST /v1/auth/nonce`, then `POST /v1/auth/token` with the provider ID token, plus refresh, revoke, and `GET /v1/me` | FR-020, FR-021. ZQ18 [DANNY 2026-10-04] (zzThis Q66). |
 | DEP-004 | Signed-out resolve of a public record | FR-008 |
-| DEP-005 | `title` 1 to 120 characters, `body` 0 to 4000 | FR-007 |
+| DEP-005 | `title` 1 to 120 and `body` 0 to 4000 Unicode code points, counted after trimming | FR-007 |
 | DEP-006 | Server-chosen mint that returns `check_word` | US2, FR-004 |
 | DEP-007 | `POST /v1/reads` | US5, FR-013 |
 | DEP-008 | Re-roll, cap 3 | FR-006 |
@@ -200,7 +200,7 @@ The DEP ids were zzThat proposals. zzThis spec 005 adopted them on 2026-10-04.
 | DEP-011 | `share.text`, and `share.url` null | FR-015 |
 | DEP-012 | `DELETE /v1/me` | FR-023 |
 
-The wordlist, the check word, and the capture values are zzThis specs 003 and 004 (prototype defaults proposed 2026-10-04). Local snap (FR-008) uses the bundled list from the pin.
+The wordlist, the check word, and the capture values are zzThis specs 003 and 004 (prototype defaults, decided in zzThis on 2026-10-04, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). Local snap (FR-008) uses the bundled list from the pin.
 
 ### Errors
 
@@ -208,10 +208,12 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 |---|---|
 | 200, public code | The title and body (US3) |
 | 404 `not-found` | `resolve.not_found` (FR-010). The JSON is exactly `{ "error": "not-found" }`, with no other field, and `Cache-Control: no-store` |
-| 400 `malformed` | `type.malformed`. No other code offered (FR-009) |
+| 400 `malformed` on resolve, from Scan or Type | `type.malformed`. No other code offered (FR-009) |
 | 400 `malformed`, reason `check-mismatch` | `scan.check_mismatch`. Confirm or retype. Do not auto-correct [ZZTHIS SPEC] spec 004 FR-016 |
 | 400 `malformed`, reason `wrong-length` | `scan.wrong_length` |
-| 400 `contract-version` | `error.update_app` |
+| 400 `contract-version` | `error.update_app`. Only this result shows it (T013) |
+| A 400 other than `contract-version` on mint, a record version, or a report | `error.nothing_saved`. The fields the person filled in stay (DEP-005) |
+| Any other response without `X-ZZ-Contract` | `error.unavailable`, or the offline rules when there is no connection |
 | 422 `unsupported` (bare mark) | `scan.bare`. Offer typing (FR-027) |
 | 422 `reserved-handle` | `error.reserved_handle` (FR-028). Create does not issue handles |
 | 422 `content-refused` | `create.content_refused` |
@@ -235,14 +237,15 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 6. The last canonical text may be kept so resolve can be retried. The photo stays on the device and is deleted when the scan ends (FR-004).
 7. A draft labeled "Not a code yet" is local only (FR-024).
 8. The app does not verify record signatures until zzThis publishes keys (Q28). A cached view is not a claim that the phone checked a signature [INFERRED].
+9. After a 2xx from revoke, re-roll, or a record version, delete the cache entry for that code's canonical form. `DELETE /v1/me` clears every entry (runtime.md, Auth step 9) [INFERRED].
 
-The edge can serve a revoked record for up to 60 seconds after the revoke [ZZTHIS SPEC] spec 005 FR-019. With rule 2, a person online sees a revoked record for at most about 2 minutes. With rule 3, offline, for at most about 7 minutes.
+The edge purge clears only the data center that handled the write. Other data centers can serve a revoked record for up to 60 seconds after the revoke [ZZTHIS SPEC] spec 005 FR-019(c). On the owner's device the change shows at once only because of both halves: rule 9 drops the app's own copy, and FR-019(c) purges the data center that handled the owner's write, which is the one the owner's next resolve normally reaches. Other devices online may see the old record for about 2 minutes (rule 2). Offline, they may show it for at most about 7 minutes (rule 3).
 
 ## On-device and cloud recognition
 
 - Option A ships first: on device where it is good enough, cloud vision only after the FR-005 confirm [ZZTHIS SPEC] Section 10.3 and Section 10.8.
 - Option B stays a zzThis benchmark, not a zzThat deliverable [ZZTHIS SPEC].
-- zzThis Q18 stays open: Danny is choosing the image model. Until then `GET /v1` reports `photo_reads: false` and `POST /v1/reads` returns `not-ready` [ZZTHIS SPEC] spec 005 US5, so the apps do not offer the upload (FR-045).
+- zzThis Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): on-device reading only in v1, with no cloud reader. `GET /v1` reports `photo_reads: false` and `POST /v1/reads` returns `not-ready` [ZZTHIS SPEC] spec 005 US5, so the apps do not offer the upload (FR-045).
 - The on-device readers are Apple Vision on iOS and ML Kit text recognition on Android (runtime.md, Read pipeline).
 - The app does not train a model [INFERRED].
 - No accuracy figure is a release criterion (FR-029).
@@ -314,7 +317,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | SC-8 | While `free_public` is false, create stays unavailable and mints nothing (FR-018). |
 | SC-9 | A signed-out person can open a public fixture code (FR-016). |
 | SC-10 | The pin check passes: every pinned file equals the zzThis file at `contracts/ZZTHIS-API-PIN`. |
-| SC-11 | No user-facing sentence exists outside the generated catalogs (FR-042), and the catalogs pass the copy rules (FR-030). |
+| SC-11 | No user-facing sentence exists outside the generated catalogs (FR-042), except the verbatim license text FR-042 names, and the catalogs pass the copy rules (FR-030). |
 | SC-12 | On each platform, an end-to-end run against the local zzThis Worker signs in with developer sign-in, creates a code, re-rolls to the cap, resolves it signed out, revokes it, sees not-found, and deletes the account. |
 | SC-13 | Each screen state in runtime.md has one snapshot, light and dark. |
 
@@ -362,7 +365,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided the same day by best practice, with Danny's yes on zzThis #74. The zzThis questions this spec relies on (Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37) were decided in zzThis on 2026-10-04 too. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided the same day by best practice, with Danny's yes on zzThis #74. The zzThis questions this spec relies on (Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37) were decided in zzThis on 2026-10-04 too. Sync follows [design.md](design.md). Q18 keeps v1 reading on the device, so v1 does not upload photos. ZQ27, the CI spend path, is OPEN for Danny. The build follows its no-spend default until he answers (decisions.md).
 
 ## Workflows
 
@@ -371,5 +374,5 @@ ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ
 | Governing workflows | anti-slop-code, production-systems, google-developer-style |
 | Product owner | Michael Chung (zzmojo) |
 | Operator | Danny |
-| CI to reuse | `.github/workflows/ci.yml` (spec lint and the pin check). The build adds `.github/workflows/apps-ci.yml` (both platforms' tests, snapshots, strings, pin) and `.github/workflows/apps-e2e.yml` (manual and nightly, not a merge gate). Both are named in plan.md. |
+| CI to reuse | `.github/workflows/ci.yml` (spec lint and the pin check, the required check). The build adds `.github/workflows/apps-ci.yml` (both platforms' tests, snapshots, strings, pin) and `.github/workflows/apps-e2e.yml` (manual, and on PRs with the `run-e2e` label, not a merge gate). Triggers and runners follow the ZQ27 default until Danny answers ZQ27 (runtime.md, Testing). Both are named in plan.md. |
 | Human gates | Store submission, spend, production credentials, privacy-policy publication (constitution IX) |
