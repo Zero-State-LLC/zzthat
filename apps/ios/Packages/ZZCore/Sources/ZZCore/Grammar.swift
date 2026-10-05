@@ -1,11 +1,16 @@
 // The v1 text grammar, zzThis docs/SPEC.md Section 2.2a, at the pin.
 //
-// This is a line-by-line port of zzThis src/lib/grammar.ts at the pin, which
-// is the parser the server runs and the one contracts/vectors.json was checked
-// against. It keeps that file's character sets on purpose (JavaScript trim and
-// \s, and full Unicode lowercasing), so the app and the server agree on every
-// input (FR-039). The two grammar_pending rows wait for zzThis spec 005 T035,
-// which changes the TypeScript parser first.
+// The structure follows zzThis src/lib/grammar.ts at the pin, the parser the
+// server runs. G2 steps 1, 2, 4, and 6 use the character sets decided in
+// D-2026-10-04-10 (2026-10-05): the 256 guard counts the raw input in UTF-16
+// code units, the fullwidth forms U+FF01 to U+FF5E map to ASCII, the text is
+// normalized to NFC, whitespace is the Unicode White_Space set, lowercasing
+// has no locale rules, and a letter that is still not ASCII fails with
+// unsupported-script. zzThis spec 005 T035 makes the same change to
+// grammar.ts. The G2 step 5 `@` rewrite stays as Section 2.2a writes it;
+// the D-2026-10-04-04 reading on split parts waits for its G9 rows (T035).
+
+import Foundation
 
 public enum CodeKind: String, Sendable, Codable, Hashable {
     case plain
@@ -50,10 +55,15 @@ public enum Grammar {
     public static let maxInputUTF16 = 256
 
     public static func parse(_ input: String) -> Result<ParsedCode, ParseFailure> {
-        let raw = Array(input.unicodeScalars)
-        if Scalars.trimmed(raw).isEmpty { return .failure(.empty) }
+        // G6 puts empty before too-long, so 300 spaces fail with empty. The
+        // step 1 mapping never turns whitespace into text or text into
+        // whitespace, so emptiness can be read before the guard.
+        if Scalars.trimmed(Array(input.unicodeScalars)).isEmpty { return .failure(.empty) }
+        // G2 step 1: the guard counts the raw input, before any mapping.
         if input.utf16.count > maxInputUTF16 { return .failure(.tooLong) }
-        let text = normalize(raw)
+        let mapped = map(input)
+        if Scalars.trimmed(mapped).isEmpty { return .failure(.empty) }
+        let text = normalize(mapped)
         if text == Scalars.of("zz") {
             return .success(ParsedCode(kind: .bare, words: [], variant: .dash, canonical: "zz",
                                        tag: nil, handle: nil, qualifiers: []))
@@ -68,8 +78,9 @@ public enum Grammar {
         case .failure(let reason): return .failure(reason)
         case .success(let value): body = value
         }
-        let parts = Scalars.split(body, where: { $0 == "-" || Scalars.isJSWhitespace($0) })
-            .map(Scalars.string)
+        // G2 step 6: the separators are White_Space and the hyphen (the
+        // dashes became hyphens in step 3). Nothing else separates.
+        let parts = Scalars.split(body, where: Scalars.isSeparator).map(Scalars.string)
         if let fault = earlyFault(parts) { return .failure(fault) }
         return classify(parts, variant: opened.variant)
     }
@@ -79,28 +90,39 @@ public enum Grammar {
         "zz-" + words.joined(separator: "-") + "-zz"
     }
 
-    // MARK: Normalization (grammar.ts normalize)
+    // MARK: Normalization (Section 2.2a G2)
 
+    /// G2 step 1, after the guard: the PRECIS UsernameCaseMapped mapping for
+    /// an ASCII result. Fullwidth U+FF01 to U+FF5E become ASCII, then NFC.
+    static func map(_ input: String) -> [Unicode.Scalar] {
+        let narrowed = Scalars.string(input.unicodeScalars.map { scalar in
+            (0xFF01...0xFF5E).contains(scalar.value) ? Unicode.Scalar(scalar.value - 0xFEE0)! : scalar
+        })
+        return Array(narrowed.precomposedStringWithCanonicalMapping.unicodeScalars)
+    }
+
+    /// G2 steps 2 to 5 on the mapped text.
     static func normalize(_ input: [Unicode.Scalar]) -> [Unicode.Scalar] {
-        let spaced = Scalars.trimmed(input.map { $0 == "\t" || $0 == "\r" || $0 == "\n" ? " " : $0 })
+        // Step 2: every White_Space character is a space, and the ends are trimmed.
+        let spaced = Scalars.trimmed(input).map { Scalars.isWhiteSpace($0) ? " " : $0 }
+        // Step 3: the dashes U+2010 to U+2015 and U+2212 are hyphens.
         let hyphens = spaced.map { Scalars.isDash($0) ? "-" : $0 }
+        // Step 4: the Unicode lowercase mapping, with no locale rules.
         var text = Array(Scalars.string(hyphens).lowercased().unicodeScalars)
-        // replace(/^zz@-?/, "zz-@")
+        // Step 5, as grammar.ts writes it: replace(/^zz@-?/, "zz-@")
         if Scalars.hasPrefix(text, "zz@") {
             var rest = Array(text.dropFirst(3))
             if rest.first == "-" { rest.removeFirst() }
             text = Scalars.of("zz-@") + rest
         }
-        // replace(/^zz-([a-z0-9]+)@[\s-]*/, "zz-$1-@")
+        // Step 5, then replace(/^zz-([a-z0-9]+)@[\s-]*/, "zz-$1-@")
         if Scalars.hasPrefix(text, "zz-") {
             var index = 3
             while index < text.count, Scalars.isPlainScalar(text[index]) { index += 1 }
             if index > 3, index < text.count, text[index] == "@" {
                 let group = Array(text[3..<index])
                 var after = index + 1
-                while after < text.count, text[after] == "-" || Scalars.isJSWhitespace(text[after]) {
-                    after += 1
-                }
+                while after < text.count, Scalars.isSeparator(text[after]) { after += 1 }
                 text = Scalars.of("zz-") + group + Scalars.of("-@") + Array(text[after...])
             }
         }
@@ -117,9 +139,9 @@ public enum Grammar {
             return Opened(variant: .circled, rest: Array(text.dropFirst(4)))
         }
         if text.count >= 3, text[0] == "z", text[1] == "z",
-           text[2] == "-" || Scalars.isJSWhitespace(text[2]) {
+           Scalars.isSeparator(text[2]) {
             var rest = Array(text.dropFirst(2))
-            while let first = rest.first, first == "-" || Scalars.isJSWhitespace(first) {
+            while let first = rest.first, Scalars.isSeparator(first) {
                 rest.removeFirst()
             }
             return Opened(variant: .dash, rest: rest)
@@ -132,9 +154,9 @@ public enum Grammar {
         if Scalars.hasSuffix(rest, "(zz)") { return .success(Array(rest.dropLast(4))) }
         let count = rest.count
         if count >= 3, rest[count - 1] == "z", rest[count - 2] == "z",
-           rest[count - 3] == "-" || Scalars.isJSWhitespace(rest[count - 3]) {
+           Scalars.isSeparator(rest[count - 3]) {
             var body = Array(rest.dropLast(2))
-            while let last = body.last, last == "-" || Scalars.isJSWhitespace(last) {
+            while let last = body.last, Scalars.isSeparator(last) {
                 body.removeLast()
             }
             return .success(body)
@@ -259,7 +281,7 @@ public enum Grammar {
     }
 }
 
-/// Scalar helpers that match the JavaScript character classes grammar.ts uses.
+/// Scalar helpers for the Section 2.2a character sets.
 enum Scalars {
     static func of(_ text: String) -> [Unicode.Scalar] { Array(text.unicodeScalars) }
 
@@ -271,14 +293,20 @@ enum Scalars {
 
     static func string(_ scalars: ArraySlice<Unicode.Scalar>) -> String { string(Array(scalars)) }
 
-    /// JavaScript \s and String.prototype.trim: WhiteSpace and LineTerminator.
-    static func isJSWhitespace(_ scalar: Unicode.Scalar) -> Bool {
+    /// G2 step 1: the characters with the Unicode White_Space property, as
+    /// the spec lists them. U+FEFF is not one of them (D-2026-10-04-10).
+    static func isWhiteSpace(_ scalar: Unicode.Scalar) -> Bool {
         switch scalar.value {
-        case 0x09...0x0D, 0x20, 0xA0, 0x1680, 0x2000...0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0xFEFF:
+        case 0x09...0x0D, 0x20, 0x85, 0xA0, 0x1680, 0x2000...0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000:
             return true
         default:
             return false
         }
+    }
+
+    /// G2 step 6, after step 3 mapped the dashes: whitespace or a hyphen.
+    static func isSeparator(_ scalar: Unicode.Scalar) -> Bool {
+        scalar == "-" || isWhiteSpace(scalar)
     }
 
     /// G2 step 3: U+2010 to U+2015 and U+2212 read as a hyphen.
@@ -295,8 +323,8 @@ enum Scalars {
     }
 
     static func trimmed(_ scalars: [Unicode.Scalar]) -> [Unicode.Scalar] {
-        guard let start = scalars.firstIndex(where: { !isJSWhitespace($0) }),
-              let end = scalars.lastIndex(where: { !isJSWhitespace($0) }) else { return [] }
+        guard let start = scalars.firstIndex(where: { !isWhiteSpace($0) }),
+              let end = scalars.lastIndex(where: { !isWhiteSpace($0) }) else { return [] }
         return Array(scalars[start...end])
     }
 
