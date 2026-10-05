@@ -18,6 +18,7 @@ enum CopyKey: String, CaseIterable, Sendable {
     case codesStatusExpired = "codes.status_expired"
     case codesStatusRevoked = "codes.status_revoked"
     case codesStatusUsed = "codes.status_used"
+    case commonBack = "common.back"
     case commonCancel = "common.cancel"
     case commonDemoBadge = "common.demo_badge"
     case commonDone = "common.done"
