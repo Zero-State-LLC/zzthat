@@ -76,7 +76,7 @@ struct DraftLabel: View {
 
     var body: some View {
         Text(.createDraftLabel)
-            .font(ZZFont.fontMono(ZZTextSize.textXs, weight: .semibold))
+            .zzFont(.mono, ZZTextSize.textXs, weight: .semibold)
             .foregroundStyle(Palette(scheme).ink2)
             .padding(.horizontal, ZZSpace.spaceXs)
             .padding(.vertical, ZZSpace.space3xs)
@@ -118,7 +118,8 @@ struct MintedScreen: View {
 
     var body: some View {
         Screen(demo: state.demo, loading: state.phase == .rerolling) {
-            Text(.mintedHeading).textRole(.heading).accessibilityAddTraits(.isHeader)
+            // The code is the largest text on the screen (design/UX.md, Minted code).
+            Text(.mintedHeading).textRole(.title).accessibilityAddTraits(.isHeader)
             CodeText(canonical: state.canonical, checkWord: state.checkWord, size: ZZTextSize.textLg)
                 .accessibilityIdentifier("minted.code")
             if let checkWord = state.checkWord {
@@ -150,7 +151,7 @@ struct CheckWordLabel: View {
         HStack(spacing: ZZSpace.spaceXs) {
             Text(.mintedCheckWordLabel).textRole(.label)
             Text(verbatim: word)
-                .font(ZZFont.fontMono(ZZTextSize.textBase, weight: .semibold))
+                .zzFont(.mono, ZZTextSize.textBase, weight: .semibold)
                 .foregroundStyle(Palette(scheme).accentInk)
         }
         .accessibilityElement(children: .ignore)

@@ -101,8 +101,10 @@ targets:
           done
       - name: Version from apps/VERSION
         basedOnDependencyAnalysis: false
+        # The built Info.plist is an input, so this runs after Xcode writes it.
         inputFiles:
           - $(SRCROOT)/../VERSION
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
         script: |
           # apps/VERSION is the user-visible version (runtime.md, Release step 1).
           # The build number is CURRENT_PROJECT_VERSION, which CI sets from the run number.

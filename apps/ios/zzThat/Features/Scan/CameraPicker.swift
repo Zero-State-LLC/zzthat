@@ -58,8 +58,8 @@ enum DemoPhoto {
 
     /// The photo and, for snapshots, the lines a reader returns for it.
     static func make(lines: [String]) -> (image: UIImage, lines: [(text: String, box: CGRect)]) {
-        let size = CGSize(width: 1200, height: 260 + 200 * lines.count)
-        let font = UIFont(name: "MarkerFelt-Wide", size: 104) ?? .systemFont(ofSize: 104, weight: .bold)
+        let size = CGSize(width: 1200, height: 260 + 180 * lines.count)
+        let font = UIFont(name: "MarkerFelt-Wide", size: 84) ?? .systemFont(ofSize: 84, weight: .bold)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: UIColor(red: 0.11, green: 0.106, blue: 0.098, alpha: 1),
@@ -73,7 +73,7 @@ enum DemoPhoto {
             for (index, line) in lines.enumerated() {
                 let text = NSAttributedString(string: line, attributes: attributes)
                 let measured = text.size()
-                let origin = CGPoint(x: (size.width - measured.width) / 2, y: 130 + CGFloat(index) * 200)
+                let origin = CGPoint(x: (size.width - measured.width) / 2, y: 130 + CGFloat(index) * 180)
                 text.draw(at: origin)
                 let box = CGRect(x: origin.x / size.width, y: origin.y / size.height,
                                  width: measured.width / size.width, height: measured.height / size.height)

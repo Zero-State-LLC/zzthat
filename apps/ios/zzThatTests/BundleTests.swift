@@ -85,6 +85,10 @@ struct BundleTests {
             .map(\.lastPathComponent))
         #expect(bundled.isSubset(of: listed), "missing from UIAppFonts: \(bundled.subtracting(listed))")
         #expect(listed.isSubset(of: bundled), "listed but not bundled: \(listed.subtracting(bundled))")
+        // With no pinned TTF, every family falls back to the system font.
+        if bundled.isEmpty {
+            #expect([FontFamily.display, .body, .mono].allSatisfy { !$0.isPinned })
+        }
     }
 
     /// The pinned wordlists are bundled when the pin has them (FR-044).

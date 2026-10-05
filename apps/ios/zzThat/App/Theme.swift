@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import ZZDesign
 
 /// The pinned token colors for one color scheme (runtime.md, Accessibility:
@@ -35,9 +36,79 @@ struct Palette {
     }
 }
 
-/// Type roles over the pinned families and sizes. `Font.custom` scales with
-/// the system text size, and falls back to the system font while the pin
-/// has no design/fonts.
+/// The pinned families (design.md, Sync; FR-043). While the pin has no
+/// design/fonts, each falls back to the system font of the same size and
+/// weight, monospaced for the mono family, so codes stay in a mono face.
+/// Both follow the system text size (runtime.md, Accessibility).
+enum FontFamily {
+    case display
+    case body
+    case mono
+
+    var pinnedName: String {
+        switch self {
+        case .display: ZZFont.fontDisplayName
+        case .body: ZZFont.fontBodyName
+        case .mono: ZZFont.fontMonoName
+        }
+    }
+
+    /// Whether the pinned family is registered, checked once per process.
+    var isPinned: Bool { Self.registered.contains(pinnedName) }
+
+    private static let registered: Set<String> = Set(ZZFontRegistry.families.filter(ZZFontRegistry.isRegistered))
+
+    func font(_ size: CGFloat, weight: Font.Weight, dynamicTypeSize: DynamicTypeSize) -> Font {
+        if isPinned {
+            // Font.custom scales with the text size on its own.
+            switch self {
+            case .display: return ZZFont.fontDisplay(size, weight: weight)
+            case .body: return ZZFont.fontBody(size, weight: weight)
+            case .mono: return ZZFont.fontMono(size, weight: weight)
+            }
+        }
+        let base = self == .mono
+            ? UIFont.monospacedSystemFont(ofSize: size, weight: weight.uiFontWeight)
+            : UIFont.systemFont(ofSize: size, weight: weight.uiFontWeight)
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(dynamicTypeSize))
+        return Font(UIFontMetrics(forTextStyle: .body).scaledFont(for: base, compatibleWith: traits))
+    }
+}
+
+extension Font.Weight {
+    var uiFontWeight: UIFont.Weight {
+        switch self {
+        case .ultraLight: .ultraLight
+        case .thin: .thin
+        case .light: .light
+        case .medium: .medium
+        case .semibold: .semibold
+        case .bold: .bold
+        case .heavy: .heavy
+        case .black: .black
+        default: .regular
+        }
+    }
+}
+
+struct FamilyFont: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let family: FontFamily
+    let size: CGFloat
+    let weight: Font.Weight
+
+    func body(content: Content) -> some View {
+        content.font(family.font(size, weight: weight, dynamicTypeSize: dynamicTypeSize))
+    }
+}
+
+extension View {
+    func zzFont(_ family: FontFamily, _ size: CGFloat, weight: Font.Weight = .regular) -> some View {
+        modifier(FamilyFont(family: family, size: size, weight: weight))
+    }
+}
+
+/// Type roles over the pinned families and sizes.
 enum TextRole {
     case heading
     case title
@@ -46,14 +117,27 @@ enum TextRole {
     case caption
     case label
 
-    var font: Font {
+    var family: FontFamily {
         switch self {
-        case .heading: ZZFont.fontDisplay(ZZTextSize.textLg, weight: .semibold)
-        case .title: ZZFont.fontDisplay(ZZTextSize.textMd, weight: .semibold)
-        case .body: ZZFont.fontBody(ZZTextSize.textBase)
-        case .secondary: ZZFont.fontBody(ZZTextSize.textSm)
-        case .caption: ZZFont.fontBody(ZZTextSize.textXs)
-        case .label: ZZFont.fontBody(ZZTextSize.textSm, weight: .semibold)
+        case .heading, .title: .display
+        case .body, .secondary, .caption, .label: .body
+        }
+    }
+
+    var size: CGFloat {
+        switch self {
+        case .heading: ZZTextSize.textLg
+        case .title: ZZTextSize.textMd
+        case .body: ZZTextSize.textBase
+        case .secondary, .label: ZZTextSize.textSm
+        case .caption: ZZTextSize.textXs
+        }
+    }
+
+    var weight: Font.Weight {
+        switch self {
+        case .heading, .title, .label: .semibold
+        case .body, .secondary, .caption: .regular
         }
     }
 
@@ -72,7 +156,7 @@ struct RoleText: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .font(role.font)
+            .zzFont(role.family, role.size, weight: role.weight)
             .foregroundStyle(role.color(Palette(scheme)))
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -99,7 +183,7 @@ struct ZZButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let palette = Palette(scheme)
         configuration.label
-            .font(ZZFont.fontBody(ZZTextSize.textBase, weight: .semibold))
+            .zzFont(.body, ZZTextSize.textBase, weight: .semibold)
             .multilineTextAlignment(.center)
             .padding(.horizontal, ZZSpace.spaceSm)
             .padding(.vertical, ZZSpace.spaceXs)

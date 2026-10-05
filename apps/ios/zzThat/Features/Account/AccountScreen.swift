@@ -133,7 +133,7 @@ struct LicensesScreen: View {
             Text(.accountLicenses).textRole(.heading).accessibilityAddTraits(.isHeader)
             ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
                 Text(verbatim: text)
-                    .font(ZZFont.fontMono(ZZTextSize.textXs))
+                    .zzFont(.mono, ZZTextSize.textXs)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .panel()
@@ -176,7 +176,7 @@ struct AccountSheet: View {
                           onSignOut: { Task { await app.signOut() } },
                           onDelete: { confirmingDelete = true },
                           onLicenses: { path.append(.licenses) }) {
-                SignInBody(phase: $signInPhase)
+                SignInBody(phase: $signInPhase, embedded: true)
             }
             .navigationTitle(Text(.accountTitle))
             .navigationBarTitleDisplayMode(.inline)

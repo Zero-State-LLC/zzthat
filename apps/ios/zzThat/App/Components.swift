@@ -33,7 +33,7 @@ struct DemoBadge: View {
     var body: some View {
         let palette = Palette(scheme)
         Text(.commonDemoBadge)
-            .font(ZZFont.fontMono(ZZTextSize.textXs, weight: .medium))
+            .zzFont(.mono, ZZTextSize.textXs, weight: .medium)
             .foregroundStyle(palette.accentInk)
             .padding(.horizontal, ZZSpace.spaceXs)
             .padding(.vertical, ZZSpace.space3xs)
@@ -96,7 +96,7 @@ struct CodeText: View {
 
     var body: some View {
         Text(attributed)
-            .font(ZZFont.fontMono(size, weight: .medium))
+            .zzFont(.mono, size, weight: .medium)
             .lineLimit(nil)
             .fixedSize(horizontal: false, vertical: true)
             .textSelection(.enabled)
@@ -141,7 +141,7 @@ struct LimitedField: View {
                     TextField("", text: $text)
                 }
             }
-            .font(ZZFont.fontBody(ZZTextSize.textBase))
+            .zzFont(.body, ZZTextSize.textBase)
             .foregroundStyle(palette.ink)
             .padding(ZZSpace.spaceXs)
             .frame(minHeight: 44)
@@ -204,7 +204,7 @@ struct PhotoBoxes: View {
                                 .position(x: rect.midX, y: rect.midY)
                             if boxIndex == 0 {
                                 Text(verbatim: "\(offset + 1)")
-                                    .font(ZZFont.fontMono(ZZTextSize.textXs, weight: .semibold))
+                                    .zzFont(.mono, ZZTextSize.textXs, weight: .semibold)
                                     .foregroundStyle(palette.onAccent)
                                     .padding(.horizontal, 4)
                                     .background(palette.accent)

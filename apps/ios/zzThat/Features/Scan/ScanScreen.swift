@@ -129,7 +129,7 @@ struct CandidateRow: View {
         let palette = Palette(scheme)
         HStack(alignment: .center, spacing: ZZSpace.spaceXs) {
             Text(verbatim: "\(number)")
-                .font(ZZFont.fontMono(ZZTextSize.textXs, weight: .semibold))
+                .zzFont(.mono, ZZTextSize.textXs, weight: .semibold)
                 .foregroundStyle(palette.onAccent)
                 .padding(.horizontal, ZZSpace.space2xs)
                 .background(palette.accent, in: RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
@@ -167,7 +167,7 @@ struct MonoText: View {
 
     var body: some View {
         Text(verbatim: text)
-            .font(ZZFont.fontMono(ZZTextSize.textBase, weight: .medium))
+            .zzFont(.mono, ZZTextSize.textBase, weight: .medium)
             .foregroundStyle(Palette(scheme).ink)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -195,7 +195,7 @@ struct TypeScreen: View {
                 Text(.typeFieldLabel).textRole(.label)
                 TextField("", text: $text, axis: .vertical)
                     .lineLimit(1...4)
-                    .font(ZZFont.fontMono(ZZTextSize.textBase))
+                    .zzFont(.mono, ZZTextSize.textBase)
                     .foregroundStyle(palette.ink)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -250,7 +250,7 @@ struct ClarifyScreen: View {
                 PartsText(parts: state.parts, highlight: position)
                 ForEach(candidates, id: \.self) { word in
                     Button { onPick(word, position) } label: {
-                        Text(verbatim: word).font(ZZFont.fontMono(ZZTextSize.textBase, weight: .semibold))
+                        Text(verbatim: word).zzFont(.mono, ZZTextSize.textBase, weight: .semibold)
                     }
                     .buttonStyle(.zzSecondary)
                     .accessibilityIdentifier("clarify.candidate.\(word)")
@@ -295,7 +295,7 @@ struct PartsText: View {
     var body: some View {
         let palette = Palette(scheme)
         Text(attributed(palette))
-            .font(ZZFont.fontMono(ZZTextSize.textMd, weight: .medium))
+            .zzFont(.mono, ZZTextSize.textMd, weight: .medium)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityLabel(Text(verbatim: Grammar.format(parts)))
     }

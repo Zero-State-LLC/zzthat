@@ -22,12 +22,25 @@ struct SignInScreenState {
 /// platform draws: Sign in with Apple and Google (FR-040). Local builds add
 /// `signin.dev`. Demo buttons do not call a provider.
 struct SignInScreen: View {
-    @Environment(\.colorScheme) private var scheme
     let state: SignInScreenState
     var onSignIn: (SignInProvider) -> Void = { _ in }
 
     var body: some View {
         Screen(demo: state.demo, loading: state.phase == .signingIn || state.loadingProviders) {
+            SignInContent(state: state, onSignIn: onSignIn)
+        }
+    }
+}
+
+/// The sign-in block on its own, so a signed-out Account shows it inside
+/// its own screen.
+struct SignInContent: View {
+    @Environment(\.colorScheme) private var scheme
+    let state: SignInScreenState
+    var onSignIn: (SignInProvider) -> Void = { _ in }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZZSpace.spaceSm) {
             Text(.signinTitle).textRole(.heading).accessibilityAddTraits(.isHeader)
             Text(.signinWhy).textRole(.body)
             if case .failure(let key) = state.phase { Message(key: key, emphasis: true) }
@@ -149,13 +162,18 @@ struct SignInBody: View {
     @Environment(AppModel.self) private var app
     @Binding var phase: SignInScreenState.Phase
     var loadingProviders = false
+    /// Inside Account, which draws the screen and the demo badge itself.
+    var embedded = false
     var onDone: () -> Void = {}
 
     var body: some View {
-        SignInScreen(state: SignInScreenState(providers: SignInProviders.shown(app: app), phase: phase,
-                                              offline: !app.isOnline, demo: app.isDemo,
-                                              loadingProviders: loadingProviders),
-                     onSignIn: signIn)
+        let state = SignInScreenState(providers: SignInProviders.shown(app: app), phase: phase,
+                                      offline: !app.isOnline, demo: app.isDemo, loadingProviders: loadingProviders)
+        if embedded {
+            SignInContent(state: state, onSignIn: signIn)
+        } else {
+            SignInScreen(state: state, onSignIn: signIn)
+        }
     }
 
     private func signIn(_ provider: SignInProvider) {
