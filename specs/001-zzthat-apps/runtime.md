@@ -148,7 +148,7 @@ Each screen implements five states. Strings come from `copy.json`.
 | Sign in | Provider buttons from discovery (FR-040) | `signin.why` with the buttons | `signin.failed`. No half session. | Refuse sign-in | Buttons labeled Demo. They do not call. | Sign in |
 | Account | Provider, sign out, delete, support, privacy, licenses | Signed out: go to Sign in | `delete.failed` | Show the cached provider. Delete refused. | Fixture account labeled Demo | Account |
 | Delete confirm | `DELETE /v1/me` (FR-034) | Not used | `delete.failed`. The account stays. | Refuse | Demo confirm does not call | Revoke confirm and Delete confirm |
-| Licenses | The bundled `NOTICE` and `OFL.txt` as plain text, opened from `account.licenses` | Not used | Not used | Same text. It is bundled. | Same text, labeled Demo | Account |
+| Licenses | The bundled `NOTICE` and `OFL.txt`, then the generated third-party notices (T087), as plain text, opened from `account.licenses` | Not used | Not used | Same text. It is bundled. | Same text, labeled Demo | Account |
 | Report | The reasons in FR-035 | Reason not chosen yet | 429. Never say whether the code exists. | Refuse | Demo send does not call | Report |
 
 Share is the system share sheet with `share.text` only (FR-020). It is not its own screen.
@@ -156,6 +156,8 @@ Share is the system share sheet with `share.text` only (FR-020). It is not its o
 Create and Edit record stop input at 120 Unicode code points for the title and 4000 for the body, counted after trimming (spec.md DEP-005) [INFERRED]. Swift counts `unicodeScalars`. Kotlin uses `codePointCount`. Only a 400 `malformed` on resolve shows `type.malformed`. Any other 400 on mint, a record version, or a report, except `contract-version`, shows `error.nothing_saved` (spec.md, Errors).
 
 The Licenses row is [INFERRED] from the zzThis license work (the EFF wordlist and IBM Plex credits in `NOTICE`). It uses the Account pattern until zzThis `design/UX.md` names one. The license text is shown verbatim, the one FR-042 exception. Its title comes from `account.licenses`. `account.licenses` is a new zzThis copy key for Michael's review, so it reaches this repo when the pin moves.
+
+The Licenses screen also shows the third-party notices that the build generates from the platform's pinned dependencies: each package's name, version, and full license text, with Apache 2.0 NOTICE files where they exist (T087) [DANNY 2026-10-05 #43]. They are shown as given, after `NOTICE` and `OFL.txt`, under the same FR-042 exception, with no copy key. The build fails when a pinned package has no license file.
 
 ## Build configurations
 
