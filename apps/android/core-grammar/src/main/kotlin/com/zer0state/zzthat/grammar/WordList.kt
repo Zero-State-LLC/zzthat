@@ -1,70 +1,68 @@
 package com.zer0state.zzthat.grammar
 
-/**
- * A versioned closed wordlist (zzThis spec 003 FR-016, FR-017). Line order is
- * the index. The list loader (tasks.md T021) reads the bundled files from
- * contracts/wordlists/, one file per version, named `<version>.txt`.
- */
-class WordList private constructor(
-    val version: String,
-    val words: List<String>,
-) {
-    private val index: Map<String, Int> = words.withIndex().associate { (i, w) -> w to i }
+import java.io.File
+
+/** One versioned wordlist (spec 003 FR-016, FR-017). Line order is the index. */
+class WordList(val version: String, val words: List<String>) {
+    private val indexes: Map<String, Int>
+
+    init {
+        if (words.isEmpty()) throw WordListException(version, "is empty")
+        val map = HashMap<String, Int>(words.size * 2)
+        words.forEachIndexed { offset, word ->
+            val line = offset + 1
+            if (word.isEmpty() || !word.all { it in 'a'..'z' }) throw WordListException(version, "line $line is not a to z")
+            if (word in RESERVED) throw WordListException(version, "line $line is a marker or macro prefix")
+            if (map.put(word, offset) != null) throw WordListException(version, "line $line repeats a word")
+        }
+        indexes = map
+    }
 
     val size: Int get() = words.size
 
-    /** The spec 003 check word needs a prime list length (Q30). */
-    val supportsCheckWord: Boolean get() = isPrime(words.size)
+    fun indexOf(word: String): Int? = indexes[word]
 
-    fun indexOf(word: String): Int? = index[word]
+    operator fun contains(word: String): Boolean = word in indexes
 
-    operator fun contains(word: String): Boolean = word in index
+    override fun equals(other: Any?): Boolean = other is WordList && other.version == version && other.words == words
 
-    sealed interface Load {
-        data class Loaded(val list: WordList) : Load
-        data class Rejected(val reason: String) : Load
+    override fun hashCode(): Int = 31 * version.hashCode() + words.hashCode()
+
+    override fun toString(): String = "WordList($version, ${words.size} words)"
+
+    private companion object {
+        val RESERVED = setOf("zz", "fn", "run")
+    }
+}
+
+/** A list file that cannot be used. A bad file is refused, never fixed up. */
+class WordListException(val version: String, val problem: String) : Exception("$version: $problem")
+
+/**
+ * Loads the bundled lists from contracts/wordlists/ (spec 003 Version id:
+ * `<version>.txt`, one word per line). Reports and other files are skipped.
+ */
+object WordListLoader {
+    /** Every list in a folder, by file name. A missing folder has none. */
+    fun load(directory: File): List<WordList> {
+        val files = directory.listFiles() ?: return emptyList()
+        return files.map { it.name }.filter(::isListFile).sorted().map { name ->
+            parse(versionOf(name), File(directory, name).readText(Charsets.UTF_8))
+        }
     }
 
-    companion object {
-        private val ENTRY = Regex("^[a-z]+$")
-        private val FORBIDDEN = setOf("zz", "fn", "run")
+    /** A bundled list file: `<version>.txt`, not a `.report.` file. */
+    fun isListFile(name: String): Boolean = name.endsWith(".txt") && name.length > 4 && ".report." !in name
 
-        /** Builds a list in memory, for fixtures such as fixture-7 in the vectors. */
-        fun of(version: String, words: List<String>): WordList = when (val loaded = validate(version, words)) {
-            is Load.Loaded -> loaded.list
-            is Load.Rejected -> throw IllegalArgumentException(loaded.reason)
-        }
+    fun versionOf(name: String): String = name.removeSuffix(".txt")
 
-        /** Parses one bundled list file. A bad file is rejected, never fixed up. */
-        fun parse(version: String, text: String): Load {
-            val lines = text.split('\n').map { it.removeSuffix("\r") }
-            val words = if (lines.lastOrNull() == "") lines.dropLast(1) else lines
-            return validate(version, words)
-        }
-
-        /** The version id of a bundled file name such as `proto-v0.txt`. */
-        fun versionOf(fileName: String): String? =
-            fileName.takeIf { it.endsWith(".txt") && it.length > 4 }?.removeSuffix(".txt")
-
-        private fun validate(version: String, words: List<String>): Load {
-            if (version.isBlank()) return Load.Rejected("no version")
-            if (words.isEmpty()) return Load.Rejected("$version is empty")
-            words.forEachIndexed { i, word ->
-                if (!ENTRY.matches(word)) return Load.Rejected("$version line ${i + 1} is not lowercase a to z")
-                if (word in FORBIDDEN) return Load.Rejected("$version line ${i + 1} is a marker or macro prefix")
-            }
-            if (words.toSet().size != words.size) return Load.Rejected("$version repeats a word")
-            return Load.Loaded(WordList(version, words))
-        }
-
-        internal fun isPrime(n: Int): Boolean {
-            if (n < 2) return false
-            var d = 2
-            while (d.toLong() * d <= n) {
-                if (n % d == 0) return false
-                d++
-            }
-            return true
-        }
+    fun parse(version: String, text: String): WordList {
+        val lines = text.split('\n').map { it.removeSuffix("\r") }.toMutableList()
+        if (lines.lastOrNull() == "") lines.removeAt(lines.lastIndex)
+        return WordList(version, lines)
     }
+
+    /** FR-044: the list for a local check word, only when its version equals the server's `wordlist_version`. */
+    fun matching(lists: List<WordList>, serverVersion: String?): WordList? =
+        serverVersion?.let { version -> lists.firstOrNull { it.version == version } }
 }

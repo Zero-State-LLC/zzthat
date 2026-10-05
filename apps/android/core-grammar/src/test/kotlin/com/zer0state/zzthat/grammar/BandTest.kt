@@ -1,0 +1,171 @@
+package com.zer0state.zzthat.grammar
+
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+
+/**
+ * tasks.md T022: the shared band rows, one table for both platforms
+ * (apps/ios/Packages/ZZCore/Tests/ZZCoreTests/Fixtures/band-rows.json, read in
+ * place): (token, line index, line confidence) rows in, one band out.
+ */
+@RunWith(Parameterized::class)
+class SharedBandRowTest(@Suppress("unused") private val label: String, private val row: JsonObject) {
+    @Test
+    fun row() {
+        val list = Vectors.fixture7
+        val code = Grammar.parse(row.string("canonical")!!).codeOrNull()!!
+        val codeClass = Classifier.classify(code, list.words)
+        val check = CheckWord.verify(code, list)
+        assertEquals(CodeClass.Word, codeClass)
+        assertEquals(CheckResult.Ok, check)
+        val rows = (row["rows"] as JsonArray).map {
+            val item = it.jsonObject
+            BandRow(item.string("token")!!, item["line"]!!.jsonPrimitive.int, item["confidence"]!!.jsonPrimitive.double)
+        }
+        val band = Bands.band(ScanKind.Code(code), codeClass, check, rows, ReadSource.CAMERA)
+        assertEquals(row.string("band"), band.wire)
+    }
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun rows(): List<Array<Any>> {
+            val shared = (Vectors.read("zz.bandRows").jsonObject["shared"] as JsonArray).map { it.jsonObject }
+            assertEquals("the three shared rows", 3, shared.size)
+            return Vectors.cases(shared) { it.string("name").orEmpty() }
+        }
+    }
+}
+
+/** One test per band trigger in zzThis spec 004 (Decision bands and Prototype band values). */
+class BandTest {
+    private val list = Vectors.fixture7
+
+    private fun camera(vararg lines: Pair<String, Double>, pipeline: ReadPipeline = ReadPipeline(list, list)): List<ReadCandidate> {
+        val recognized = lines.mapIndexed { offset, (text, confidence) ->
+            RecognizedLine(text, confidence, NormRect(0.1, 0.1 + offset * 0.2, 0.8, 0.1))
+        }
+        return pipeline.read(recognized).candidates
+    }
+
+    private fun typed(text: String): TypedRead = ReadPipeline(list, list).readTyped(text)
+
+    private fun typedBand(text: String): Band = (typed(text) as TypedRead.Read).candidate.band
+
+    @Test
+    fun cameraAcceptVerifiedWordCode() {
+        val found = camera("zz-copper-lantern-sky-zz" to 0.95)
+        assertEquals(listOf(Band.ACCEPT), found.map { it.band })
+        assertEquals(CheckResult.Ok, found.first().check)
+    }
+
+    @Test
+    fun cameraClarifyWordBetweenThresholds() {
+        assertEquals(listOf(Band.CLARIFY), camera("zz-copper-lantern-sky-zz" to 0.6).map { it.band })
+    }
+
+    @Test
+    fun cameraClarifyNearWord() {
+        val found = camera("zz-coper-lantern-sky-zz" to 0.95)
+        assertEquals(listOf(Band.CLARIFY), found.map { it.band })
+        assertEquals(CodeClass.Confirm(mapOf(1 to listOf("copper"))), found.first().codeClass)
+    }
+
+    @Test
+    fun cameraClarifyCheckWordMismatch() {
+        val found = camera("zz-copper-maple-sky-zz" to 0.95)
+        assertEquals(listOf(Band.CLARIFY), found.map { it.band })
+        assertEquals(CheckResult.CheckMismatch, found.first().check)
+    }
+
+    @Test
+    fun cameraClarifyFieldHandleOrName() {
+        for (text in listOf("zz-b2-smith-1-zz", "zz-@agentsmith-zz", "zz-vitalik.eth-zz")) {
+            assertEquals(text, listOf(Band.CLARIFY), camera(text to 0.99).map { it.band })
+        }
+    }
+
+    @Test
+    fun cameraRetryPartial() {
+        assertEquals(listOf(Band.RETRY), camera("label zz-copper-lantern" to 0.95).map { it.band })
+    }
+
+    @Test
+    fun cameraRetryNoCandidate() {
+        assertEquals(Band.RETRY, Bands.band(null, null, null, emptyList(), ReadSource.CAMERA))
+    }
+
+    @Test
+    fun cameraRetryWordBelowHalf() {
+        val found = camera("zz-copper-lantern" to 0.9, "sky-zz" to 0.45)
+        assertEquals(listOf("zz-copper-lantern-sky-zz"), found.map { it.canonical })
+        assertEquals(listOf(Band.RETRY), found.map { it.band })
+    }
+
+    @Test
+    fun cameraAbstainInvalid() {
+        assertEquals(listOf(Band.ABSTAIN), camera("zz-#tag-zz" to 0.95).map { it.band })
+    }
+
+    @Test
+    fun cameraAbstainWrongLength() {
+        val found = camera("zz-copper-lantern-zz" to 0.95)
+        assertEquals(listOf(Band.ABSTAIN), found.map { it.band })
+        assertEquals(CheckResult.WrongLength, found.first().check)
+    }
+
+    @Test
+    fun cameraAbstainBare() {
+        assertEquals(listOf(Band.ABSTAIN), camera("zz" to 0.95).map { it.band })
+    }
+
+    @Test
+    fun cameraWithoutAMatchingListSkipsTheLocalCheck() {
+        val pipeline = ReadPipeline.of(listOf(list), serverVersion = "proto-v0")
+        val found = camera("zz-copper-maple-sky-zz" to 0.95, pipeline = pipeline)
+        assertNull(found.first().check)
+        assertEquals(CodeClass.Word, found.first().codeClass)
+        assertEquals(listOf(Band.ACCEPT), found.map { it.band })
+    }
+
+    @Test
+    fun typedAccept() {
+        for (text in listOf("zz-copper-lantern-sky-zz", "zz-b2-smith-1-zz", "zz-@agentsmith-zz", "zz-vitalik.eth-zz")) {
+            assertEquals(text, Band.ACCEPT, typedBand(text))
+        }
+    }
+
+    @Test
+    fun typedClarifyNearWordOrMismatch() {
+        for (text in listOf("zz-coper-lantern-sky-zz", "zz-copper-maple-sky-zz")) {
+            assertEquals(text, Band.CLARIFY, typedBand(text))
+        }
+    }
+
+    @Test
+    fun typedAbstainParserFailure() {
+        assertEquals(TypedRead.Refused(ParseFailure.RESERVED_SYMBOL), typed("zz-#tag-zz"))
+    }
+
+    @Test
+    fun typedAbstainWrongLengthOrBare() {
+        for (text in listOf("zz-copper-lantern-zz", "zz", "(zz)")) {
+            assertEquals(text, Band.ABSTAIN, typedBand(text))
+        }
+    }
+
+    @Test
+    fun thresholdsAreThePrototypeValues() {
+        assertEquals(0.80, BandThresholds.ACCEPT, 0.0)
+        assertEquals(0.50, BandThresholds.RETRY_BELOW, 0.0)
+    }
+}

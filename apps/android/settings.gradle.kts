@@ -1,8 +1,10 @@
+// Google Maven and Maven Central only. AGP, the Kotlin plugins, and Paparazzi
+// publish their plugin markers there. The OpenAPI Generator runs from its CLI
+// artifact on Maven Central (core-api/build.gradle.kts).
 pluginManagement {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
 }
 
