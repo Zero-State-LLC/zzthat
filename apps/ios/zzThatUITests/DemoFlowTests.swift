@@ -19,15 +19,28 @@ final class DemoFlowTests: XCTestCase {
         let flow = DemoFlow(app: app)
         XCTAssertTrue(app.staticTexts["demo.badge"].waitForExistence(timeout: 10))
 
-        // Scan the fixture photo on the device, confirm the reading, and resolve it.
+        // Scan the fixture photo on the device. Its check word verifies against
+        // the bundled fixture-7 list, so the one candidate in Accept opens at once.
         flow.tap("scan.take_photo")
-        flow.tap("scan.candidate.1", timeout: 30)
-        flow.tap("clarify.as_written")
-        XCTAssertTrue(app.staticTexts["record.title"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["record.title"].waitForExistence(timeout: 30))
         flow.tap("resolve.report")
         flow.tap("report.reason.spam")
         flow.tap("report.send")
         flow.tap("report.done")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // A near-word asks the person: zz-coper-lantern-sky-zz offers copper.
+        flow.tap("scan.type_instead")
+        let field = app.textViews["type.field"].exists ? app.textViews["type.field"] : app.textFields["type.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        // Put the caret after the prefilled demo code, then clear it.
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 40))
+        field.typeText("zz-coper-lantern-sky-zz")
+        flow.tap("type.open")
+        flow.tap("clarify.candidate.copper")
+        XCTAssertTrue(app.staticTexts["record.title"].waitForExistence(timeout: 10))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.navigationBars.buttons.element(boundBy: 0).tap()
 

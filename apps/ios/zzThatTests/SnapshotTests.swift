@@ -107,11 +107,14 @@ struct SnapshotTests {
     static let twoCodeLines = DemoPhoto.make(lines: ["zz-river-maple-sky-zz", "zz-b2-4-zz"])
     static let noCodeLines = DemoPhoto.make(lines: ["the buzz word"])
 
-    /// The pipeline as the app runs it at this pin: no bundled list, so no
-    /// local check word (FR-008), and a reading is confirmed by a person.
+    /// The pipeline as the Demo build runs it: the bundled lists, with the
+    /// demo server's `wordlist_version` (fixture-7) picking the local check
+    /// word (FR-044).
     static func candidates(_ photo: (image: UIImage, lines: [(text: String, box: CGRect)])) -> [ReadCandidate] {
         let lines = photo.lines.map { RecognizedLine(text: $0.text, confidence: 0.97, box: $0.box) }
-        return ReadPipeline(classifyList: nil, checkList: nil).read(lines: lines).candidates
+        let pipeline = ReadPipeline(bundled: AppModel.loadBundledLists(),
+                                    serverVersion: DemoAPI.discovery.wordlistVersion)
+        return pipeline.read(lines: lines).candidates
     }
 
     static let demoRecord = DemoAPI.records["zz-kathy-lost-cat-zz"]!

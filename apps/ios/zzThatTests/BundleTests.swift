@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Testing
 import ZZAPI
 @testable import zzThat
@@ -76,19 +77,36 @@ struct BundleTests {
         #expect((plist?["NSPrivacyTrackingDomains"] as? [Any])?.isEmpty == true)
     }
 
-    /// design.md, Sync: each bundled TTF is listed under UIAppFonts. The pin
-    /// has no design/fonts yet, so both lists are empty and the system font
-    /// is the fallback.
-    @Test func everyBundledFontIsListed() {
+    /// design.md, Sync: each bundled TTF is listed under UIAppFonts, and
+    /// every listed face loads, so the pinned families replace the system
+    /// font fallback.
+    @Test func everyBundledFontIsListedAndLoads() throws {
         let listed = Set(Self.info["UIAppFonts"] as? [String] ?? [])
-        let bundled = Set((Bundle.main.urls(forResourcesWithExtension: "ttf", subdirectory: nil) ?? [])
-            .map(\.lastPathComponent))
+        let files = Bundle.main.urls(forResourcesWithExtension: "ttf", subdirectory: nil) ?? []
+        let bundled = Set(files.map(\.lastPathComponent))
+        #expect(!bundled.isEmpty, "the pin ships the IBM Plex files")
         #expect(bundled.isSubset(of: listed), "missing from UIAppFonts: \(bundled.subtracting(listed))")
         #expect(listed.isSubset(of: bundled), "listed but not bundled: \(listed.subtracting(bundled))")
-        // With no pinned TTF, every family falls back to the system font.
-        if bundled.isEmpty {
-            #expect([FontFamily.display, .body, .mono].allSatisfy { !$0.isPinned })
+        for file in files {
+            let provider = try #require(CGDataProvider(url: file as CFURL))
+            let face = try #require(CGFont(provider)?.postScriptName as String?)
+            #expect(UIFont(name: face, size: 17) != nil, "\(file.lastPathComponent) does not load as \(face)")
         }
+        let pinned = [FontFamily.display, .body, .mono].filter(\.isPinned)
+        #expect(pinned.count == 3, "the pinned families are registered, so no fallback runs")
+    }
+
+    /// The Demo, Local, and Release Info plists list the same pinned files,
+    /// so a build this suite does not run cannot drift either.
+    @Test(arguments: ["Info-Demo.plist", "Info-Local.plist", "Info-Release.plist"])
+    func everyConfigurationListsThePinnedFonts(_ name: String) throws {
+        let fonts = Self.repo.appendingPathComponent("apps/ios/zzThat/Resources/Fonts")
+        let pinned = Set(try FileManager.default.contentsOfDirectory(atPath: fonts.path).filter { $0.hasSuffix(".ttf") })
+        let url = Self.repo.appendingPathComponent("apps/ios/zzThat/Config").appendingPathComponent(name)
+        let plist = try PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil) as? [String: Any]
+        let listed = plist?["UIAppFonts"] as? [String] ?? []
+        #expect(Set(listed) == pinned)
+        #expect(listed.count == pinned.count, "no file is listed twice")
     }
 
     /// The pinned wordlists are bundled when the pin has them (FR-044).

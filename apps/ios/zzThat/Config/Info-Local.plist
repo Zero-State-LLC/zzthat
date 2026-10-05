@@ -12,11 +12,24 @@
 	<string>$(ZZ_SUPPORT_EMAIL)</string>
 	<key>ZZPrivacyURL</key>
 	<string>$(ZZ_PRIVACY_URL)</string>
-	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync). The pin
-	     d6143be has no design/fonts yet, so the list is empty; a test fails
-	     when a bundled TTF is missing here. -->
+	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync), the same list in
+	     all three Info plists. BundleTests fails when a bundled TTF is not
+	     listed here, or a listed one is not bundled. -->
 	<key>UIAppFonts</key>
-	<array/>
+	<array>
+		<string>IBMPlexMono-Bold.ttf</string>
+		<string>IBMPlexMono-Medium.ttf</string>
+		<string>IBMPlexMono-Regular.ttf</string>
+		<string>IBMPlexMono-SemiBold.ttf</string>
+		<string>IBMPlexSans-Bold.ttf</string>
+		<string>IBMPlexSans-Medium.ttf</string>
+		<string>IBMPlexSans-Regular.ttf</string>
+		<string>IBMPlexSans-SemiBold.ttf</string>
+		<string>IBMPlexSansCondensed-Bold.ttf</string>
+		<string>IBMPlexSansCondensed-Medium.ttf</string>
+		<string>IBMPlexSansCondensed-Regular.ttf</string>
+		<string>IBMPlexSansCondensed-SemiBold.ttf</string>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>GIDClientID</key>

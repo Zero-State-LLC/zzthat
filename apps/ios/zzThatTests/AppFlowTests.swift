@@ -235,6 +235,36 @@ struct OwnerFlowTests {
         #expect(create.title == "Lost cat" && create.body == "Answers")
     }
 
+    /// FR-033: after a 429, Send stays off until `Retry-After` has passed,
+    /// and the one wait sentence does not say whether the code exists.
+    @Test func aRateLimitedReportWaitsForRetryAfter() async throws {
+        let transport = AppStubTransport { _, _ in
+            .init(status: 429, json: #"{"error":"rate-limited"}"#, headers: ["Retry-After": "1"])
+        }
+        let app = TestApp.make(service: try await TestApp.liveService(transport, signedIn: false))
+        let model = ReportModel(canonical: "zz-kathy-lost-cat-zz")
+        model.state.reason = .spam
+        let sending = Task { await model.send(app: app) }
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(model.state.phase == .failure(.resolveRateLimited))
+        #expect(model.state.waiting)
+        #expect(!model.state.canSend)
+        await sending.value
+        #expect(!model.state.waiting)
+        #expect(model.state.canSend)
+        #expect(transport.operations == ["createReport"])
+    }
+
+    @Test func aReportIsRefusedOffline() async throws {
+        let transport = AppStubTransport { _, _ in .init(status: 202, json: #"{"id":"r-1"}"#) }
+        let app = TestApp.make(service: try await TestApp.liveService(transport, signedIn: false), online: false)
+        let model = ReportModel(canonical: "zz-kathy-lost-cat-zz")
+        model.state.reason = .other
+        await model.send(app: app)
+        #expect(model.state.offline)
+        #expect(transport.operations.isEmpty)
+    }
+
     @Test func myCodesOfflineKeepsNoList() async throws {
         let app = try await Self.signedInDemo(online: false)
         let codes = CodesModel()

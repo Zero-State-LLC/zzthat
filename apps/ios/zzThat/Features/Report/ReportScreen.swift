@@ -93,42 +93,59 @@ struct ReasonPicker: View {
     }
 }
 
-/// The live Report sheet. Signed out, the report carries no bearer (FR-016).
-struct ReportRoute: View {
-    @Environment(AppModel.self) private var app
-    @Environment(\.dismiss) private var dismiss
+/// Sends one report (FR-035). The answer never says whether the code
+/// exists. After a 429, Send waits for `Retry-After` (FR-033).
+@MainActor
+@Observable
+final class ReportModel {
     let canonical: String
-    @State private var state = ReportState()
+    var state = ReportState()
 
-    var body: some View {
-        NavigationStack {
-            ReportScreen(state: $state, onSend: send, onDone: { dismiss() })
-        }
-        .onAppear {
-            state.demo = app.isDemo
-            state.offline = !app.isOnline
-        }
-        .onChange(of: app.isOnline) { _, online in state.offline = !online }
+    init(canonical: String) {
+        self.canonical = canonical
     }
 
-    private func send() {
+    func send(app: AppModel) async {
         guard let reason = state.reason else { return }
         guard app.isOnline else {
             state.offline = true
             return
         }
+        // Not while a send, a sent answer, or a Retry-After wait is on.
+        guard state.canSend else { return }
         state.phase = .sending
-        Task {
-            switch await app.service.report(canonical: canonical, reason: reason, note: state.note) {
-            case .success: state.phase = .sent
-            case .failure(.noConnection): state.phase = .failure(.errorNoConnection)
-            case .failure(.rateLimited(let seconds)):
-                state.phase = .failure(.resolveRateLimited)
-                state.waiting = true
-                try? await Task.sleep(for: .seconds(max(seconds, 1)))
-                state.waiting = false
-            case .failure(let failure): state.phase = .failure(CopyKey(failure.message(for: .report)))
-            }
+        switch await app.service.report(canonical: canonical, reason: reason, note: state.note) {
+        case .success: state.phase = .sent
+        case .failure(.noConnection): state.phase = .failure(.errorNoConnection)
+        case .failure(.rateLimited(let seconds)):
+            state.phase = .failure(.resolveRateLimited)
+            state.waiting = true
+            try? await Task.sleep(for: .seconds(max(seconds, 1)))
+            state.waiting = false
+        case .failure(let failure): state.phase = .failure(CopyKey(failure.message(for: .report)))
         }
+    }
+}
+
+/// The live Report sheet. Signed out, the report carries no bearer (FR-016).
+struct ReportRoute: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.dismiss) private var dismiss
+    @State private var model: ReportModel
+
+    init(canonical: String) {
+        _model = State(initialValue: ReportModel(canonical: canonical))
+    }
+
+    var body: some View {
+        @Bindable var model = model
+        NavigationStack {
+            ReportScreen(state: $model.state, onSend: { Task { await model.send(app: app) } }, onDone: { dismiss() })
+        }
+        .onAppear {
+            model.state.demo = app.isDemo
+            model.state.offline = !app.isOnline
+        }
+        .onChange(of: app.isOnline) { _, online in model.state.offline = !online }
     }
 }
