@@ -79,12 +79,14 @@ targets:
         # The version script edits the built Info.plist before signing.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
     postBuildScripts:
-      - name: Bundle the pinned wordlists and licenses
+      - name: Bundle the pinned wordlists, licenses, and third-party notices
         basedOnDependencyAnalysis: false
         script: |
           # contracts/wordlists/*.txt (design.md, Sync) go to wordlists/, and the
-          # pinned NOTICE and OFL.txt to Licenses/, when the pin has them. The pin
-          # d6143be has neither yet, so both folders may be missing.
+          # pinned NOTICE and OFL.txt to Licenses/, when the pin has them. Then
+          # Licenses/ThirdPartyNotices.txt is generated from the app's lock and
+          # the resolved package checkouts (tasks.md T087). The generator fails
+          # the build when a pinned package has no license file.
           set -eu
           resources="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
           rm -rf "$resources/wordlists" "$resources/Licenses"
@@ -99,6 +101,12 @@ targets:
             mkdir -p "$resources/Licenses"
             cp "$file" "$resources/Licenses/"
           done
+          # Xcode writes the app's package lock into Packages/ZZAPI, and keeps
+          # the resolved checkouts in SourcePackages beside Build.
+          /usr/bin/python3 "$SRCROOT/scripts/third_party_notices.py" \
+            --resolved "$SRCROOT/Packages/ZZAPI/Package.resolved" \
+            --source-packages "${BUILD_DIR%/Build/*}/SourcePackages" \
+            --out "$resources/Licenses/ThirdPartyNotices.txt"
       - name: Version from apps/VERSION
         basedOnDependencyAnalysis: false
         # The built Info.plist is an input, so this runs after Xcode writes it.

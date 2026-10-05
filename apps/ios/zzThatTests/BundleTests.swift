@@ -119,12 +119,43 @@ struct BundleTests {
     }
 
     /// The Licenses screen shows exactly the bundled files (FR-042).
-    @Test func licensesShowTheBundledFiles() {
+    /// The pins in the app's lock, which Xcode keeps in Packages/ZZAPI.
+    static func lockedPins() throws -> [[String: Any]] {
+        let url = repo.appendingPathComponent("apps/ios/Packages/ZZAPI/Package.resolved")
+        let lock = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
+        return try #require(lock?["pins"] as? [[String: Any]])
+    }
+
+    /// T087: the Licenses screen shows the zzThis NOTICE and OFL.txt as
+    /// pinned, then one block per pinned package from the generated notices.
+    @Test func licensesShowTheBundledFiles() throws {
         let folder = Self.repo.appendingPathComponent("apps/ios/zzThat/Resources/Licenses")
-        let pinned = ["NOTICE", "OFL.txt"].filter {
-            FileManager.default.fileExists(atPath: folder.appendingPathComponent($0).path)
+        let pinned = try ["NOTICE", "OFL.txt"].map {
+            try String(contentsOf: folder.appendingPathComponent($0), encoding: .utf8)
         }
-        #expect(LicensesScreen.bundledTexts().count == pinned.count)
+        let texts = LicensesScreen.bundledTexts()
+        #expect(Array(texts.prefix(2)) == pinned, "NOTICE, then OFL.txt, exactly as pinned")
+        #expect(texts.count == 2 + (try Self.lockedPins().count), "one block per pinned package")
+    }
+
+    /// T087: the generated notices name every package the app's lock pins,
+    /// with its version, its repository, and its license text.
+    @Test func thirdPartyNoticesListEveryPinnedPackage() throws {
+        let url = try #require(Bundle.main.resourceURL?.appendingPathComponent("Licenses/ThirdPartyNotices.txt"))
+        let notices = try String(contentsOf: url, encoding: .utf8)
+        let blocks = notices.components(separatedBy: "\n\(LicensesScreen.noticeSeparator)\n")
+        for pin in try Self.lockedPins() {
+            let location = try #require(pin["location"] as? String)
+            let state = pin["state"] as? [String: Any]
+            let version = try #require((state?["version"] ?? state?["revision"]) as? String)
+            let block = blocks.first { $0.contains("\n\(location)\n") }
+            #expect(block != nil, "no notice for \(location)")
+            guard let block else { continue }
+            let header = block.trimmingCharacters(in: .newlines).split(separator: "\n", maxSplits: 1)
+            #expect(header.first?.hasSuffix(" \(version)") == true, "\(location) is not at \(version)")
+            // The license text follows the name and repository lines.
+            #expect(block.count > location.count + 200, "no license text for \(location)")
+        }
     }
 }
 

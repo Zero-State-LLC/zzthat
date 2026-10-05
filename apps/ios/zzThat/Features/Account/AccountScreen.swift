@@ -124,9 +124,9 @@ extension View {
 
 // MARK: Licenses
 
-/// Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`,
-/// verbatim, the one FR-042 exception. The pin has neither file yet, so the
-/// screen shows only what is bundled.
+/// Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`, then
+/// the third-party notices the build generates from the pinned packages
+/// (T087), all verbatim, the one FR-042 exception.
 struct LicensesScreen: View {
     let texts: [String]
     let demo: Bool
@@ -134,23 +134,36 @@ struct LicensesScreen: View {
     var body: some View {
         Screen(demo: demo) {
             Text(.accountLicenses).textRole(.heading).accessibilityAddTraits(.isHeader)
-            ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
-                Text(verbatim: text)
-                    .zzFont(.mono, ZZTextSize.textXs)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .panel()
+            // About 200 KB of text: each license is its own lazily drawn block.
+            LazyVStack(alignment: .leading, spacing: ZZSpace.spaceSm) {
+                ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
+                    Text(verbatim: text)
+                        .zzFont(.mono, ZZTextSize.textXs)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .panel()
+                }
             }
         }
     }
 
-    /// `Licenses/NOTICE` and `Licenses/OFL.txt` from the app bundle.
+    /// The separator line between packages in ThirdPartyNotices.txt.
+    static let noticeSeparator = String(repeating: "=", count: 64)
+
+    /// `Licenses/NOTICE` and `Licenses/OFL.txt` from the app bundle, then one
+    /// block per package from `Licenses/ThirdPartyNotices.txt`.
     static func bundledTexts(bundle: Bundle = .main) -> [String] {
-        ["NOTICE", "OFL.txt"].compactMap { name in
-            guard let url = bundle.resourceURL?.appendingPathComponent("Licenses").appendingPathComponent(name),
-                  let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-            return text
+        let folder = bundle.resourceURL?.appendingPathComponent("Licenses")
+        func read(_ name: String) -> String? {
+            guard let url = folder?.appendingPathComponent(name) else { return nil }
+            return try? String(contentsOf: url, encoding: .utf8)
         }
+        let pinned = ["NOTICE", "OFL.txt"].compactMap(read)
+        let packages = (read("ThirdPartyNotices.txt") ?? "")
+            .components(separatedBy: "\n\(noticeSeparator)\n")
+            .map { $0.trimmingCharacters(in: .newlines) }
+            .filter { !$0.isEmpty }
+        return pinned + packages
     }
 }
 
