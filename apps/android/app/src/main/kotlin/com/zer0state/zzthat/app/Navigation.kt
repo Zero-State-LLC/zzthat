@@ -96,7 +96,9 @@ import com.zer0state.zzthat.ui.TabBar
 import com.zer0state.zzthat.ui.openLink
 import com.zer0state.zzthat.ui.rememberPhotoCapture
 import com.zer0state.zzthat.ui.share
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import llc.zerostate.zzthis.design.ZZMotion
 
 /** The state that lives as long as the tabs: one scan, the Create form, and the owner list. */
@@ -118,9 +120,12 @@ suspend fun openCanonical(canonical: String, app: AppModel, nav: NavHostControll
         app.lastCanonical.set(canonical)
         return R.string.resolve_not_on_device
     }
-    nav.navigate(ResolveDestination(canonical))
+    nav.onMain { navigate(ResolveDestination(canonical)) }
     return null
 }
+
+/** Navigation after a suspension point runs on the main thread, where the back stack lives. */
+suspend fun NavHostController.onMain(block: NavHostController.() -> Unit) = withContext(Dispatchers.Main.immediate) { block() }
 
 /** The tab shell: three tabs, each with its own back stack, and Account, Sign in, Report, and Licenses over them. */
 @Composable
@@ -388,7 +393,7 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
                 model.body = it
                 if (!app.isOnline) scope.launch { model.saveDraft(app) }
             },
-            onSubmit = { scope.launch { model.mint(app)?.let { nav.navigate(MintedDestination(it.id)) } } },
+            onSubmit = { scope.launch { model.mint(app)?.let { nav.onMain { navigate(MintedDestination(it.id)) } } } },
             onSignIn = { nav.navigate(SignInDestination) },
         )
     }
@@ -401,7 +406,7 @@ private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav:
     Frame(stringResource(R.string.nav_create)) {
         if (model == null) {
             // The tab that minted this code is gone (the process restarted): Create starts again.
-            LaunchedEffect(codeId) { nav.popBackStack(CreateHome, inclusive = false) }
+            LaunchedEffect(codeId) { nav.onMain { popBackStack(CreateHome, inclusive = false) } }
         } else {
             MintedScreen(
                 state = MintedScreenState(
@@ -533,7 +538,7 @@ private fun EditRoute(app: AppModel, models: TabModels, codeId: String, nav: Nav
                     if (model.save(app)) {
                         // Back to Code detail with `edit.saved` (design/UX.md, Edit record).
                         models.savedCodeId = codeId
-                        nav.popBackStack()
+                        nav.onMain { popBackStack() }
                     }
                 }
             },
@@ -653,7 +658,7 @@ private fun SignInRoute(app: AppModel, nav: NavHostController) {
                 when (val outcome = signIn(provider, app, googleSignIn(app, context))) {
                     SignInFlow.Outcome.SignedIn -> {
                         phase = SignInScreenState.Phase.Idle
-                        nav.popBackStack()
+                        nav.onMain { popBackStack() }
                     }
                     SignInFlow.Outcome.Cancelled -> phase = SignInScreenState.Phase.Idle
                     is SignInFlow.Outcome.Failed -> phase = SignInScreenState.Phase.Failure(outcome.message.res)

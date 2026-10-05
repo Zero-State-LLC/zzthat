@@ -177,11 +177,11 @@ fun CodeText(canonical: String, checkWord: String? = null, size: TextUnit = ZZTy
             if (start >= 0) addStyle(SpanStyle(color = palette.accentInk), start + 1, start + 1 + checkWord.length)
         }
     }
-    SelectionContainer(modifier = modifier) {
+    SelectionContainer {
         Text(
             text = text,
             style = TextStyle(fontFamily = ZZFonts.mono, fontSize = size, fontWeight = ZZType.WeightMedium, color = palette.ink),
-            modifier = Modifier.semantics { contentDescription = canonical },
+            modifier = modifier.semantics { contentDescription = canonical },
         )
     }
 }
