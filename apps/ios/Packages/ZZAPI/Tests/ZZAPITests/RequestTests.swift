@@ -173,6 +173,25 @@ struct RequestTests {
         #expect(object?["refresh_token"] as? String == "refresh-0")
     }
 
+    /// The launch factory builds the token store with its refresher, so a
+    /// stored refresh token starts the session the same way.
+    @Test func theLaunchFactoryRefreshesBeforeTheFirstBearerCall() async throws {
+        let transport = StubTransport(Self.ok)
+        let service = ZZService.live(origin: URL(string: "http://localhost:8787")!,
+                                     storage: MemoryRefreshTokenStorage(token: "refresh-0"), transport: transport)
+        _ = try await service.me().get()
+        #expect(transport.sent.map(\.operationID) == ["refreshToken", "getMe"])
+        #expect(Self.contractFields(transport.sent[1].request) == ["1"])
+        #expect(transport.sent[1].request.headerFields[.authorization] == "Bearer access-1")
+    }
+
+    /// A build without an API origin answers `error.unavailable`, never data.
+    @Test func anUnconfiguredServiceIsUnavailable() async {
+        let service = ZZService.unconfigured(storage: MemoryRefreshTokenStorage())
+        #expect(await service.resolve("zz-kathy-lost-cat-zz").failure == .unavailable)
+        #expect(await service.discovery().failure?.message(for: .discovery) == .unavailable)
+    }
+
     /// The person is signed out only when the refresh itself returns 401.
     @Test func aRejectedRefreshSignsOut() async throws {
         let transport = StubTransport { sent in

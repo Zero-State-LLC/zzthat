@@ -139,9 +139,12 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.zer0state.zzthat.uitests
         TEST_TARGET_NAME: zzThat
       configs:
-        # The end-to-end run uses the Local build (runtime.md, End-to-end run).
+        # The end-to-end run uses the Local build (runtime.md, End-to-end run);
+        # the demo flow uses the Demo build.
         Local:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ZZ_LOCAL
+        Demo:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ZZ_DEMO
 schemes:
   zzThat:
     build:
