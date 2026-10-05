@@ -157,7 +157,7 @@ Create and Edit record stop input at 120 Unicode code points for the title and 4
 
 The Licenses row is [INFERRED] from the zzThis license work (the EFF wordlist and IBM Plex credits in `NOTICE`). It uses the Account pattern until zzThis `design/UX.md` names one. The license text is shown verbatim, the one FR-042 exception. Its title comes from `account.licenses`. `account.licenses` is a new zzThis copy key for Michael's review, so it reaches this repo when the pin moves.
 
-The Licenses screen also shows the third-party notices that the build generates from the platform's pinned dependencies: each package's name, version, and full license text, with Apache 2.0 NOTICE files where they exist (T087) [DANNY 2026-10-05 #43]. They are shown as given, after `NOTICE` and `OFL.txt`, under the same FR-042 exception, with no copy key. The build fails when a pinned package has no license file.
+The Licenses screen also shows the third-party notices that the build generates for the packages that ship in the app, from the platform's pinned dependencies: each package's name, version, and full license text, with Apache 2.0 NOTICE files where they exist (T087) [DANNY 2026-10-05 #43]. Test-only packages and build tools are not listed (S4). The notices are shown as given, after `NOTICE` and `OFL.txt`, under the same FR-042 exception, with no copy key. The build fails when the app links a package the notices miss, or when a listed package has no license file.
 
 ## Build configurations
 
