@@ -1,6 +1,6 @@
 # Requirements checklist: 001-zzthat-apps
 
-Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decided, and again after the one-shot deepening (ZQ22 to ZQ26, zzThis pin `d6143be99b2946902a84a89b1584c5907e640a2d`). The apps are not built. Rows below check the spec, not a binary.
+Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decided, and again after the one-shot deepening (ZQ22 to ZQ26, zzThis pin `484100308376bce01c88f30f871dff3e13082fe0`). The apps are not built. Rows below check the spec, not a binary.
 
 ## Completeness
 
