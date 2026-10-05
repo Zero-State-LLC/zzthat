@@ -119,6 +119,11 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
+          # The image's default 6 GB userdata partition needs 7.37 GB free, and
+          # the runner has about 6.8 GB here, so the emulator quit at launch
+          # ("Not enough space to create userdata partition", run 37380570500).
+          # A 4 GB partition needs 4.9 GB.
+          disk-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           working-directory: apps/android

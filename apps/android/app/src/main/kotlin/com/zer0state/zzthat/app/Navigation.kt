@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -23,8 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.annotation.StringRes
-import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -132,24 +131,8 @@ suspend fun openCanonical(canonical: String, app: AppModel, nav: NavHostControll
 /** Navigation after a suspension point runs on the main thread, where the back stack lives. */
 suspend fun NavHostController.onMain(block: NavHostController.() -> Unit) = withContext(Dispatchers.Main.immediate) { block() }
 
-/** The title each route's frame shows, so the next screen's back arrow can name it. */
-fun titleOf(destination: NavDestination?): Int? = when {
-    destination == null -> null
-    destination.hasRoute(ScanHome::class) || destination.hasRoute(ResolveDestination::class) -> R.string.nav_scan
-    destination.hasRoute(TypeDestination::class) -> R.string.type_field_label
-    destination.hasRoute(ClarifyDestination::class) -> R.string.scan_clarify_title
-    destination.hasRoute(CreateHome::class) || destination.hasRoute(MintedDestination::class) -> R.string.nav_create
-    destination.hasRoute(WriteCheckDestination::class) -> R.string.minted_write_check
-    destination.hasRoute(CodesHome::class) || destination.hasRoute(DetailDestination::class) -> R.string.nav_my_codes
-    destination.hasRoute(EditDestination::class) -> R.string.detail_edit
-    destination.hasRoute(AccountDestination::class) -> R.string.account_title
-    destination.hasRoute(LicensesDestination::class) -> R.string.account_licenses
-    else -> null
-}
-
-/** The back arrow of a pushed screen (Danny, #43 C3), named by the screen it returns to. */
-private fun back(nav: NavHostController, @StringRes fallback: Int): Back =
-    Back(titleOf(nav.previousBackStackEntry?.destination) ?: fallback) { nav.popBackStack() }
+/** The back arrow of a pushed screen (Danny, #43 C3). */
+private fun back(nav: NavHostController): Back = Back { nav.popBackStack() }
 
 /** The tab shell: three tabs, each with its own back stack, and Account, Sign in, Report, and Licenses over them. */
 @Composable
@@ -287,7 +270,7 @@ private fun ScanRoute(app: AppModel, scan: ScanModel, reader: TextReader, nav: N
 private fun TypeRoute(app: AppModel, nav: NavHostController) {
     val model = remember { TypeModel().apply { if (app.isDemo) text = DemoPhoto.CANONICAL } }
     val scope = rememberCoroutineScope()
-    Frame(stringResource(R.string.type_field_label), back(nav, R.string.nav_scan)) {
+    Frame(stringResource(R.string.type_field_label), back(nav)) {
         TypeScreen(
             text = model.text,
             onTextChange = {
@@ -324,7 +307,7 @@ private fun ClarifyRoute(app: AppModel, destination: ClarifyDestination, nav: Na
         val step = model.step(app.pipeline)
         if (step is ClarifyStep.Done) scope.launch { message = openCanonical(step.canonical, app, nav) }
     }
-    Frame(stringResource(R.string.scan_clarify_title), back(nav, R.string.nav_scan)) {
+    Frame(stringResource(R.string.scan_clarify_title), back(nav)) {
         ClarifyScreen(
             state = ClarifyScreenState(model.parts, model.step(app.pipeline), app.isDemo),
             onPick = { word, position ->
@@ -355,7 +338,7 @@ private fun ResolveRoute(app: AppModel, canonical: String, nav: NavHostControlle
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(canonical) { model.loadOnce(app) }
-    Frame(stringResource(R.string.nav_scan), back(nav, R.string.nav_scan)) {
+    Frame(stringResource(R.string.nav_scan), back(nav)) {
         ResolveScreen(
             canonical = canonical,
             phase = model.phase,
@@ -428,7 +411,7 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
 private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav: NavHostController) {
     val model = create.mintedModel(codeId)
     val scope = rememberCoroutineScope()
-    Frame(stringResource(R.string.nav_create), back(nav, R.string.nav_create)) {
+    Frame(stringResource(R.string.nav_create), back(nav)) {
         if (model == null) {
             // The tab that minted this code is gone (the process restarted): Create starts again.
             LaunchedEffect(codeId) { nav.onMain { popBackStack(CreateHome, inclusive = false) } }
@@ -463,7 +446,7 @@ private fun WriteCheckRoute(app: AppModel, canonical: String, reader: TextReader
     androidx.compose.runtime.DisposableEffect(canonical) {
         onDispose { model.end(app) }
     }
-    Frame(stringResource(R.string.minted_write_check), back(nav, R.string.nav_create)) {
+    Frame(stringResource(R.string.minted_write_check), back(nav)) {
         WriteCheckScreen(
             state = WriteCheckScreenState(
                 canonical = canonical,
@@ -515,7 +498,7 @@ private fun DetailRoute(app: AppModel, models: TabModels, codeId: String, nav: N
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(codeId, app.ownerRevision) { model.load(app) }
-    Frame(stringResource(R.string.nav_my_codes), back(nav, R.string.nav_my_codes)) {
+    Frame(stringResource(R.string.nav_my_codes), back(nav)) {
         CodeDetailScreen(
             state = CodeDetailScreenState(
                 row = model.row,
@@ -551,7 +534,7 @@ private fun EditRoute(app: AppModel, models: TabModels, codeId: String, nav: Nav
     val model = remember(codeId) { EditRecordModel(codeId, models.codes.row(codeId)) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(codeId) { model.loadOnce(app) }
-    Frame(stringResource(R.string.detail_edit), back(nav, R.string.nav_my_codes)) {
+    Frame(stringResource(R.string.detail_edit), back(nav)) {
         EditRecordScreen(
             title = model.title,
             body = model.body,
@@ -654,8 +637,9 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
 @Composable
 private fun LicensesRoute(app: AppModel, nav: NavHostController) {
     val context = LocalContext.current
-    val texts = remember { bundledLicenses(context) }
-    Frame(stringResource(R.string.account_licenses), back(nav, R.string.account_title)) {
+    // The notices run to about two megabytes, so they are read off the main thread.
+    val texts by produceState(emptyList<String>()) { value = withContext(Dispatchers.IO) { bundledLicenses(context) } }
+    Frame(stringResource(R.string.account_licenses), back(nav)) {
         LicensesScreen(texts, app.isDemo)
     }
 }

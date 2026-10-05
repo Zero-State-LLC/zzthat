@@ -8,16 +8,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -39,6 +50,7 @@ import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.design.ZZLicenses
 import com.zer0state.zzthat.ui.ButtonKind
 import com.zer0state.zzthat.ui.ChipShape
+import com.zer0state.zzthat.ui.DemoBadge
 import com.zer0state.zzthat.ui.LocalPalette
 import com.zer0state.zzthat.ui.Message
 import com.zer0state.zzthat.ui.MinTouch
@@ -48,6 +60,7 @@ import com.zer0state.zzthat.ui.ZZButton
 import com.zer0state.zzthat.ui.ZZScreen
 import com.zer0state.zzthat.ui.panel
 import com.zer0state.zzthat.ui.style
+import llc.zerostate.zzthis.design.ZZRadius
 import llc.zerostate.zzthis.design.ZZSpace
 import llc.zerostate.zzthis.design.ZZType
 
@@ -148,23 +161,107 @@ private fun LinkRow(text: String, tag: String, onClick: () -> Unit) {
 }
 
 /**
- * Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`,
- * verbatim, the one FR-042 exception.
+ * Licenses (runtime.md, Screens): the bundled `NOTICE` and `OFL.txt`, then
+ * the third-party notices the build generates (T087), verbatim, the one
+ * FR-042 exception. The notices run to about two megabytes, so the screen is
+ * a lazy list with ZZScreen's layout: each text is cut at line breaks into
+ * runs of [LICENSE_RUN_LINES] lines that draw one panel together, and a run is
+ * laid out only when it scrolls into view.
  */
 @Composable
 fun LicensesScreen(texts: List<String>, demo: Boolean) {
-    ZZScreen(demo = demo) {
-        RoleText(stringResource(R.string.account_licenses), TextRole.HEADING, Modifier.semantics { heading() })
-        for (text in texts) {
-            SelectionContainer(modifier = Modifier.panel()) {
-                Text(text, style = TextStyle(fontFamily = ZZFonts.mono, fontSize = ZZType.TextXs, color = LocalPalette.current.ink))
+    val palette = LocalPalette.current
+    val runs = remember(texts) { texts.map(::licenseRuns) }
+    val style = TextStyle(fontFamily = ZZFonts.mono, fontSize = ZZType.TextXs, color = palette.ink)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(palette.paper).testTag("licenses.list"),
+        contentPadding = PaddingValues(horizontal = ZZSpace.Gutter, vertical = ZZSpace.SpaceSm),
+    ) {
+        if (demo) item(key = "demo") { DemoBadge() }
+        item(key = "heading") {
+            RoleText(
+                stringResource(R.string.account_licenses),
+                TextRole.HEADING,
+                Modifier.padding(top = if (demo) ZZSpace.SpaceSm else 0.dp).semantics { heading() },
+            )
+        }
+        runs.forEachIndexed { index, textRuns ->
+            items(textRuns.size, key = { run -> "text-$index-$run" }) { run ->
+                val first = run == 0
+                val last = run == textRuns.lastIndex
+                val panel = if (first && last) Modifier.panel() else Modifier.panelRun(first, last, palette.panel, palette.rule)
+                SelectionContainer(modifier = Modifier.padding(top = if (first) ZZSpace.SpaceSm else 0.dp).then(panel)) {
+                    Text(textRuns[run], style = style)
+                }
             }
         }
     }
 }
 
-/** `assets/licenses/NOTICE` and `assets/licenses/OFL.txt`, from the pin (design.md, Sync). */
-fun bundledLicenses(context: Context): List<String> = ZZLicenses.FILES.mapNotNull { name ->
+/** Lines in one run of a license text on the Licenses screen. */
+const val LICENSE_RUN_LINES = 100
+
+/**
+ * [text] cut at every [LICENSE_RUN_LINES]th line break, the break itself
+ * dropped, so the runs joined with line breaks give back [text] exactly. A
+ * final line break stays with the last run.
+ */
+fun licenseRuns(text: String): List<String> {
+    val runs = mutableListOf<String>()
+    var start = 0
+    var lines = 0
+    var index = text.indexOf('\n')
+    while (index in 0 until text.length - 1) {
+        lines++
+        if (lines == LICENSE_RUN_LINES) {
+            runs += text.substring(start, index)
+            start = index + 1
+            lines = 0
+        }
+        index = text.indexOf('\n', index + 1)
+    }
+    runs += text.substring(start)
+    return runs
+}
+
+/**
+ * One run of a long license text: [panel]'s fill, rule, and padding, open at
+ * the edges the run shares with the runs before and after it, so the runs of
+ * one text draw one panel.
+ */
+private fun Modifier.panelRun(top: Boolean, bottom: Boolean, fill: Color, rule: Color): Modifier = fillMaxWidth()
+    .drawBehind {
+        val stroke = ZZSpace.RuleHair.toPx()
+        // The panel's shape, stretched past the open edges, then clipped to the run.
+        val over = ZZRadius.RadiusChip.toPx() + stroke
+        val above = if (top) 0f else over
+        val below = if (bottom) 0f else over
+        clipRect {
+            translate(top = -above) {
+                drawOutline(ChipShape.createOutline(Size(size.width, size.height + above + below), layoutDirection, this), fill)
+                // Modifier.border keeps the rule inside the shape.
+                translate(left = stroke / 2, top = stroke / 2) {
+                    val inner = Size(size.width - stroke, size.height + above + below - stroke)
+                    drawOutline(ChipShape.createOutline(inner, layoutDirection, this), rule, style = Stroke(stroke))
+                }
+            }
+        }
+    }
+    .padding(
+        start = ZZSpace.SpaceSm,
+        end = ZZSpace.SpaceSm,
+        top = if (top) ZZSpace.SpaceSm else 0.dp,
+        bottom = if (bottom) ZZSpace.SpaceSm else 0.dp,
+    )
+
+/** The third-party notices in `assets/licenses`, written at build time by the app's `generateThirdPartyNotices` task (T087). */
+const val THIRD_PARTY_NOTICES = "third-party-notices.txt"
+
+/**
+ * `assets/licenses/NOTICE` and `assets/licenses/OFL.txt`, from the pin
+ * (design.md, Sync), then `assets/licenses/third-party-notices.txt` (T087).
+ */
+fun bundledLicenses(context: Context): List<String> = (ZZLicenses.FILES + THIRD_PARTY_NOTICES).mapNotNull { name ->
     try {
         context.assets.open("${ZZLicenses.FOLDER}/$name").bufferedReader(Charsets.UTF_8).use { it.readText() }
     } catch (error: Exception) {

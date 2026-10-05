@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -61,11 +60,8 @@ import kotlinx.coroutines.launch
 import llc.zerostate.zzthis.design.ZZSpace
 import java.io.File
 
-/**
- * The back arrow of a pushed screen (Danny, #43 C3). TalkBack names it with
- * the title of the screen it returns to, as the iOS back button does.
- */
-class Back(@StringRes val label: Int, val onClick: () -> Unit)
+/** The back arrow of a pushed screen (Danny, #43 C3). TalkBack names it `common.back` (zzThis #78). */
+class Back(val onClick: () -> Unit)
 
 /**
  * A screen with its title bar: the back arrow on a pushed screen, the title,
@@ -85,7 +81,7 @@ fun Frame(title: String?, back: Back? = null, actions: @Composable RowScope.() -
                 .padding(start = if (back != null) ZZSpace.Space2xs else ZZSpace.Gutter, end = ZZSpace.Gutter),
         ) {
             if (back != null) {
-                val label = stringResource(back.label)
+                val label = stringResource(R.string.common_back)
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier

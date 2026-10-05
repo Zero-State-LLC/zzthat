@@ -2,22 +2,22 @@
 
 zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.2.0, ratification pending Danny's approval).
 
-Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `1b11138767d7a8c137dc042a9cdd2104db374876`. This repo references those specs. It does not copy them.
+Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `0a65f6ef0e5c50439087cca0acbafc354aaeed7c`. This repo references those specs. It does not copy them.
 
 | zzThis artifact | What zzThat uses it for |
 |---|---|
-| [`docs/SPEC.md`](https://github.com/Zero-State-LLC/zzthis/blob/1b11138767d7a8c137dc042a9cdd2104db374876/docs/SPEC.md) | Grammar (Section 2.2a), architecture (Section 10), questions (Section 9), v1 and v2 line (Section 12) |
-| [`specs/002-resolver-core`](https://github.com/Zero-State-LLC/zzthis/tree/1b11138767d7a8c137dc042a9cdd2104db374876/specs/002-resolver-core) | The server the apps call. Free public codes are v2 there. |
-| [`specs/003-wordlist-checkword`](https://github.com/Zero-State-LLC/zzthis/tree/1b11138767d7a8c137dc042a9cdd2104db374876/specs/003-wordlist-checkword) | Wordlist, check word, and the v1 text grammar |
-| [`specs/005-v1-api`](https://github.com/Zero-State-LLC/zzthis/tree/1b11138767d7a8c137dc042a9cdd2104db374876/specs/005-v1-api) | The `/v1` contract the apps call, pinned as `contracts/zzthis-v1.openapi.yaml` |
-| [`design/`](https://github.com/Zero-State-LLC/zzthis/tree/1b11138767d7a8c137dc042a9cdd2104db374876/design) | Tokens, fonts, logos, UX patterns, and `copy.json` |
-| [`specs/004-capture`](https://github.com/Zero-State-LLC/zzthis/tree/1b11138767d7a8c137dc042a9cdd2104db374876/specs/004-capture) | Camera, typing, and voice capture. Voice is not in the first app release (ZQ10). |
+| [`docs/SPEC.md`](https://github.com/Zero-State-LLC/zzthis/blob/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/docs/SPEC.md) | Grammar (Section 2.2a), architecture (Section 10), questions (Section 9), v1 and v2 line (Section 12) |
+| [`specs/002-resolver-core`](https://github.com/Zero-State-LLC/zzthis/tree/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/specs/002-resolver-core) | The server the apps call. Free public codes are v2 there. |
+| [`specs/003-wordlist-checkword`](https://github.com/Zero-State-LLC/zzthis/tree/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/specs/003-wordlist-checkword) | Wordlist, check word, and the v1 text grammar |
+| [`specs/005-v1-api`](https://github.com/Zero-State-LLC/zzthis/tree/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/specs/005-v1-api) | The `/v1` contract the apps call, pinned as `contracts/zzthis-v1.openapi.yaml` |
+| [`design/`](https://github.com/Zero-State-LLC/zzthis/tree/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/design) | Tokens, fonts, logos, UX patterns, and `copy.json` |
+| [`specs/004-capture`](https://github.com/Zero-State-LLC/zzthis/tree/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/specs/004-capture) | Camera, typing, and voice capture. Voice is not in the first app release (ZQ10). |
 
 ## Features
 
 | ID | Feature | Built? | specify | clarify | plan | checklist | tasks | analyze |
 |---|---|---|---|---|---|---|---|---|
-| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done, deepened 2026-10-04 | ZQ1 to ZQ28 decided ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/1b11138767d7a8c137dc042a9cdd2104db374876/specs/analysis-2026-10-04.md) (in zzThis) |
+| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done, deepened 2026-10-04 | ZQ1 to ZQ28 decided ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/0a65f6ef0e5c50439087cca0acbafc354aaeed7c/specs/analysis-2026-10-04.md) (in zzThis) |
 
 Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature of this repo [ZZTHIS SPEC].
 
