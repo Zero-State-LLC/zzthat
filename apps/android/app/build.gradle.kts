@@ -131,6 +131,7 @@ extensions.configure<ApplicationAndroidComponentsExtension> {
 tasks.withType<Test>().configureEach {
     systemProperty("zz.appSrc", layout.projectDirectory.dir("src").asFile.absolutePath)
     systemProperty("zz.apps", appsDir.asFile.absolutePath)
+    systemProperty("zz.wordlists", contractsDir.dir("wordlists").asFile.absolutePath)
 }
 
 dependencies {

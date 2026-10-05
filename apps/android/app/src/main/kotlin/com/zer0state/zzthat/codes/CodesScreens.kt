@@ -5,9 +5,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.window.Dialog
+import com.zer0state.zzthat.ui.ChipShape
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -166,24 +173,52 @@ fun ConfirmDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    Dialog(onDismissRequest = onCancel) {
+        ConfirmCard(title, body, action, tag, onConfirm, onCancel)
+    }
+}
+
+/** The dialog's card, also drawn on its own for the snapshots. */
+@Composable
+fun ConfirmCard(
+    @StringRes title: Int,
+    @StringRes body: Int,
+    @StringRes action: Int,
+    tag: String,
+    onConfirm: () -> Unit = {},
+    onCancel: () -> Unit = {},
+) {
     val palette = LocalPalette.current
-    AlertDialog(
-        onDismissRequest = onCancel,
-        modifier = Modifier.testTag(tag),
-        title = { Text(stringResource(title), style = TextRole.TITLE.style()) },
-        text = { Text(stringResource(body), style = TextRole.BODY.style()) },
-        dismissButton = {
-            TextButton(onClick = onCancel, modifier = Modifier.testTag("$tag.cancel").defaultMinSize(minHeight = MinTouch)) {
-                Text(stringResource(R.string.common_cancel), style = TextRole.LABEL.style().copy(fontSize = ZZType.TextBase))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, modifier = Modifier.testTag("$tag.confirm").defaultMinSize(minHeight = MinTouch)) {
-                Text(stringResource(action), style = TextRole.LABEL.style().copy(fontSize = ZZType.TextBase, color = palette.accentInk))
-            }
-        },
-        containerColor = palette.panel,
-    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(ZZSpace.SpaceSm),
+        modifier = Modifier
+            .testTag(tag)
+            .fillMaxWidth()
+            .background(palette.panel, ChipShape)
+            .border(ZZSpace.RuleHair, palette.rule, ChipShape)
+            .padding(ZZSpace.SpaceMd),
+    ) {
+        Text(stringResource(title), style = TextRole.TITLE.style(), modifier = Modifier.semantics { heading() })
+        Text(stringResource(body), style = TextRole.BODY.style())
+        Row(horizontalArrangement = Arrangement.spacedBy(ZZSpace.SpaceXs, Alignment.End), modifier = Modifier.fillMaxWidth()) {
+            DialogButton(stringResource(R.string.common_cancel), "$tag.cancel", palette.ink, onCancel)
+            DialogButton(stringResource(action), "$tag.confirm", palette.accentInk, onConfirm)
+        }
+    }
+}
+
+@Composable
+private fun DialogButton(text: String, tag: String, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .testTag(tag)
+            .defaultMinSize(minWidth = MinTouch, minHeight = MinTouch)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = ZZSpace.SpaceXs),
+    ) {
+        Text(text, style = TextRole.LABEL.style().copy(fontSize = ZZType.TextBase, color = color))
+    }
 }
 
 data class EditRecordScreenState(
