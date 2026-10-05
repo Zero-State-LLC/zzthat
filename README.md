@@ -11,7 +11,7 @@
   <a href="https://github.com/orgs/Zero-State-LLC/projects/25">Board</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthat/issues">Issues</a> ·
   <a href="https://github.com/Zero-State-LLC/zzthis">zzThis</a> ·
-  <a href="https://github.com/Zero-State-LLC/zzthis/blob/889a4a7e9631cd76639f43a36ea27da301ea2f14/docs/SPEC.md">zzThis spec pin</a>
+  <a href="https://github.com/Zero-State-LLC/zzthis/blob/d6143be99b2946902a84a89b1584c5907e640a2d/docs/SPEC.md">zzThis spec pin</a>
 </p>
 
 <p align="center">
@@ -73,7 +73,7 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to open a change |
 | [`README.md`](README.md) | This file |
 
-zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `889a4a7e9631cd76639f43a36ea27da301ea2f14`, recorded in `contracts/ZZTHIS-API-PIN`.
+zzThis, not this repo, holds the central server, the later web client, the marketing page, the grammar, the resolver, the wordlist, and capture. The pin is commit `d6143be99b2946902a84a89b1584c5907e640a2d`, recorded in `contracts/ZZTHIS-API-PIN`.
 
 | zzThis path | Role for these apps |
 |---|---|
@@ -83,7 +83,7 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 | `specs/002-resolver-core` | Server behavior the client calls |
 | `specs/003-wordlist-checkword` | Wordlist, check word, grammar library |
 | `specs/004-capture` | Camera, typing, and voice |
-| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `889a4a7e9631cd76639f43a36ea27da301ea2f14` |
+| `design/` and `scripts/pin-zzthis.sh` | Tokens, generated Swift and Kotlin, fonts, masters, UX patterns, `copy.json`. Pin `d6143be99b2946902a84a89b1584c5907e640a2d` |
 | `specs/005-v1-api` and `docs/ONE-SHOT-BRIEF.md` | The `/v1` contract and the one-shot build brief |
 
 ## Architecture
