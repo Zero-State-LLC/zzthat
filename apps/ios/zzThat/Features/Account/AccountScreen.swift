@@ -95,7 +95,10 @@ struct LinkRow: View {
 
     var body: some View {
         HStack {
-            Text(verbatim: text).textRole(.body)
+            Text(verbatim: text)
+                .textRole(.body)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: ZZSpace.spaceXs)
             Image(systemName: symbol)
                 .foregroundStyle(Palette(scheme).ink3)

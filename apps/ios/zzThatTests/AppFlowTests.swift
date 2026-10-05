@@ -408,3 +408,27 @@ final class AtomicFlag: @unchecked Sendable {
         set { lock.withLock { stored = newValue } }
     }
 }
+
+/// DEP-005 limits as Create and Edit record enforce them (runtime.md, Screens).
+@MainActor
+@Suite("Field limits")
+struct FieldLimitTests {
+    @Test func titleStopsAt120CodePointsAfterTrimming() {
+        let long = String(repeating: "a", count: 130)
+        #expect(FieldLimits.limit(long, to: FieldLimits.title).unicodeScalars.count == 120)
+        let padded = "  " + String(repeating: "b", count: 120) + "  "
+        #expect(FieldLimits.limit(padded, to: FieldLimits.title) == padded, "edge spaces do not count")
+        let accented = String(repeating: "e\u{301}", count: 70)
+        #expect(FieldLimits.count(FieldLimits.limit(accented, to: FieldLimits.title)) <= 120,
+                "code points, not characters, are counted")
+    }
+
+    @Test func theReportNoteCountsAsTyped() {
+        let note = " " + String(repeating: "n", count: 500)
+        #expect(FieldLimits.limit(note, to: FieldLimits.reportNote, trimmed: false).unicodeScalars.count == 500)
+    }
+
+    @Test func aOneLineFieldTakesNoLineBreak() {
+        #expect(FieldLimits.oneLine("Lost\ncat\r\nflyer") == "Lost cat flyer")
+    }
+}

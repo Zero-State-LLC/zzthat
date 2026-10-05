@@ -133,14 +133,10 @@ struct LimitedField: View {
         let palette = Palette(scheme)
         VStack(alignment: .leading, spacing: ZZSpace.space3xs) {
             Text(label).textRole(.label)
-            Group {
-                if multiline {
-                    TextField("", text: $text, axis: .vertical)
-                        .lineLimit(4...12)
-                } else {
-                    TextField("", text: $text)
-                }
-            }
+            // A one-line field still wraps, so a long title stays readable at
+            // large text sizes instead of being cut off.
+            TextField("", text: $text, axis: .vertical)
+                .lineLimit(multiline ? 4...12 : 1...4)
             .zzFont(.body, ZZTextSize.textBase)
             .foregroundStyle(palette.ink)
             .padding(ZZSpace.spaceXs)
@@ -151,7 +147,9 @@ struct LimitedField: View {
             .accessibilityLabel(Text(label))
             .accessibilityIdentifier(identifier)
             .onChange(of: text) { _, new in
-                let limited = FieldLimits.limit(new, to: limit, trimmed: countsTrimmed)
+                // A one-line field takes no line break: Return types a space.
+                let flat = multiline ? new : FieldLimits.oneLine(new)
+                let limited = FieldLimits.limit(flat, to: limit, trimmed: countsTrimmed)
                 if limited != new { text = limited }
             }
         }
@@ -173,6 +171,11 @@ enum FieldLimits {
         var text = text
         while count(text, trimmed: trimmed) > max, !text.isEmpty { text.removeLast() }
         return text
+    }
+
+    /// Line breaks become spaces, for a one-line field such as the title.
+    static func oneLine(_ text: String) -> String {
+        String(text.map { $0.isNewline ? " " : $0 })
     }
 
     static func isBlank(_ text: String) -> Bool {
