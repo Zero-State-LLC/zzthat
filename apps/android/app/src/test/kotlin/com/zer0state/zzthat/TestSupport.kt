@@ -118,6 +118,7 @@ object TestApp {
         online: Boolean = true,
         clock: FakeClock = FakeClock(),
         googleWebClientId: String = "unset",
+        bundledLists: List<com.zer0state.zzthat.grammar.WordList> = emptyList(),
     ): AppModel {
         val folder = temporaryDirectory()
         val local = PreferenceDataStoreFactory.create(scope = scope) { File(folder, "local.preferences_pb") }
@@ -130,7 +131,7 @@ object TestApp {
             providerStore = ProviderStore(local),
             photos = PhotoScratch(File(folder, "photos")),
             connectivity = Connectivity(online),
-            bundledLists = emptyList(),
+            bundledLists = bundledLists,
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
         )
     }

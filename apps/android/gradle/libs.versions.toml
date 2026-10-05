@@ -53,6 +53,8 @@ compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+# The tab icons and the back arrow (Danny, #43 C3). Its version comes from the Compose BOM.
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 compose-animation-core = { module = "androidx.compose.animation:animation-core" }
 
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }

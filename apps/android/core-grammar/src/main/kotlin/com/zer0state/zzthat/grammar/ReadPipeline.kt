@@ -136,10 +136,23 @@ class ReadPipeline(
     }
 
     companion object {
-        /** The bundled lists and the server's list version pick both lists (FR-044). */
+        /**
+         * The list the classifier uses when no bundled list matches the
+         * server's `wordlist_version`, or before discovery has loaded (Danny,
+         * #43 A2): the production prototype list, never a test fixture.
+         */
+        const val DEFAULT_CLASSIFY_VERSION = "proto-v0"
+
+        /**
+         * The bundled lists and the server's list version pick both lists
+         * (FR-044, #43 A2). The classifier and the local check word use only
+         * the bundled list whose version matches; with no match there is no
+         * local check word, and the classifier uses [DEFAULT_CLASSIFY_VERSION].
+         */
         fun of(bundled: List<WordList>, serverVersion: String?): ReadPipeline {
             val check = WordListLoader.matching(bundled, serverVersion)
-            return ReadPipeline(classifyList = check ?: bundled.firstOrNull(), checkList = check)
+            val classify = check ?: bundled.firstOrNull { it.version == DEFAULT_CLASSIFY_VERSION }
+            return ReadPipeline(classifyList = classify, checkList = check)
         }
 
         /**

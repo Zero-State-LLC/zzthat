@@ -128,13 +128,18 @@ class BandTest {
         assertEquals(listOf(Band.ABSTAIN), camera("zz" to 0.95).map { it.band })
     }
 
+    /**
+     * FR-044 and Danny's #43 A2: with no bundled list matching the server's
+     * version, no local check word runs, and the bundled fixture list is not
+     * used to classify, so the reading goes to Clarify instead of opening.
+     */
     @Test
     fun cameraWithoutAMatchingListSkipsTheLocalCheck() {
         val pipeline = ReadPipeline.of(listOf(list), serverVersion = "proto-v0")
         val found = camera("zz-copper-maple-sky-zz" to 0.95, pipeline = pipeline)
         assertNull(found.first().check)
-        assertEquals(CodeClass.Word, found.first().codeClass)
-        assertEquals(listOf(Band.ACCEPT), found.map { it.band })
+        assertEquals(CodeClass.Field, found.first().codeClass)
+        assertEquals(listOf(Band.CLARIFY), found.map { it.band })
     }
 
     @Test

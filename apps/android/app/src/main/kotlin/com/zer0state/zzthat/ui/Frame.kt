@@ -24,7 +24,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import llc.zerostate.zzthis.design.ZZType
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,12 +63,18 @@ import llc.zerostate.zzthis.design.ZZSpace
 import java.io.File
 
 /**
- * A screen with its title bar. The title bar holds text actions only, such
- * as Account on every tab (runtime.md, Navigation) and Done on Account. Back
- * is the system back.
+ * The back arrow of a pushed screen (Danny, #43 C3). TalkBack names it with
+ * the title of the screen it returns to, as the iOS back button does.
+ */
+class Back(@StringRes val label: Int, val onClick: () -> Unit)
+
+/**
+ * A screen with its title bar: the back arrow on a pushed screen, the title,
+ * and text actions such as Account on every tab (runtime.md, Navigation) and
+ * Done on Account.
  */
 @Composable
-fun Frame(title: String?, actions: @Composable RowScope.() -> Unit = {}, content: @Composable () -> Unit) {
+fun Frame(title: String?, back: Back? = null, actions: @Composable RowScope.() -> Unit = {}, content: @Composable () -> Unit) {
     val palette = LocalPalette.current
     Column(modifier = Modifier.fillMaxSize().background(palette.paper)) {
         Row(
@@ -66,8 +83,21 @@ fun Frame(title: String?, actions: @Composable RowScope.() -> Unit = {}, content
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .padding(horizontal = ZZSpace.Gutter),
+                .padding(start = if (back != null) ZZSpace.Space2xs else ZZSpace.Gutter, end = ZZSpace.Gutter),
         ) {
+            if (back != null) {
+                val label = stringResource(back.label)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .testTag("nav.back")
+                        .size(MinTouch)
+                        .clickable(role = Role.Button, onClick = back.onClick)
+                        .semantics { contentDescription = label },
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = palette.accentInk)
+                }
+            }
             if (title != null) {
                 Text(
                     text = title,
@@ -101,11 +131,15 @@ fun BarAction(text: String, tag: String, onClick: () -> Unit) {
     }
 }
 
-/** The three tabs: Scan, Create, My codes (runtime.md, Navigation). */
-enum class Tab(val label: Int, val tag: String) {
-    SCAN(R.string.nav_scan, "tab.scan"),
-    CREATE(R.string.nav_create, "tab.create"),
-    CODES(R.string.nav_my_codes, "tab.codes"),
+/**
+ * The three tabs: Scan, Create, My codes (runtime.md, Navigation), with the
+ * Material core icons nearest the iOS symbols (Danny, #43 C3). The core set
+ * has no camera, so Scan shows the search glass.
+ */
+enum class Tab(val label: Int, val tag: String, val icon: ImageVector) {
+    SCAN(R.string.nav_scan, "tab.scan", Icons.Filled.Search),
+    CREATE(R.string.nav_create, "tab.create", Icons.Filled.Create),
+    CODES(R.string.nav_my_codes, "tab.codes", Icons.AutoMirrored.Filled.List),
 }
 
 @Composable
@@ -116,6 +150,7 @@ fun TabBar(selected: Tab, onSelect: (Tab) -> Unit) {
         Row(modifier = Modifier.fillMaxWidth().height(ZZSpace.NavH).selectableGroup()) {
             for (tab in Tab.entries) {
                 val isSelected = tab == selected
+                val color = if (isSelected) palette.accentInk else palette.ink2
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -124,11 +159,14 @@ fun TabBar(selected: Tab, onSelect: (Tab) -> Unit) {
                         .fillMaxSize()
                         .selectable(selected = isSelected, role = Role.Tab) { onSelect(tab) },
                 ) {
-                    Text(
-                        text = stringResource(tab.label),
-                        textAlign = TextAlign.Center,
-                        style = TextRole.LABEL.style().copy(color = if (isSelected) palette.accentInk else palette.ink2),
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Icon(tab.icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+                        Text(
+                            text = stringResource(tab.label),
+                            textAlign = TextAlign.Center,
+                            style = TextRole.CAPTION.style().copy(color = color, fontWeight = ZZType.WeightSemibold),
+                        )
+                    }
                     if (isSelected) {
                         Box(
                             modifier = Modifier
