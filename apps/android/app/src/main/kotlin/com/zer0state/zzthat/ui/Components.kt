@@ -48,6 +48,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -321,6 +322,9 @@ fun LimitedField(
             cursorBrush = SolidColor(palette.accentInk),
             minLines = if (multiline) 4 else 1,
             keyboardOptions = KeyboardOptions(
+                // A code is typed as written: no capitals added, no autocorrect.
+                capitalization = if (mono) KeyboardCapitalization.None else KeyboardCapitalization.Sentences,
+                autoCorrectEnabled = !mono,
                 keyboardType = keyboardType,
                 imeAction = if (onDone != null) ImeAction.Go else ImeAction.Default,
             ),

@@ -179,7 +179,11 @@ fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnr
         }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) scope.launch { PhotoDecoder.decode(context, uri)?.let { onPhoto(it) } ?: onUnreadable() }
+        if (uri != null) {
+            // A picked photo replaces an earlier camera photo, which is deleted (FR-004).
+            app.photos.end()
+            scope.launch { PhotoDecoder.decode(context, uri)?.let { onPhoto(it) } ?: onUnreadable() }
+        }
     }
     val cameraAvailable = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
     return PhotoCapture(
