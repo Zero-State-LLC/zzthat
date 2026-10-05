@@ -1,6 +1,7 @@
 package com.zer0state.zzthat.grammar
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -42,9 +43,9 @@ class PipelineTest {
     fun eachCandidateIsBoxedOnItsOwnLine() {
         val top = NormRect(0.1, 0.1, 0.8, 0.1)
         val bottom = NormRect(0.2, 0.5, 0.6, 0.1)
-        val lines = listOf(RecognizedLine("zz-river-maple-sky-zz", 0.9, top), RecognizedLine("zz-b2-4-zz", 0.6, bottom))
+        val lines = listOf(RecognizedLine("zz-river-falcon-sky-zz", 0.9, top), RecognizedLine("zz-b2-4-zz", 0.6, bottom))
         val result = ReadPipeline(null, null).read(lines)
-        assertEquals(listOf("zz-river-maple-sky-zz", "zz-b2-4-zz"), result.candidates.map { it.canonical })
+        assertEquals(listOf("zz-river-falcon-sky-zz", "zz-b2-4-zz"), result.candidates.map { it.canonical })
         assertEquals(listOf(listOf(top), listOf(bottom)), result.candidates.map { it.boxes })
         assertEquals(listOf(0.9, 0.6), result.candidates.map { Bands.candidateConfidence(it.rows) })
     }
@@ -107,6 +108,47 @@ class PipelineTest {
             val error = assertThrows(WordListException::class.java) { WordListLoader.parse("t", text) }
             assertEquals(message, error.message)
         }
+    }
+
+    private val pinned by lazy { WordListLoader.load(File(System.getProperty("zz.wordlists"))) }
+
+    /** #43 A2 and FR-044: a bundled list that matches the server's version is used for both the classifier and the check word. */
+    @Test
+    fun aMatchingListDecidesBothLists() {
+        for (version in listOf("fixture-7", "proto-v0")) {
+            val pipeline = ReadPipeline.of(pinned, serverVersion = version)
+            assertEquals(version, pipeline.classifyList?.version)
+            assertEquals(version, pipeline.checkList?.version)
+        }
+    }
+
+    /** #43 A2: with no matching list, there is no local check word and the classifier uses proto-v0, never fixture-7. */
+    @Test
+    fun withoutAMatchTheClassifierUsesProtoV0() {
+        val pipeline = ReadPipeline.of(pinned, serverVersion = "proto-v1")
+        assertEquals("proto-v0", pipeline.classifyList?.version)
+        assertNull(pipeline.checkList)
+    }
+
+    /** #43 A2: before discovery loads there is no server version, and the classifier uses proto-v0. */
+    @Test
+    fun beforeDiscoveryTheClassifierUsesProtoV0() {
+        val pipeline = ReadPipeline.of(pinned, serverVersion = null)
+        assertEquals(ReadPipeline.DEFAULT_CLASSIFY_VERSION, pipeline.classifyList?.version)
+        assertNull(pipeline.checkList)
+        // The fixture code is not a word code against proto-v0, so a camera read asks the person.
+        val read = pipeline.read(listOf(RecognizedLine("zz-copper-lantern-sky-zz", 0.95, NormRect.ZERO))).candidates.single()
+        assertNotEquals(CodeClass.Word, read.codeClass)
+        assertNull(read.check)
+        assertEquals(Band.CLARIFY, read.band)
+    }
+
+    /** #43 A2: a build without proto-v0 bundled classifies against no list rather than a fixture. */
+    @Test
+    fun withoutProtoV0BundledThereIsNoFallbackList() {
+        val fixtureOnly = pinned.filter { it.version == "fixture-7" }
+        assertNull(ReadPipeline.of(fixtureOnly, serverVersion = null).classifyList)
+        assertEquals("fixture-7", ReadPipeline.of(fixtureOnly, serverVersion = "fixture-7").classifyList?.version)
     }
 
     /** The pinned lists in contracts/wordlists load, and their lengths are prime (spec 003 Q30). */

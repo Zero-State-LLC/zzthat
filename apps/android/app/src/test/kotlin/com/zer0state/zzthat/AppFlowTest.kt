@@ -357,7 +357,7 @@ class OwnerFlowTest {
         val app = signedInDemo()
         val detail = CodeDetailModel("demo-code-2", null)
         detail.load(app)
-        assertEquals("zz-river-maple-sky-zz", detail.row?.canonical)
+        assertEquals("zz-river-falcon-sky-zz", detail.row?.canonical)
         assertEquals("Parcel (demo)", detail.record?.title)
         val missing = CodeDetailModel("no-such-code", null)
         missing.load(app)

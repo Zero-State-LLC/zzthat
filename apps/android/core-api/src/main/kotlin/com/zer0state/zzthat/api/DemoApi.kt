@@ -51,8 +51,8 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
     private val owned = mutableListOf(
         Owned(owned("demo-code-1", "zz-copper-lantern-sky-zz", "sky", OwnedCode.Status.active, "demo-record-1"),
             RECORDS.getValue("zz-copper-lantern-sky-zz"), 1),
-        Owned(owned("demo-code-2", "zz-river-maple-sky-zz", "sky", OwnedCode.Status.active, "demo-record-2"),
-            RECORDS.getValue("zz-river-maple-sky-zz"), 1),
+        Owned(owned("demo-code-2", "zz-river-falcon-sky-zz", "sky", OwnedCode.Status.active, "demo-record-2"),
+            RECORDS.getValue("zz-river-falcon-sky-zz"), 1),
         Owned(owned("demo-code-3", "zz-b2-4-zz", null, OwnedCode.Status.revoked, "demo-record-3"),
             RECORDS.getValue("zz-b2-4-zz"), 1),
     )
@@ -179,7 +179,7 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
                 "Crate, field supply (demo)",
                 "NSN: DEMO-0000-00-000-0001\nDocument number: DEMO-DOC-0001\nHand receipt: DEMO-HR-01",
             ),
-            "zz-river-maple-sky-zz" to Record("Parcel (demo)", "Reference: DEMO-PARCEL-01\nStatus: Ready for drop-off (demo)"),
+            "zz-river-falcon-sky-zz" to Record("Parcel (demo)", "Reference: DEMO-PARCEL-01\nStatus: Ready for drop-off (demo)"),
             "zz-b2-4-zz" to Record("Duffel group B2, item 4 (demo)", "Hand receipt: DEMO-HR-02"),
         )
 

@@ -2,12 +2,14 @@ package com.zer0state.zzthat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.zer0state.zzthat.account.AccountScreen
@@ -59,6 +61,11 @@ import com.zer0state.zzthat.scan.ScanScreen
 import com.zer0state.zzthat.scan.ScanScreenState
 import com.zer0state.zzthat.scan.TypeScreen
 import com.zer0state.zzthat.scan.TypeScreenState
+import com.zer0state.zzthat.ui.Back
+import com.zer0state.zzthat.ui.BarAction
+import com.zer0state.zzthat.ui.Frame
+import com.zer0state.zzthat.ui.Tab
+import com.zer0state.zzthat.ui.TabBar
 import com.zer0state.zzthat.ui.ZZTheme
 import llc.zerostate.zzthis.design.ZZColor
 import llc.zerostate.zzthis.design.ZZSpace
@@ -78,23 +85,63 @@ class SnapshotTest {
     @get:Rule
     val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5, theme = "android:Theme.Material.Light.NoActionBar")
 
-    private class Case(val name: String, val content: @Composable () -> Unit)
+    /**
+     * The chrome a screen has in the app: its title bar (title, back arrow on
+     * a pushed screen, text action) and, inside a tab, the tab bar.
+     */
+    private class Chrome(val title: Int?, val tab: Tab?, val back: Int? = null, val action: Pair<Int, String>? = null)
+
+    private class Case(val name: String, val chrome: Chrome?, val content: @Composable () -> Unit)
+
+    @Composable
+    private fun framed(chrome: Chrome, content: @Composable () -> Unit) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f)) {
+                Frame(
+                    title = chrome.title?.let { stringResource(it) },
+                    back = chrome.back?.let { Back(it) {} },
+                    actions = { chrome.action?.let { (label, tag) -> BarAction(stringResource(label), tag) {} } },
+                    content = content,
+                )
+            }
+            chrome.tab?.let { TabBar(it) {} }
+        }
+    }
 
     private fun snap(cases: List<Case>) {
         for (case in cases) {
             for (dark in listOf(false, true)) {
                 paparazzi.snapshot(name = "${case.name}-${if (dark) "dark" else "light"}") {
-                    ZZTheme(dark = dark) { case.content() }
+                    ZZTheme(dark = dark) {
+                        val chrome = case.chrome
+                        if (chrome != null) framed(chrome, case.content) else case.content()
+                    }
                 }
             }
         }
     }
 
+    private val account = R.string.nav_account to "nav.account"
+    private val scanRoot = Chrome(R.string.nav_scan, Tab.SCAN, action = account)
+    private val type = Chrome(R.string.type_field_label, Tab.SCAN, back = R.string.nav_scan)
+    private val clarify = Chrome(R.string.scan_clarify_title, Tab.SCAN, back = R.string.nav_scan)
+    private val resolve = Chrome(R.string.nav_scan, Tab.SCAN, back = R.string.nav_scan)
+    private val report = Chrome(null, null)
+    private val createRoot = Chrome(R.string.nav_create, Tab.CREATE, action = account)
+    private val minted = Chrome(R.string.nav_create, Tab.CREATE, back = R.string.nav_create)
+    private val writeCheck = Chrome(R.string.minted_write_check, Tab.CREATE, back = R.string.nav_create)
+    private val codesRoot = Chrome(R.string.nav_my_codes, Tab.CODES, action = account)
+    private val detail = Chrome(R.string.nav_my_codes, Tab.CODES, back = R.string.nav_my_codes)
+    private val edit = Chrome(R.string.detail_edit, Tab.CODES, back = R.string.nav_my_codes)
+    private val signIn = Chrome(null, null, action = R.string.common_cancel to "signin.cancel")
+    private val accountSheet = Chrome(R.string.account_title, null, action = R.string.common_done to "account.done")
+    private val licenses = Chrome(R.string.account_licenses, null, back = R.string.account_title)
+
     // MARK: Fixtures
 
     private val context get() = paparazzi.context
     private val fixture by lazy { DemoPhoto.make(context, listOf(DemoPhoto.CANONICAL)) }
-    private val twoCodes by lazy { DemoPhoto.make(context, listOf("zz-river-maple-sky-zz", "zz-b2-4-zz")) }
+    private val twoCodes by lazy { DemoPhoto.make(context, listOf("zz-river-falcon-sky-zz", "zz-b2-4-zz")) }
     private val noCode by lazy { DemoPhoto.make(context, listOf("the buzz word")) }
 
     /** The pipeline as the Demo build runs it: the bundled lists, with the demo server's `wordlist_version` (fixture-7). */
@@ -109,7 +156,7 @@ class SnapshotTest {
     private val demoMint = DemoApi.MINT_SEQUENCE[0]
     private val demoRows = listOf(
         row("demo-code-1", "zz-copper-lantern-sky-zz", "sky", OwnedCode.Status.active, "demo-record-1"),
-        row("demo-code-2", "zz-river-maple-sky-zz", "sky", OwnedCode.Status.active, "demo-record-2"),
+        row("demo-code-2", "zz-river-falcon-sky-zz", "sky", OwnedCode.Status.active, "demo-record-2"),
         row("demo-code-3", "zz-b2-4-zz", null, OwnedCode.Status.revoked, "demo-record-3"),
     )
     private val demoOwnerRecord = DemoApi.RECORDS.getValue("zz-copper-lantern-sky-zz").let {
@@ -133,105 +180,105 @@ class SnapshotTest {
         SignInContent(SignInScreenState(listOf(TokenRequest.Provider.google), offline = state.offline))
     }
 
-    /** A system dialog over its Demo screen: the screen, the window dim, and the dialog card. */
-    @Composable
-    private fun confirm(background: @Composable () -> Unit, title: Int, body: Int, action: Int, tag: String) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            background()
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(ZZColor.ShadowDark).padding(ZZSpace.SpaceMd)) {
-                ConfirmCard(title, body, action, tag)
+    /** A system dialog over its Demo screen and that screen's chrome: the window dim, and the dialog card. */
+    private fun dialogCase(name: String, chrome: Chrome, title: Int, body: Int, action: Int, tag: String, background: @Composable () -> Unit) =
+        Case(name, chrome = null) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                framed(chrome, background)
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(ZZColor.ShadowDark).padding(ZZSpace.SpaceMd)) {
+                    ConfirmCard(title, body, action, tag)
+                }
             }
         }
-    }
 
     // MARK: Cases
 
     @Test
     fun scan() = snap(
         listOf(
-            Case("scan-loading") { scan(ScanScreenState(photo = fixture.bitmap.asImageBitmap(), reading = true, cameraAvailable = true)) },
-            Case("scan-empty") { scan(ScanScreenState(photo = noCode.bitmap.asImageBitmap(), message = R.string.scan_no_code, cameraAvailable = true)) },
-            Case("scan-error") { scan(ScanScreenState(message = R.string.scan_camera_off, cameraAvailable = true)) },
-            Case("scan-offline") {
+            Case("scan-loading", scanRoot) { scan(ScanScreenState(photo = fixture.bitmap.asImageBitmap(), reading = true, cameraAvailable = true)) },
+            Case("scan-empty", scanRoot) { scan(ScanScreenState(photo = noCode.bitmap.asImageBitmap(), message = R.string.scan_no_code, cameraAvailable = true)) },
+            Case("scan-error", scanRoot) { scan(ScanScreenState(message = R.string.scan_camera_off, cameraAvailable = true)) },
+            Case("scan-offline", scanRoot) {
                 scan(ScanScreenState(fixture.bitmap.asImageBitmap(), candidates(fixture), message = R.string.resolve_not_on_device, cameraAvailable = true))
             },
-            Case("scan-demo") { scan(ScanScreenState(fixture.bitmap.asImageBitmap(), candidates(fixture), demo = true)) },
-            Case("pick-offline") {
+            Case("scan-demo", scanRoot) { scan(ScanScreenState(fixture.bitmap.asImageBitmap(), candidates(fixture), demo = true)) },
+            Case("pick-offline", scanRoot) {
                 scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), candidates(twoCodes), message = R.string.resolve_not_on_device, cameraAvailable = true))
             },
-            Case("pick-demo") { scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), candidates(twoCodes), demo = true)) },
-            Case("clarify-error") { ClarifyScreen(ClarifyScreenState(listOf("copper", "maple", "sky"), ClarifyStep.CheckMismatch)) },
-            Case("clarify-offline") { ClarifyScreen(ClarifyScreenState(listOf("b2", "smith", "1"), ClarifyStep.Confirm)) },
-            Case("clarify-demo") {
+            Case("pick-demo", scanRoot) { scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), candidates(twoCodes), demo = true)) },
+            Case("clarify-error", clarify) { ClarifyScreen(ClarifyScreenState(listOf("copper", "maple", "sky"), ClarifyStep.CheckMismatch)) },
+            Case("clarify-offline", clarify) { ClarifyScreen(ClarifyScreenState(listOf("b2", "smith", "1"), ClarifyStep.Confirm)) },
+            Case("clarify-demo", clarify) {
                 ClarifyScreen(ClarifyScreenState(listOf("coper", "lantern", "sky"), ClarifyStep.NearWord(1, "coper", listOf("copper")), demo = true))
             },
-            Case("type-empty") { TypeScreen("", {}, TypeScreenState()) },
-            Case("type-error") { TypeScreen("zz-copper-lantern", {}, TypeScreenState(message = R.string.type_malformed)) },
-            Case("type-offline") { TypeScreen(DemoPhoto.CANONICAL, {}, TypeScreenState(message = R.string.resolve_not_on_device)) },
-            Case("type-demo") { TypeScreen(DemoPhoto.CANONICAL, {}, TypeScreenState(demo = true)) },
+            Case("type-empty", type) { TypeScreen("", {}, TypeScreenState()) },
+            Case("type-error", type) { TypeScreen("zz-copper-lantern", {}, TypeScreenState(message = R.string.type_malformed)) },
+            Case("type-offline", type) { TypeScreen(DemoPhoto.CANONICAL, {}, TypeScreenState(message = R.string.resolve_not_on_device)) },
+            Case("type-demo", type) { TypeScreen(DemoPhoto.CANONICAL, {}, TypeScreenState(demo = true)) },
         ),
     )
 
     @Test
     fun resolve() = snap(
         listOf(
-            Case("resolve-loading") { ResolveScreen(demoView.canonical, ResolvePhase.Loading(null), demo = false) },
-            Case("resolve-error") { ResolveScreen(demoView.canonical, ResolvePhase.NotFound, demo = false) },
-            Case("resolve-offline") { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = true), demo = false) },
-            Case("resolve-offline-not-on-device") { ResolveScreen(demoView.canonical, ResolvePhase.NotOnDevice, demo = false) },
-            Case("resolve-demo") { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = false), demo = true) },
-            Case("report-loading") { ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sending)) },
-            Case("report-empty") { ReportScreen(ReportState()) },
-            Case("report-error") {
+            Case("resolve-loading", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Loading(null), demo = false) },
+            Case("resolve-error", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.NotFound, demo = false) },
+            Case("resolve-offline", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = true), demo = false) },
+            Case("resolve-offline-not-on-device", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.NotOnDevice, demo = false) },
+            Case("resolve-demo", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = false), demo = true) },
+            Case("report-loading", report) { ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sending)) },
+            Case("report-empty", report) { ReportScreen(ReportState()) },
+            Case("report-error", report) {
                 ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Failure(R.string.resolve_rate_limited)))
             },
-            Case("report-offline") { ReportScreen(ReportState(ReportRequest.Reason.spam, offline = true)) },
-            Case("report-demo") { ReportScreen(ReportState(ReportRequest.Reason.personalMinusData, demo = true)) },
+            Case("report-offline", report) { ReportScreen(ReportState(ReportRequest.Reason.spam, offline = true)) },
+            Case("report-demo", report) { ReportScreen(ReportState(ReportRequest.Reason.personalMinusData, demo = true)) },
         ),
     )
 
     @Test
     fun create() = snap(
         listOf(
-            Case("create-loading") {
+            Case("create-loading", createRoot) {
                 CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, CreateModel.Phase.Minting))
             },
-            Case("create-empty") { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.SIGNED_OUT)) },
-            Case("create-error") {
+            Case("create-empty", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.SIGNED_OUT)) },
+            Case("create-error", createRoot) {
                 CreateScreen(
                     demoRecord.title,
                     demoRecord.body,
                     CreateScreenState(CreateScreenState.Gate.FORM, CreateModel.Phase.Failure(R.string.create_content_refused)),
                 )
             },
-            Case("create-offline") { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, offline = true)) },
-            Case("create-demo") { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, demo = true)) },
-            Case("unavailable-empty") { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE)) },
-            Case("unavailable-offline") { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, offline = true)) },
-            Case("unavailable-demo") { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, demo = true)) },
-            Case("minted-loading") {
+            Case("create-offline", createRoot) { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, offline = true)) },
+            Case("create-demo", createRoot) { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, demo = true)) },
+            Case("unavailable-empty", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE)) },
+            Case("unavailable-offline", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, offline = true)) },
+            Case("unavailable-demo", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, demo = true)) },
+            Case("minted-loading", minted) {
                 MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, phase = MintedModel.Phase.Rerolling))
             },
-            Case("minted-error") {
+            Case("minted-error", minted) {
                 MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = true, phase = MintedModel.Phase.Failure(R.string.minted_reroll_cap)))
             },
-            Case("minted-offline") { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, offline = true)) },
-            Case("minted-demo") { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, demo = true)) },
-            Case("writecheck-loading") {
+            Case("minted-offline", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, offline = true)) },
+            Case("minted-demo", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, demo = true)) },
+            Case("writecheck-loading", writeCheck) {
                 WriteCheckScreen(WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), reading = true, cameraAvailable = true))
             },
-            Case("writecheck-empty") { WriteCheckScreen(WriteCheckScreenState(DemoPhoto.CANONICAL, cameraAvailable = true)) },
-            Case("writecheck-error") {
+            Case("writecheck-empty", writeCheck) { WriteCheckScreen(WriteCheckScreenState(DemoPhoto.CANONICAL, cameraAvailable = true)) },
+            Case("writecheck-error", writeCheck) {
                 WriteCheckScreen(
                     WriteCheckScreenState(demoMint.first, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MISMATCH, cameraAvailable = true),
                 )
             },
-            Case("writecheck-offline") {
+            Case("writecheck-offline", writeCheck) {
                 WriteCheckScreen(
                     WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MATCH, cameraAvailable = true),
                 )
             },
-            Case("writecheck-demo") {
+            Case("writecheck-demo", writeCheck) {
                 WriteCheckScreen(
                     WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MATCH, demo = true),
                 )
@@ -242,48 +289,42 @@ class SnapshotTest {
     @Test
     fun codes() = snap(
         listOf(
-            Case("codes-loading") { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loading)) },
-            Case("codes-empty") { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Loaded)) },
-            Case("codes-empty-signed-out") { CodesScreen(CodesScreenState(false)) },
-            Case("codes-error") { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_forbidden))) },
-            Case("codes-offline") { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_no_connection))) },
-            Case("codes-demo") { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loaded, demo = true)) },
-            Case("detail-loading") { CodeDetailScreen(CodeDetailScreenState(demoRows[0], phase = CodeDetailModel.Phase.Loading)) },
-            Case("detail-error") { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.NotFound)) },
-            Case("detail-offline") { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.Failure(R.string.error_no_connection))) },
-            Case("detail-demo") { CodeDetailScreen(CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, demo = true)) },
-            Case("edit-loading") { EditRecordScreen("", "", EditRecordScreenState(EditRecordModel.Phase.Loading)) },
-            Case("edit-empty") { EditRecordScreen("", demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing)) },
-            Case("edit-error") {
+            Case("codes-loading", codesRoot) { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loading)) },
+            Case("codes-empty", codesRoot) { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Loaded)) },
+            Case("codes-empty-signed-out", codesRoot) { CodesScreen(CodesScreenState(false)) },
+            Case("codes-error", codesRoot) { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_forbidden))) },
+            Case("codes-offline", codesRoot) { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_no_connection))) },
+            Case("codes-demo", codesRoot) { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loaded, demo = true)) },
+            Case("detail-loading", detail) { CodeDetailScreen(CodeDetailScreenState(demoRows[0], phase = CodeDetailModel.Phase.Loading)) },
+            Case("detail-error", detail) { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.NotFound)) },
+            Case("detail-offline", detail) { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.Failure(R.string.error_no_connection))) },
+            Case("detail-demo", detail) { CodeDetailScreen(CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, demo = true)) },
+            Case("edit-loading", edit) { EditRecordScreen("", "", EditRecordScreenState(EditRecordModel.Phase.Loading)) },
+            Case("edit-empty", edit) { EditRecordScreen("", demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing)) },
+            Case("edit-error", edit) {
                 EditRecordScreen(
                     demoOwnerRecord.title,
                     demoOwnerRecord.body,
                     EditRecordScreenState(EditRecordModel.Phase.Failure(R.string.create_content_refused)),
                 )
             },
-            Case("edit-offline") { EditRecordScreen(demoOwnerRecord.title, demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing, offline = true)) },
-            Case("edit-demo") { EditRecordScreen(demoOwnerRecord.title, demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing, demo = true)) },
-            Case("revoke-confirm-loading") {
+            Case("edit-offline", edit) { EditRecordScreen(demoOwnerRecord.title, demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing, offline = true)) },
+            Case("edit-demo", edit) { EditRecordScreen(demoOwnerRecord.title, demoOwnerRecord.body, EditRecordScreenState(EditRecordModel.Phase.Editing, demo = true)) },
+            Case("revoke-confirm-loading", detail) {
                 CodeDetailScreen(CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, CodeDetailModel.RevokePhase.Revoking))
             },
-            Case("revoke-confirm-error") {
+            Case("revoke-confirm-error", detail) {
                 CodeDetailScreen(
                     CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, CodeDetailModel.RevokePhase.Failure(R.string.error_nothing_saved)),
                 )
             },
-            Case("revoke-confirm-offline") {
+            Case("revoke-confirm-offline", detail) {
                 CodeDetailScreen(
                     CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, CodeDetailModel.RevokePhase.Failure(R.string.error_no_connection)),
                 )
             },
-            Case("revoke-confirm-demo") {
-                confirm(
-                    { CodeDetailScreen(CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, demo = true)) },
-                    R.string.revoke_title,
-                    R.string.revoke_body,
-                    R.string.revoke_action,
-                    "revoke.confirm",
-                )
+            dialogCase("revoke-confirm-demo", detail, R.string.revoke_title, R.string.revoke_body, R.string.revoke_action, "revoke.confirm") {
+                CodeDetailScreen(CodeDetailScreenState(demoRows[0], demoOwnerRecord, CodeDetailModel.Phase.Loaded, demo = true))
             },
         ),
     )
@@ -291,28 +332,28 @@ class SnapshotTest {
     @Test
     fun account() = snap(
         listOf(
-            Case("signin-loading") { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), SignInScreenState.Phase.SigningIn)) },
-            Case("signin-empty") { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google))) },
-            Case("signin-error") {
+            Case("signin-loading", signIn) { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), SignInScreenState.Phase.SigningIn)) },
+            Case("signin-empty", signIn) { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google))) },
+            Case("signin-error", signIn) {
                 SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), SignInScreenState.Phase.Failure(R.string.signin_failed)))
             },
-            Case("signin-offline") { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), offline = true)) },
-            Case("signin-demo") { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), demo = true)) },
-            Case("account-loading") { account(signedInAccount.copy(loading = true)) },
-            Case("account-empty") { account(signedInAccount.copy(signedIn = false)) },
-            Case("account-error") { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Failure(R.string.delete_failed))) },
-            Case("account-offline") { account(signedInAccount.copy(offline = true)) },
-            Case("account-demo") { account(signedInAccount.copy(demo = true)) },
-            Case("delete-confirm-loading") { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Deleting)) },
-            Case("delete-confirm-error") { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Failure(R.string.delete_failed))) },
-            Case("delete-confirm-offline") {
+            Case("signin-offline", signIn) { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), offline = true)) },
+            Case("signin-demo", signIn) { SignInScreen(SignInScreenState(listOf(TokenRequest.Provider.google), demo = true)) },
+            Case("account-loading", accountSheet) { account(signedInAccount.copy(loading = true)) },
+            Case("account-empty", accountSheet) { account(signedInAccount.copy(signedIn = false)) },
+            Case("account-error", accountSheet) { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Failure(R.string.delete_failed))) },
+            Case("account-offline", accountSheet) { account(signedInAccount.copy(offline = true)) },
+            Case("account-demo", accountSheet) { account(signedInAccount.copy(demo = true)) },
+            Case("delete-confirm-loading", accountSheet) { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Deleting)) },
+            Case("delete-confirm-error", accountSheet) { account(signedInAccount.copy(deletePhase = AccountScreenState.DeletePhase.Failure(R.string.delete_failed))) },
+            Case("delete-confirm-offline", accountSheet) {
                 account(signedInAccount.copy(offline = true, deletePhase = AccountScreenState.DeletePhase.Failure(R.string.error_no_connection)))
             },
-            Case("delete-confirm-demo") {
-                confirm({ account(signedInAccount.copy(demo = true)) }, R.string.delete_title, R.string.delete_body, R.string.delete_action, "delete.confirm")
+            dialogCase("delete-confirm-demo", accountSheet, R.string.delete_title, R.string.delete_body, R.string.delete_action, "delete.confirm") {
+                account(signedInAccount.copy(demo = true))
             },
-            Case("licenses-offline") { LicensesScreen(bundledLicenses(context), demo = false) },
-            Case("licenses-demo") { LicensesScreen(bundledLicenses(context), demo = true) },
+            Case("licenses-offline", licenses) { LicensesScreen(bundledLicenses(context), demo = false) },
+            Case("licenses-demo", licenses) { LicensesScreen(bundledLicenses(context), demo = true) },
         ),
     )
 
