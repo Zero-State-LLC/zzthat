@@ -1,6 +1,11 @@
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import groovy.json.JsonSlurper
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 
 // The application (runtime.md, Modules: App): entry, tabs, navigation, feature
 // screens, and dependency wiring. Flavors demo, local, and prod are the Demo,
@@ -116,10 +121,13 @@ abstract class BundleWordlists : DefaultTask() {
 // Third-party notices (T087, Danny on #43): every library on the release
 // runtime classpath with its group, name, version, and license, read from its
 // POM (following parent POMs) out of Gradle's own cache, then each distinct
-// license's text once, then any NOTICE file a library carries. The file is
-// generated into the assets at build time and never edited by hand. A library
-// with no license the build can find, or a license with no known text, fails
-// the build instead of being skipped.
+// license's text once, then the components that Google's libraries list in
+// their third_party_licenses files for the code built into them, each text
+// once after the components that use it, then any NOTICE file a library
+// carries. The file is generated into the assets at build time and never
+// edited by hand. A library with no license the build can find, a license
+// with no known text, or an embedded component with no text fails the build
+// instead of being skipped.
 
 /** One license: its identifier and either its verbatim text (a file in app/licenses) or, for terms published only as a web page, its URL. */
 data class KnownLicense(val id: String, val textFile: String?, val url: String?)
@@ -172,6 +180,12 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
+    /** A NOTICE file (Apache 2.0, section 4(d)). */
+    private val notice = Regex("(?i)notice(\\.txt|\\.md)?")
+
+    /** The files Google's libraries carry for the licenses of the code built into them. */
+    private val embeddedNames = setOf("third_party_licenses.json", "third_party_licenses.txt")
+
     /** A POM license URL or name, compared without its scheme, `www.`, or file extension. */
     private fun licenseKey(text: String): String = text.trim().lowercase()
         .removePrefix("https://").removePrefix("http://").removePrefix("www.")
@@ -208,17 +222,16 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
         return emptyList()
     }
 
-    /** The NOTICE files inside a jar or aar, with the jars inside an aar: (path, verbatim text). */
-    private fun noticeFiles(file: File): List<Pair<String, String>> {
-        val notice = Regex("(?i)notice(\\.txt|\\.md)?")
-        val found = mutableListOf<Pair<String, String>>()
+    /** The files a jar or aar carries for its licenses, with those in the jars inside an aar: path to bytes. */
+    private fun carriedFiles(file: File): Map<String, ByteArray> {
+        val found = linkedMapOf<String, ByteArray>()
         fun scan(zip: ZipInputStream, prefix: String) {
             while (true) {
                 val entry = zip.nextEntry ?: break
+                val name = entry.name.substringAfterLast('/')
                 when {
                     entry.isDirectory -> Unit
-                    notice.matches(entry.name.substringAfterLast('/')) ->
-                        found += "$prefix${entry.name}" to zip.readBytes().toString(Charsets.UTF_8)
+                    notice.matches(name) || name in embeddedNames -> found["$prefix${entry.name}"] = zip.readBytes()
                     // Not closed: closing it would close the outer stream.
                     entry.name.endsWith(".jar") -> scan(ZipInputStream(zip), "$prefix${entry.name}!/")
                 }
@@ -228,16 +241,66 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
         return found
     }
 
+    /**
+     * The components a library's third_party_licenses.json names, each with
+     * its text, which the .json places in third_party_licenses.txt by byte
+     * offset and length. A component that does not resolve to a text is a
+     * problem, not a gap.
+     */
+    private fun embeddedLicenses(coordinates: String, carried: Map<String, ByteArray>, problems: MutableList<String>): List<Pair<String, String>> {
+        val found = mutableListOf<Pair<String, String>>()
+        val folders = carried.keys.filter { it.substringAfterLast('/') in embeddedNames }.map { it.substringBeforeLast('/', "").let { folder -> if (folder.isEmpty()) "" else "$folder/" } }.toSortedSet()
+        for (folder in folders) {
+            val json = carried["${folder}third_party_licenses.json"]
+            val txt = carried["${folder}third_party_licenses.txt"]
+            if (json == null || txt == null) {
+                problems += "$coordinates carries only one of ${folder}third_party_licenses.json and .txt"
+                continue
+            }
+            val table = try {
+                JsonSlurper().parseText(json.toString(Charsets.UTF_8)) as? Map<*, *>
+            } catch (error: Exception) {
+                null
+            }
+            if (table == null) {
+                problems += "$coordinates ${folder}third_party_licenses.json is not a JSON object"
+                continue
+            }
+            for ((component, place) in table) {
+                val start = ((place as? Map<*, *>)?.get("start") as? Number)?.toInt() ?: -1
+                val length = ((place as? Map<*, *>)?.get("length") as? Number)?.toInt() ?: -1
+                val text = if (start >= 0 && length > 0 && start.toLong() + length <= txt.size) {
+                    try {
+                        Charsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(txt, start, length)).toString()
+                    } catch (error: CharacterCodingException) {
+                        null
+                    }
+                } else {
+                    null
+                }
+                if (component !is String || component.isBlank() || text.isNullOrBlank()) {
+                    problems += "$coordinates ${folder}third_party_licenses.json gives no text for $component"
+                } else {
+                    found += component.trim() to text.trimEnd()
+                }
+            }
+        }
+        return found
+    }
+
     @TaskAction
     fun generate() {
         val libraries = artifacts.artifacts
-            .mapNotNull { artifact -> (artifact.id.componentIdentifier as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { it to artifact.file } }
+            .mapNotNull { artifact -> (artifact.id.componentIdentifier as? ModuleComponentIdentifier)?.let { it to artifact.file } }
             .groupBy({ "${it.first.group}:${it.first.module}:${it.first.version}" }) { it }
             .toSortedMap()
         val unlicensed = mutableListOf<String>()
         val unknown = sortedMapOf<String, MutableList<String>>()
+        val problems = mutableListOf<String>()
         val entries = mutableListOf<Pair<String, List<KnownLicense>>>()
         val notices = mutableListOf<Pair<String, String>>()
+        // Each embedded license text once, with the components that use it.
+        val embedded = mutableMapOf<String, MutableSet<String>>()
         for ((coordinates, files) in libraries) {
             val id = files.first().first
             val found = pomLicenses(id.group, id.module, id.version)
@@ -250,18 +313,28 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
                     ?: run { unknown.getOrPut("$name <$url>") { mutableListOf() } += coordinates; null }
             }
             entries += coordinates to known.filterNotNull().distinct()
-            for ((_, file) in files) for ((path, text) in noticeFiles(file)) notices += "$coordinates $path" to text
+            for ((_, file) in files) {
+                val carried = carriedFiles(file)
+                for ((path, bytes) in carried) {
+                    if (notice.matches(path.substringAfterLast('/'))) notices += "$coordinates $path" to bytes.toString(Charsets.UTF_8)
+                }
+                for ((component, text) in embeddedLicenses(coordinates, carried, problems)) {
+                    embedded.getOrPut(text) { sortedSetOf() } += component
+                }
+            }
         }
         for ((name, id) in copiedSources.get()) {
             val license = licenses.values.firstOrNull { it.id == id } ?: throw GradleException("copied source $name names an unknown license $id")
             entries += name to listOf(license)
         }
-        if (unlicensed.isNotEmpty() || unknown.isNotEmpty()) {
-            val problems = unlicensed.map { "no license in the POM or its parents: $it" } +
-                unknown.map { (license, users) -> "no known text for $license, used by ${users.joinToString()}" }
-            throw GradleException("Third-party notices are incomplete:\n" + problems.joinToString("\n"))
+        if (unlicensed.isNotEmpty() || unknown.isNotEmpty() || problems.isNotEmpty()) {
+            val all = unlicensed.map { "no license in the POM or its parents: $it" } +
+                unknown.map { (license, users) -> "no known text for $license, used by ${users.joinToString()}" } +
+                problems
+            throw GradleException("Third-party notices are incomplete:\n" + all.joinToString("\n"))
         }
         val rule = "=".repeat(64)
+        val embeddedRule = "-".repeat(64)
         val text = buildString {
             for ((name, licenseList) in entries) {
                 append(name).append('\n')
@@ -273,6 +346,12 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
                 if (license.textFile != null) {
                     append('\n').append(licenseTexts.get().file(license.textFile).asFile.readText(Charsets.UTF_8).trimEnd()).append('\n')
                 }
+            }
+            // The code built into Google's libraries, from their third_party_licenses files.
+            for ((embeddedText, components) in embedded.entries.sortedWith(compareBy({ it.value.first() }, { it.key }))) {
+                append('\n').append(embeddedRule).append('\n')
+                for (component in components) append(component).append('\n')
+                append('\n').append(embeddedText).append('\n')
             }
             for ((name, notice) in notices) {
                 append('\n').append(rule).append('\n').append(name).append('\n')
@@ -286,7 +365,11 @@ abstract class GenerateThirdPartyNotices : DefaultTask() {
     }
 }
 
-/** Every library on the release runtime classpath, one `group:name:version` per line, for the notices test. */
+/**
+ * For the notices test: every library on the release runtime classpath, one
+ * `group:name:version` per line in libraries.txt, and each library's
+ * third_party_licenses.json and .txt copied to embedded/group/name/version.
+ */
 abstract class ListRuntimeLibraries : DefaultTask() {
     @get:Internal
     lateinit var artifacts: ArtifactCollection
@@ -296,23 +379,34 @@ abstract class ListRuntimeLibraries : DefaultTask() {
     val artifactFiles: FileCollection
         get() = artifacts.artifactFiles
 
-    @get:OutputFile
-    abstract val output: RegularFileProperty
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
 
     @TaskAction
     fun write() {
-        val lines = artifacts.artifacts
-            .mapNotNull { it.id.componentIdentifier as? org.gradle.api.artifacts.component.ModuleComponentIdentifier }
-            .map { "${it.group}:${it.module}:${it.version}" }
-            .distinct()
-            .sorted()
-        output.get().asFile.writeText(lines.joinToString("\n", postfix = "\n"))
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        out.mkdirs()
+        val libraries = sortedSetOf<String>()
+        for (artifact in artifacts.artifacts) {
+            val id = artifact.id.componentIdentifier as? ModuleComponentIdentifier ?: continue
+            libraries += "${id.group}:${id.module}:${id.version}"
+            ZipFile(artifact.file).use { zip ->
+                for (name in listOf("third_party_licenses.json", "third_party_licenses.txt")) {
+                    val entry = zip.getEntry(name) ?: continue
+                    val target = File(out, "embedded/${id.group}/${id.module}/${id.version}/$name")
+                    target.parentFile.mkdirs()
+                    zip.getInputStream(entry).use { input -> target.outputStream().use { input.copyTo(it) } }
+                }
+            }
+        }
+        File(out, "libraries.txt").writeText(libraries.joinToString("\n", postfix = "\n"))
     }
 }
 
 /** The release runtime classpath's libraries (all three flavors resolve the same ones), without the app's own modules. */
 fun releaseArtifacts(): ArtifactCollection = configurations.getByName("prodReleaseRuntimeClasspath").incoming
-    .artifactView { componentFilter { it is org.gradle.api.artifacts.component.ModuleComponentIdentifier } }
+    .artifactView { componentFilter { it is ModuleComponentIdentifier } }
     .artifacts
 
 val thirdPartyNotices = tasks.register<GenerateThirdPartyNotices>("generateThirdPartyNotices") {
@@ -328,7 +422,7 @@ val thirdPartyNotices = tasks.register<GenerateThirdPartyNotices>("generateThird
 }
 val runtimeLibraries = tasks.register<ListRuntimeLibraries>("listReleaseRuntimeLibraries") {
     artifacts = releaseArtifacts()
-    output.set(layout.buildDirectory.file("zz/release-runtime-libraries.txt"))
+    outputDir.set(layout.buildDirectory.dir("zz/release-runtime"))
 }
 
 extensions.configure<ApplicationAndroidComponentsExtension> {
@@ -349,15 +443,16 @@ extensions.configure<ApplicationAndroidComponentsExtension> {
 }
 
 tasks.withType<Test>().configureEach {
-    // The notices tests read the generated file and the release classpath list (T087).
+    // The notices tests read the generated file, the release classpath list, and the embedded license files (T087).
     val notices = thirdPartyNotices.flatMap { it.outputDir }
-    val libraries = runtimeLibraries.flatMap { it.output }
+    val release = runtimeLibraries.flatMap { it.outputDir }
     inputs.dir(notices).withPropertyName("thirdPartyNotices")
-    inputs.file(libraries).withPropertyName("releaseRuntimeLibraries")
+    inputs.dir(release).withPropertyName("releaseRuntimeLibraries")
     jvmArgumentProviders.add(CommandLineArgumentProvider {
         listOf(
             "-Dzz.notices=" + notices.get().file("licenses/third-party-notices.txt").asFile.absolutePath,
-            "-Dzz.releaseLibraries=" + libraries.get().asFile.absolutePath,
+            "-Dzz.releaseLibraries=" + release.get().file("libraries.txt").asFile.absolutePath,
+            "-Dzz.releaseEmbedded=" + release.get().dir("embedded").asFile.absolutePath,
         )
     })
     systemProperty("zz.appSrc", layout.projectDirectory.dir("src").asFile.absolutePath)

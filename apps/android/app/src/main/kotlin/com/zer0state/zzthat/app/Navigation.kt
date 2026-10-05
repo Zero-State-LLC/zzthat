@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -654,7 +655,8 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
 @Composable
 private fun LicensesRoute(app: AppModel, nav: NavHostController) {
     val context = LocalContext.current
-    val texts = remember { bundledLicenses(context) }
+    // The notices run to about two megabytes, so they are read off the main thread.
+    val texts by produceState(emptyList<String>()) { value = withContext(Dispatchers.IO) { bundledLicenses(context) } }
     Frame(stringResource(R.string.account_licenses), back(nav, R.string.account_title)) {
         LicensesScreen(texts, app.isDemo)
     }

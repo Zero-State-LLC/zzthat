@@ -12,9 +12,11 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.zer0state.zzthat.account.licenseRuns
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -143,18 +145,28 @@ class DemoFlowTest {
         waitFor("tab.codes")
     }
 
-    /** Licenses shows `NOTICE` and `OFL.txt`, then the third-party notices this build generated (T087). */
+    /**
+     * Licenses shows `NOTICE` and `OFL.txt`, then the third-party notices this
+     * build generated (T087), each text in its runs of lines, in order, to the
+     * last run.
+     */
     @Test
     fun licensesShowTheThirdPartyNotices() {
         val texts = listOf("NOTICE", "OFL.txt", "third-party-notices.txt").map { name ->
             rule.activity.assets.open("licenses/$name").bufferedReader(Charsets.UTF_8).use { it.readText() }
         }
+        val runs = texts.flatMap(::licenseRuns)
         waitFor("demo.badge")
         tap("nav.account")
         tap("account.licenses")
-        rule.waitForIdle()
-        val tops = texts.map { rule.onNode(hasText(it)).fetchSemanticsNode().positionInRoot.y }
-        assertEquals("in order", tops.sorted(), tops)
-        rule.onNode(hasText(texts.last())).performScrollTo().assertIsDisplayed()
+        // The texts are read off the main thread.
+        rule.waitUntil(10_000) { rule.onAllNodes(hasText(runs.first())).fetchSemanticsNodes().isNotEmpty() }
+        // Items: the Demo badge, the heading, then every run.
+        val list = rule.onNodeWithTag("licenses.list")
+        for (run in listOf(0, 1, 2, runs.size / 2, runs.lastIndex)) {
+            list.performScrollToIndex(2 + run)
+            rule.onNode(hasText(runs[run])).assertIsDisplayed()
+        }
+        assertEquals(texts.joinToString("\n"), runs.joinToString("\n"))
     }
 }
