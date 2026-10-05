@@ -33,7 +33,7 @@ As a person, I create a zz code in the app and write it on a thing, so that some
 
 Acceptance:
 
-1. The server chooses the words and the check word [ZZTHIS SPEC] spec 002 US2. Create calls mint and shows that wordlist code. The person does not send a code string (ZQ11). Issued word codes are two or three data words plus a check word [ZZTHIS SPEC] Section 2.2. The prototype issues two data words and a check word [ZZTHIS SPEC] spec 003 Prototype defaults (Q27, pending Danny's yes).
+1. The server chooses the words and the check word [ZZTHIS SPEC] spec 002 US2. Create calls mint and shows that wordlist code. The person does not send a code string (ZQ11). Issued word codes are two or three data words plus a check word [ZZTHIS SPEC] Section 2.2. The prototype issues two data words and a check word [ZZTHIS SPEC] spec 003 Prototype defaults (Q27, decided 2026-10-04).
 2. If the server has no free public scope, the app does not invent a code. It shows an unavailable state (FR-018, ZQ3).
 3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11. The free app does not mint field codes or handles.
 4. After the person writes the minted code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017, with the spec 004 Client read pipeline.
@@ -154,7 +154,7 @@ Acceptance:
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
 | FR-045 | The app offers the photo upload (FR-005) only when `GET /v1` reports `photo_reads: true`. It is false in v1, so v1 never uploads a photo. When it is offered, the file is JPEG only and at most 8388608 bytes (8 MiB). The server checks the JPEG signature (bytes FF D8 FF). Another type is 400 `malformed`. A larger body is 413 `payload-too-large` and is not stored. | [ZZTHIS SPEC] spec 005 US5 and FR-013 |
 | FR-046 | The record body is shown as plain text. Links in it are not tappable. | [ZZTHIS SPEC] spec 005 FR-007 |
-| FR-047 | The Account screen shows the support contact and the privacy policy link from build settings. A store submission waits for both (ZQ25). | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
+| FR-047 | The Account screen shows the support contact (`support@zer0state.com`) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
 | FR-049 | The app turns off the HTTP library's own cache for `/v1` calls. FR-041 is the only resolve cache. | [INFERRED], so one rule owns caching |
 
@@ -280,7 +280,7 @@ The code on paper is a public identifier. Authorization stays on the server [ZZT
 - Privacy disclosure matches the table above.
 - Account deletion is in the app before submission (FR-034), calling DEP-012. The server revokes the Sign in with Apple token, as Apple requires.
 - App Store review guideline 1.2 (user-written pages): the report action (FR-035), the server's content check and suspension, and a support contact in the app (FR-047).
-- A square app icon, the support contact, and the privacy policy URL are owed before submission (ZQ25). Builds use a placeholder icon.
+- Before submission (ZQ25): Michael's square icon artwork, the `support@zer0state.com` mailbox, and the published privacy page. Builds use a placeholder icon.
 - No accuracy or adoption claims (FR-029).
 - Danny submits (constitution IX). This spec does not authorize a submission.
 
@@ -362,7 +362,7 @@ The build contract is [runtime.md](runtime.md): project trees, modules, navigati
 
 ## Decisions
 
-ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) wait on Danny and Michael, with defaults this spec follows. zzThis Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37 remain open in zzThis with prototype defaults. This spec does not close them. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
+ZQ1 to ZQ21 are decided in [decisions.md](decisions.md). ZQ22 is decided with ZQ18 [DANNY 2026-10-04] (zzThis Q66). ZQ23 to ZQ26 (issues [#33](https://github.com/Zero-State-LLC/zzthat/issues/33) to [#36](https://github.com/Zero-State-LLC/zzthat/issues/36)) were decided the same day by best practice, with Danny's yes on zzThis #74. The zzThis questions this spec relies on (Q18, Q25 for a code written with no device, Q27, Q30 to Q32, Q36, and Q37) were decided in zzThis on 2026-10-04 too. Sync follows [design.md](design.md). Q18's model is still Danny's, so v1 does not upload photos.
 
 ## Workflows
 

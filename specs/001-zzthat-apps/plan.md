@@ -51,13 +51,13 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 
 The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks.md), Phase 1 to Phase 11.
 
-1. Danny accepts this spec and the zzThis build intent. ZQ23 to ZQ26 are answered, or their defaults stand. ZQ22 is already yes.
+1. Done: spec 001 is merged, and ZQ22 to ZQ26 are decided (zzThis #74). Danny still accepts the zzThis build intent.
 2. The zzThis build branch exists, with the fonts, `pin-zzthis.sh`, and the wordlist files. Pin to its head.
 3. Scaffold, then the core library on both platforms against `contracts/vectors.json`.
 4. API client, accounts, scan and resolve, create, share and manage, offline, privacy and strings.
 5. Snapshots per state and one end-to-end run per platform against the local zzThis Worker.
 6. After zzThis merges, move the pin to its merge commit, then merge this repo's PR.
-7. Store submission waits on Danny's yes and on ZQ25.
+7. Store submission waits on Danny's yes and on the ZQ25 items: the icon artwork, the support mailbox, and the published privacy page.
 
 ## Risks
 
