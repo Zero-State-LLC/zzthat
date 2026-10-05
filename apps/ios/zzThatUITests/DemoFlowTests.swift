@@ -22,7 +22,12 @@ final class DemoFlowTests: XCTestCase {
         // Scan the fixture photo on the device. Its check word verifies against
         // the bundled fixture-7 list, so the one candidate in Accept opens at once.
         flow.tap("scan.take_photo")
-        XCTAssertTrue(app.staticTexts["record.title"].waitForExistence(timeout: 30))
+        // The first Vision request on a fresh simulator loads its model, which
+        // can take well over 30 seconds.
+        if !app.staticTexts["record.title"].waitForExistence(timeout: 120) {
+            print("DEMOFLOW tree after the fixture photo:\n\(app.debugDescription)")
+            XCTFail("the fixture photo did not open its record")
+        }
         flow.tap("resolve.report")
         flow.tap("report.reason.spam")
         flow.tap("report.send")
