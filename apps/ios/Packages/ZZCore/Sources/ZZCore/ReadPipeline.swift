@@ -70,9 +70,14 @@ public struct ReadPipeline: Sendable {
     }
 
     /// The bundled lists and the server's list version pick both lists.
+    /// Classification uses only the list whose version matches the server's
+    /// `wordlist_version`. When none matches, or discovery has not loaded,
+    /// it uses proto-v0, never the fixture-7 test list (A2, [DANNY
+    /// 2026-10-05 #43]). The local check word still needs the match (FR-044).
     public init(bundled: [WordList], serverVersion: String?) {
         let check = WordListLoader.matching(bundled, serverVersion: serverVersion)
-        self.init(classifyList: check ?? bundled.first, checkList: check)
+        let fallback = bundled.first { $0.version == WordListLoader.defaultClassifyVersion }
+        self.init(classifyList: check ?? fallback, checkList: check)
     }
 
     /// Steps 3 to 5 on recognized lines.

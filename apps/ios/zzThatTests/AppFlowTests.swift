@@ -277,7 +277,7 @@ struct OwnerFlowTests {
         let app = try await Self.signedInDemo()
         let detail = CodeDetailModel(codeID: "demo-code-2", row: nil)
         await detail.load(app: app)
-        #expect(detail.row?.canonical == "zz-river-maple-sky-zz")
+        #expect(detail.row?.canonical == "zz-river-falcon-sky-zz")
         #expect(detail.record?.title == "Parcel (demo)")
         let missing = CodeDetailModel(codeID: "no-such-code", row: nil)
         await missing.load(app: app)
@@ -305,6 +305,19 @@ struct ReadFlowTests {
         let model = TypeModel()
         model.text = text
         #expect(model.action(app: app) == expected)
+    }
+
+    /// A2 ([DANNY 2026-10-05 #43]): before discovery loads, the bundled
+    /// proto-v0 list classifies and no local check word runs; once the demo
+    /// server reports fixture-7, that list classifies and checks.
+    @Test func theAppClassifiesWithTheServersListOrProtoV0() async {
+        let lists = AppModel.loadBundledLists()
+        let app = TestApp.make(service: TestApp.demoService(), kind: .demo, bundledLists: lists)
+        #expect(app.pipeline.classifyList?.version == "proto-v0")
+        #expect(app.pipeline.checkList == nil)
+        await app.refreshDiscovery()
+        #expect(app.pipeline.classifyList?.version == "fixture-7")
+        #expect(app.pipeline.checkList?.version == "fixture-7")
     }
 
     @Test func aCameraFieldCodeAsksForOneConfirm() {

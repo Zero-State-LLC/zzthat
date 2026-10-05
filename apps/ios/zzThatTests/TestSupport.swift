@@ -2,6 +2,7 @@ import Foundation
 import HTTPTypes
 import OpenAPIRuntime
 import ZZAPI
+import ZZCore
 @testable import zzThat
 
 /// A clock the FR-041 tests move by hand.
@@ -81,7 +82,7 @@ enum TestApp {
     /// An app on the given service. `kind` is not Demo unless asked, so the
     /// connectivity flag decides online and offline.
     static func make(service: ZZService, kind: BuildKind = .local, online: Bool = true,
-                     clock: FakeClock = FakeClock()) -> AppModel {
+                     clock: FakeClock = FakeClock(), bundledLists: [WordList] = []) -> AppModel {
         let cacheURL = temporaryURL("resolve-cache.json")
         try? FileManager.default.createDirectory(at: cacheURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         let defaults = defaults()
@@ -92,7 +93,7 @@ enum TestApp {
                         drafts: DraftStore(defaults: defaults), lastCanonical: LastCanonicalStore(defaults: defaults),
                         providerStore: ProviderStore(defaults: defaults),
                         photos: PhotoScratch(directory: temporaryURL("photos")),
-                        connectivity: Connectivity(isOnline: online), bundledLists: [])
+                        connectivity: Connectivity(isOnline: online), bundledLists: bundledLists)
     }
 
     static func demoService() -> ZZService {

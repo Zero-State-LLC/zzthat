@@ -70,6 +70,10 @@ public enum WordListLoader {
         return try WordList(version: version, words: lines)
     }
 
+    /// The list that classifies codes when no bundled list matches the
+    /// server's `wordlist_version` (A2, [DANNY 2026-10-05 #43]).
+    public static let defaultClassifyVersion = "proto-v0"
+
     /// FR-044: the list for a local check word, only when its version equals
     /// the server's `wordlist_version`.
     public static func matching(_ lists: [WordList], serverVersion: String?) -> WordList? {

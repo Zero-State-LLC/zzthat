@@ -121,14 +121,17 @@ struct BandTests {
         #expect(try camera([("zz", 0.95)]).map(\.band) == [.abstain])
     }
 
+    /// FR-044 and A2 ([DANNY 2026-10-05 #43]): with only fixture-7 bundled
+    /// and the server on proto-v0, no list classifies or checks the code, so
+    /// a person confirms it.
     @Test func cameraWithoutAMatchingListSkipsTheLocalCheck() throws {
         let list = try Self.fixture7()
         let pipeline = ReadPipeline(bundled: [list], serverVersion: "proto-v0")
         let line = RecognizedLine(text: "zz-copper-maple-sky-zz", confidence: 0.95, box: .zero)
         let found = pipeline.read(lines: [line]).candidates
         #expect(found.first?.check == nil)
-        #expect(found.first?.codeClass == .word)
-        #expect(found.map(\.band) == [.accept])
+        #expect(found.first?.codeClass == .field)
+        #expect(found.map(\.band) == [.clarify])
     }
 
     // MARK: Typed triggers

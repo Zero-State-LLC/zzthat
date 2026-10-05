@@ -22,7 +22,7 @@ public actor DemoAPI: APIProtocol {
         "zz-copper-lantern-sky-zz": Record(
             title: "Crate, field supply (demo)",
             body: "NSN: DEMO-0000-00-000-0001\nDocument number: DEMO-DOC-0001\nHand receipt: DEMO-HR-01"),
-        "zz-river-maple-sky-zz": Record(
+        "zz-river-falcon-sky-zz": Record(
             title: "Parcel (demo)",
             body: "Reference: DEMO-PARCEL-01\nStatus: Ready for drop-off (demo)"),
         "zz-b2-4-zz": Record(title: "Duffel group B2, item 4 (demo)", body: "Hand receipt: DEMO-HR-02"),
@@ -51,10 +51,10 @@ public actor DemoAPI: APIProtocol {
                                        status: .active, recordID: "demo-record-1",
                                        title: Self.records["zz-copper-lantern-sky-zz"]!.title),
                   record: Self.records["zz-copper-lantern-sky-zz"]!, version: 1),
-            Owned(code: Self.ownedCode(id: "demo-code-2", canonical: "zz-river-maple-sky-zz", checkWord: "sky",
+            Owned(code: Self.ownedCode(id: "demo-code-2", canonical: "zz-river-falcon-sky-zz", checkWord: "sky",
                                        status: .active, recordID: "demo-record-2",
-                                       title: Self.records["zz-river-maple-sky-zz"]!.title),
-                  record: Self.records["zz-river-maple-sky-zz"]!, version: 1),
+                                       title: Self.records["zz-river-falcon-sky-zz"]!.title),
+                  record: Self.records["zz-river-falcon-sky-zz"]!, version: 1),
             Owned(code: Self.ownedCode(id: "demo-code-3", canonical: "zz-b2-4-zz", checkWord: nil,
                                        status: .revoked, recordID: "demo-record-3",
                                        title: Self.records["zz-b2-4-zz"]!.title),

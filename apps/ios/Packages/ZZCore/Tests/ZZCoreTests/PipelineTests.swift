@@ -41,11 +41,11 @@ struct PipelineTests {
         let top = CGRect(x: 0.1, y: 0.1, width: 0.8, height: 0.1)
         let bottom = CGRect(x: 0.2, y: 0.5, width: 0.6, height: 0.1)
         let lines = [
-            RecognizedLine(text: "zz-river-maple-sky-zz", confidence: 0.9, box: top),
+            RecognizedLine(text: "zz-river-falcon-sky-zz", confidence: 0.9, box: top),
             RecognizedLine(text: "zz-b2-4-zz", confidence: 0.6, box: bottom),
         ]
         let result = ReadPipeline(classifyList: nil, checkList: nil).read(lines: lines)
-        #expect(result.candidates.map(\.canonical) == ["zz-river-maple-sky-zz", "zz-b2-4-zz"])
+        #expect(result.candidates.map(\.canonical) == ["zz-river-falcon-sky-zz", "zz-b2-4-zz"])
         #expect(result.candidates.map(\.boxes) == [[top], [bottom]])
         #expect(result.candidates.map { Bands.candidateConfidence($0.rows) } == [0.9, 0.6])
     }
@@ -76,6 +76,31 @@ struct PipelineTests {
         #expect(WordListLoader.matching(lists, serverVersion: "fixture-7")?.version == "fixture-7")
         #expect(WordListLoader.matching(lists, serverVersion: "proto-v0") == nil)
         #expect(WordListLoader.matching(lists, serverVersion: nil) == nil)
+    }
+
+    /// A2 ([DANNY 2026-10-05 #43]): classify with the list that matches the
+    /// server's `wordlist_version`, else proto-v0, never fixture-7. The local
+    /// check word runs only on a match (FR-044). The lists are the pinned ones.
+    @Test(arguments: [
+        ("fixture-7", "fixture-7", "fixture-7"),
+        ("proto-v0", "proto-v0", "proto-v0"),
+        ("proto-v9", "proto-v0", nil),
+        (nil, "proto-v0", nil),
+    ] as [(String?, String?, String?)])
+    func theClassifyingListMatchesTheServerOrIsProtoV0(_ server: String?, _ classify: String?, _ check: String?)
+        throws {
+        let folder = Vectors.url.deletingLastPathComponent().appendingPathComponent("wordlists")
+        let lists = try WordListLoader.load(directory: folder)
+        #expect(Set(lists.map(\.version)) == ["fixture-7", "proto-v0"])
+        let pipeline = ReadPipeline(bundled: lists, serverVersion: server)
+        #expect(pipeline.classifyList?.version == classify)
+        #expect(pipeline.checkList?.version == check)
+    }
+
+    @Test func fixture7IsNeverTheFallback() throws {
+        let pipeline = ReadPipeline(bundled: [try Self.fixture7()], serverVersion: nil)
+        #expect(pipeline.classifyList == nil)
+        #expect(pipeline.checkList == nil)
     }
 
     @Test func aMissingFolderLoadsNoList() throws {

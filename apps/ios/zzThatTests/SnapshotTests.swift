@@ -104,7 +104,7 @@ struct SnapshotTests {
     // MARK: Fixtures
 
     static let fixtureLines = DemoPhoto.make(lines: [DemoPhoto.canonical])
-    static let twoCodeLines = DemoPhoto.make(lines: ["zz-river-maple-sky-zz", "zz-b2-4-zz"])
+    static let twoCodeLines = DemoPhoto.make(lines: ["zz-river-falcon-sky-zz", "zz-b2-4-zz"])
     static let noCodeLines = DemoPhoto.make(lines: ["the buzz word"])
 
     /// The pipeline as the Demo build runs it: the bundled lists, with the
@@ -125,9 +125,9 @@ struct SnapshotTests {
         OwnedCode(id: "demo-code-1", canonical: "zz-copper-lantern-sky-zz", checkWord: "sky", status: .active,
                   recordId: "demo-record-1", scope: .freePublic, rerollsRemaining: 0, createdAt: DemoAPI.fixedDate,
                   title: DemoAPI.records["zz-copper-lantern-sky-zz"]!.title),
-        OwnedCode(id: "demo-code-2", canonical: "zz-river-maple-sky-zz", checkWord: "sky", status: .active,
+        OwnedCode(id: "demo-code-2", canonical: "zz-river-falcon-sky-zz", checkWord: "sky", status: .active,
                   recordId: "demo-record-2", scope: .freePublic, rerollsRemaining: 0, createdAt: DemoAPI.fixedDate,
-                  title: DemoAPI.records["zz-river-maple-sky-zz"]!.title),
+                  title: DemoAPI.records["zz-river-falcon-sky-zz"]!.title),
         OwnedCode(id: "demo-code-3", canonical: "zz-b2-4-zz", checkWord: nil, status: .revoked,
                   recordId: "demo-record-3", scope: .freePublic, rerollsRemaining: 0, createdAt: DemoAPI.fixedDate,
                   title: DemoAPI.records["zz-b2-4-zz"]!.title),
