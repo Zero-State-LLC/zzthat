@@ -1,3 +1,4 @@
+import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 
 // The application (runtime.md, Modules: App): entry, tabs, navigation, feature
@@ -94,20 +95,42 @@ kotlin {
 // contracts/wordlists/*.txt are bundled as assets/wordlists (runtime.md,
 // Pinned files; FR-044). The pinned folder is copied at build time, not
 // duplicated in the tree.
-val wordlistAssets = layout.buildDirectory.dir("generated/zz/wordlists")
-val syncWordlists = tasks.register<Sync>("syncWordlistAssets") {
-    from(contractsDir.dir("wordlists")) { include("*.txt") }
-    into(wordlistAssets.map { it.dir("wordlists") })
+abstract class BundleWordlists : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val source: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        val target = File(out, "wordlists").apply { mkdirs() }
+        source.get().asFile.listFiles { file -> file.name.endsWith(".txt") }.orEmpty().forEach { it.copyTo(File(target, it.name)) }
+    }
 }
 
 extensions.configure<ApplicationAndroidComponentsExtension> {
     onVariants { variant ->
-        variant.sources.assets?.addStaticSourceDirectory(wordlistAssets.get().asFile.absolutePath)
+        val name = variant.name.replaceFirstChar(Char::uppercase)
+        val task = tasks.register<BundleWordlists>("bundle${name}Wordlists") {
+            source.set(contractsDir.dir("wordlists"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(task, BundleWordlists::outputDir)
+        // The unit tests read the merged manifest the variant ships (T072, T075).
+        val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+        tasks.withType<Test>().matching { it.name == "test${name}UnitTest" }.configureEach {
+            inputs.file(manifest).withPropertyName("mergedManifest")
+            jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-Dzz.manifest=" + manifest.get().asFile.absolutePath) })
+        }
     }
 }
 
-tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
-    dependsOn(syncWordlists)
+tasks.withType<Test>().configureEach {
+    systemProperty("zz.appSrc", layout.projectDirectory.dir("src").asFile.absolutePath)
+    systemProperty("zz.apps", appsDir.asFile.absolutePath)
 }
 
 dependencies {

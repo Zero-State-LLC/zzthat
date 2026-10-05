@@ -21,7 +21,10 @@ import com.zer0state.zzthat.api.generated.models.ReportRequest
 import com.zer0state.zzthat.api.generated.models.Resolve
 import com.zer0state.zzthat.api.generated.models.TokenRequest
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import retrofit2.Response
 import java.io.IOException
@@ -37,18 +40,28 @@ class ApiFailureException(val failure: ApiFailure) : IOException(failure.toStrin
 
 /**
  * Every call the apps make (spec.md, API contract), over the generated
- * interfaces. Each call returns the decoded body or one [ApiFailure].
+ * interfaces. Each call returns the decoded body or one [ApiFailure]. Calls
+ * are main-safe: they run on [dispatcher], because keeping or deleting a
+ * token writes to disk.
  */
-class ZZService(val apis: ZZApis, val tokens: TokenStore) {
+class ZZService(
+    val apis: ZZApis,
+    val tokens: TokenStore,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
+    private suspend fun <T> io(block: suspend () -> T): T = withContext(dispatcher) { block() }
+
     // MARK: Discovery
 
-    suspend fun discovery(): ApiResult<Discovery> =
+    suspend fun discovery(): ApiResult<Discovery> = io {
         call(200, { apis.meta.getDiscovery(MetaApi.XZZContractGetDiscovery._1) }) { it.requireBody() }
+    }
 
     // MARK: Auth
 
-    suspend fun nonce(): ApiResult<String> =
+    suspend fun nonce(): ApiResult<String> = io {
         call(200, { apis.auth.createNonce(AuthApi.XZZContractCreateNonce._1) }) { it.requireBody().nonce }
+    }
 
     /** `POST /v1/auth/token` (Auth step 5), then keep the pair. Tokens are kept only after the exchange succeeds. */
     suspend fun exchange(
@@ -56,9 +69,9 @@ class ZZService(val apis: ZZApis, val tokens: TokenStore) {
         idToken: String,
         nonce: String,
         authorizationCode: String? = null,
-    ): ApiResult<Unit> {
+    ): ApiResult<Unit> = io {
         val request = TokenRequest(provider, TokenRequest.Client.android, idToken, nonce, authorizationCode)
-        return call(200, { apis.auth.exchangeToken(AuthApi.XZZContractExchangeToken._1, request) }) {
+        call(200, { apis.auth.exchangeToken(AuthApi.XZZContractExchangeToken._1, request) }) {
             val pair = it.requireBody()
             tokens.signIn(pair.accessToken, pair.refreshToken)
         }
@@ -69,47 +82,50 @@ class ZZService(val apis: ZZApis, val tokens: TokenStore) {
      * The tokens are deleted even when the revoke fails, so sign-out always
      * ends the session on this device.
      */
-    suspend fun signOut(): ApiResult<Unit> {
+    suspend fun signOut(): ApiResult<Unit> = io {
         val refresh = tokens.refreshToken
         val result = call(204, { apis.auth.revokeToken(AuthApi.XZZContractRevokeToken._1, RefreshRequest(refresh)) }) {}
         tokens.clear()
-        return result
+        result
     }
 
-    suspend fun me(): ApiResult<Account> = call(200, { apis.auth.getMe(AuthApi.XZZContractGetMe._1) }) { it.requireBody() }
+    suspend fun me(): ApiResult<Account> = io { call(200, { apis.auth.getMe(AuthApi.XZZContractGetMe._1) }) { it.requireBody() } }
 
     /** `DELETE /v1/me` (FR-034). On success the tokens are deleted here; the app deletes the draft and every cache. */
-    suspend fun deleteAccount(): ApiResult<Unit> {
+    suspend fun deleteAccount(): ApiResult<Unit> = io {
         val result = call(204, { apis.auth.deleteMe(AuthApi.XZZContractDeleteMe._1) }) {}
         if (result is ApiResult.Ok) tokens.clear()
-        return result
+        result
     }
 
     // MARK: Codes
 
     /** `GET /v1/resolve/{code}` with the canonical code only: no photo and no `Authorization` (FR-016, T012). */
-    suspend fun resolve(canonical: String): ApiResult<ResolveResponse> =
+    suspend fun resolve(canonical: String): ApiResult<ResolveResponse> = io {
         call(200, { apis.codes.resolveCode(CodesApi.XZZContractResolveCode._1, canonical) }) {
             ResolveResponse(it.requireBody(), cacheable = it.headers()["Cache-Control"] == PUBLIC_CACHE_CONTROL)
         }
+    }
 
     /** `POST /v1/codes` with scope `free_public`, kind `plain`, and the title and body. No code string and no photo (FR-017, SC-2). */
-    suspend fun mint(title: String, body: String): ApiResult<Code> {
+    suspend fun mint(title: String, body: String): ApiResult<Code> = io {
         val request = MintRequest(
             scope = MintRequest.Scope.free_public,
             record = EverydayRecord(title, body),
             kind = MintRequest.Kind.plain,
             singleUse = null,
         )
-        return call(201, { apis.codes.mintCode(CodesApi.XZZContractMintCode._1, request) }) { it.requireBody() }
+        call(201, { apis.codes.mintCode(CodesApi.XZZContractMintCode._1, request) }) { it.requireBody() }
     }
 
-    suspend fun reroll(codeId: String): ApiResult<Code> =
+    suspend fun reroll(codeId: String): ApiResult<Code> = io {
         call(200, { apis.codes.rerollCode(CodesApi.XZZContractRerollCode._1, codeId) }) { it.requireBody() }
+    }
 
     /** One page of `GET /v1/me/codes`, 50 a page (FR-021). */
-    suspend fun myCodes(cursor: String? = null, limit: Int = PAGE_SIZE): ApiResult<CodePage> =
+    suspend fun myCodes(cursor: String? = null, limit: Int = PAGE_SIZE): ApiResult<CodePage> = io {
         call(200, { apis.codes.listMyCodes(CodesApi.XZZContractListMyCodes._1, limit, cursor) }) { it.requireBody() }
+    }
 
     /**
      * Code detail and Edit record by code id (runtime.md, Navigation): page
@@ -130,19 +146,22 @@ class ZZService(val apis: ZZApis, val tokens: TokenStore) {
         return ApiResult.Ok(null)
     }
 
-    suspend fun record(id: String): ApiResult<OwnerRecord> =
+    suspend fun record(id: String): ApiResult<OwnerRecord> = io {
         call(200, { apis.records.getRecord(RecordsApi.XZZContractGetRecord._1, id) }) { it.requireBody() }
+    }
 
-    suspend fun addVersion(recordId: String, title: String, body: String): ApiResult<Unit> =
+    suspend fun addVersion(recordId: String, title: String, body: String): ApiResult<Unit> = io {
         call(201, { apis.records.addRecordVersion(RecordsApi.XZZContractAddRecordVersion._1, recordId, EverydayRecord(title, body)) }) {}
+    }
 
-    suspend fun revoke(codeId: String): ApiResult<Unit> =
+    suspend fun revoke(codeId: String): ApiResult<Unit> = io {
         call(200, { apis.codes.revokeCode(CodesApi.XZZContractRevokeCode._1, codeId) }) {}
+    }
 
     /** `POST /v1/reports` (FR-035). The answer never says whether the code exists. */
-    suspend fun report(canonical: String, reason: ReportRequest.Reason, note: String): ApiResult<Unit> {
+    suspend fun report(canonical: String, reason: ReportRequest.Reason, note: String): ApiResult<Unit> = io {
         val request = ReportRequest(canonical, reason, note.ifEmpty { null })
-        return call(202, { apis.reports.createReport(ReportsApi.XZZContractCreateReport._1, request) }) {}
+        call(202, { apis.reports.createReport(ReportsApi.XZZContractCreateReport._1, request) }) {}
     }
 
     companion object {
