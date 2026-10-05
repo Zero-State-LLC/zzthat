@@ -870,6 +870,17 @@
         }
       }
     },
+    "scan.choose_photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a photo of the code"
+          }
+        }
+      }
+    },
     "scan.clarify_as_written" : {
       "extractionState" : "manual",
       "localizations" : {

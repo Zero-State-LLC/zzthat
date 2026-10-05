@@ -943,6 +943,16 @@
       ]
     },
     {
+      "input": "see zz@bob.",
+      "note": "D-2026-10-05-06: a zz@ opener that ends a sentence is still partial, not bare",
+      "candidates": [
+        {
+          "kind": "partial",
+          "text": "zz@bob"
+        }
+      ]
+    },
+    {
       "input": "ai-zz@bob",
       "note": "D-2026-10-04-03: a zz@ opener joined by a hyphen to the word before it reads forward only",
       "candidates": [
