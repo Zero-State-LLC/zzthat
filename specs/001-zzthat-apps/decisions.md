@@ -44,3 +44,22 @@ ZQ22 to ZQ26 were added on 2026-10-04 with the zzThis pin `484100308376bce01c88f
 ZQ27 and ZQ28 were added on 2026-10-04 from the pre-build audit and decided on 2026-10-05 by established practice, as Danny asked on zzThis #75. Danny can reopen either. Their issues are #40 and #41.
 
 Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). This repo follows those answers.
+
+## Build decisions on #43 (2026-10-05)
+
+Danny answered the build's stop-and-ask items in a [comment on #43](https://github.com/Zero-State-LLC/zzthat/pull/43#issuecomment-6002525004) on 2026-10-05 at 20:40 UTC. A1 (a photo-picker copy key) and A3 (a vectors row for `zz@bob.`) change zzThis and reach this repo when the pin moves.
+
+| ID | Decision | Source |
+|---|---|---|
+| A2 | The read pipeline classifies codes with the bundled wordlist whose version matches the server's `wordlist_version`. When none matches, or discovery has not loaded, it uses proto-v0, never fixture-7. The local check word still needs the match (FR-044). | [DANNY 2026-10-05 #43] |
+| A4 | The demo code `zz-river-maple-sky-zz` becomes `zz-river-falcon-sky-zz`, which passes the fixture-7 check word: (4 + 2 × 6) mod 7 = 2, `sky`. | [DANNY 2026-10-05 #43] |
+| B1 | The Google Play account-deletion link is `https://zz.zer0state.com/account/`. | [DANNY 2026-10-05 #43] |
+| B2 | Store finalization is held until Danny supplies the legal name and address, the effective date, a children's section, and EU and California rights. | [DANNY 2026-10-05 #43] |
+| B3 | Reports are deleted one year after they are closed. zzThis spec 005 records the rule. | [DANNY 2026-10-05 #43] |
+| B4 | Codes a person looks up are not listed as collected. The IP-based rate-limit HMAC is listed as collected for fraud prevention and security, not linked to the person, and not used for tracking. | [DANNY 2026-10-05 #43] |
+| C1 | Android generates `:core-api` with the OpenAPI Generator 7.25.0 command-line jar from Maven Central, run by the `:core-api:openApiGenerate` task (runtime.md, Toolchain and API client). | [DANNY 2026-10-05 #43] |
+| C2 | Keep the compileSdk 36 pins until Google Play requires 37. | [DANNY 2026-10-05 #43] |
+| C3 | Android adds material-icons-core for the tab and back icons. | [DANNY 2026-10-05 #43] |
+| C4 | Keep the ML Kit Accept threshold at 0.80 for v1, and treat it as Q37 data. | [DANNY 2026-10-05 #43] |
+| C5 | The zzThis contract adds `info.license.identifier` `LicenseRef-Proprietary`. | [DANNY 2026-10-05 #43] |
+| C6 | Keep the `USE_BIOMETRIC` and `USE_FINGERPRINT` permissions that Credential Manager adds. | [DANNY 2026-10-05 #43] |
