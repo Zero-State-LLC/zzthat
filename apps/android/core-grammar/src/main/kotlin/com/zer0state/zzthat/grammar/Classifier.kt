@@ -1,58 +1,100 @@
 package com.zer0state.zzthat.grammar
 
-/** Section 2.2a G1 classes. `confirm` means a near-word needs the person. */
-enum class CodeClass(val wire: String) {
-    WORD("word"),
-    FIELD("field"),
-    CONFIRM("confirm"),
-    HANDLE("handle"),
-    NAME("name"),
-    BARE("bare"),
-}
+// Word code, field code, or confirm: zzThis Section 2.2a G1 and spec 003
+// FR-021, as zzThis packages/zz-core/src/classify.ts does it. The classifier
+// runs after the parser and takes the wordlist as input (spec 003 FR-015).
 
-data class Classification(
-    val codeClass: CodeClass,
-    /** 1-based part position to its candidates, by distance and then list order. */
-    val nearWords: Map<Int, List<String>> = emptyMap(),
-)
+sealed interface CodeClass {
+    /** The class name the vectors use. */
+    val wire: String
 
-/**
- * The classifier (zzThis spec 003 FR-021, Section 2.2a G1). It runs after the
- * parser and takes the wordlist as input. It never snaps a part on its own.
- */
-object Classifier {
-    private val LETTERS = Regex("^[a-z]+$")
-
-    /** Number words count as parts with a digit (D-2026-10-04-08). */
-    internal val NUMBER_WORDS = listOf("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
-
-    fun classify(code: ParseResult.Code, list: WordList?, maxDistance: Int = Parameters.NEAR_WORD_MAX_DISTANCE): Classification =
-        when (code.kind) {
-            CodeKind.BARE -> Classification(CodeClass.BARE)
-            CodeKind.HANDLE -> Classification(CodeClass.HANDLE)
-            CodeKind.NAME -> Classification(CodeClass.NAME)
-            CodeKind.PLAIN -> classifyPlain(code.parts, list, maxDistance)
-        }
-
-    private fun classifyPlain(parts: List<String>, list: WordList?, maxDistance: Int): Classification {
-        if (list != null && parts.all { it in list }) return Classification(CodeClass.WORD)
-        if (list == null) return Classification(CodeClass.FIELD)
-        val near = linkedMapOf<Int, List<String>>()
-        parts.forEachIndexed { i, part ->
-            if (part in list || !LETTERS.matches(part) || part in NUMBER_WORDS) return@forEachIndexed
-            val candidates = list.words.withIndex()
-                .map { (index, word) -> Triple(word, levenshtein(part, word), index) }
-                .filter { it.second <= maxDistance }
-                .sortedWith(compareBy({ it.second }, { it.third }))
-                .map { it.first }
-            if (candidates.isNotEmpty()) near[i + 1] = candidates
-        }
-        return if (near.isEmpty()) Classification(CodeClass.FIELD) else Classification(CodeClass.CONFIRM, near)
+    /** Every part is a wordlist word. */
+    data object Word : CodeClass {
+        override val wire = "word"
     }
 
-    /** Levenshtein distance over lowercase ASCII letters (spec 003 FR-003). A swap costs 2. */
-    fun levenshtein(a: String, b: String): Int {
+    /** A plain code that is not a word code and has no near-word. */
+    data object Field : CodeClass {
+        override val wire = "field"
+    }
+
+    /**
+     * A plain code with at least one near-word. Keys are 1-based part
+     * positions. Candidates are sorted by distance, then by list index.
+     */
+    data class Confirm(val nearWords: Map<Int, List<String>>) : CodeClass {
+        override val wire = "confirm"
+    }
+
+    data object Handle : CodeClass {
+        override val wire = "handle"
+    }
+
+    data object Name : CodeClass {
+        override val wire = "name"
+    }
+
+    data object Bare : CodeClass {
+        override val wire = "bare"
+    }
+}
+
+val CodeClass.nearWords: Map<Int, List<String>> get() = (this as? CodeClass.Confirm)?.nearWords.orEmpty()
+
+object Classifier {
+    /**
+     * G1: a part within this Levenshtein distance of a list word is a
+     * near-word. A parameter until the real-photo test set measures it.
+     */
+    const val MAX_NEAR_DISTANCE = 2
+
+    /** The number words zero to nine. G1 treats them as parts with a digit (D-2026-10-04-08). */
+    val NUMBER_WORDS = listOf("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+    fun classify(code: ParsedCode, wordlist: List<String>, maxNearDistance: Int = MAX_NEAR_DISTANCE): CodeClass {
+        when (code.kind) {
+            CodeKind.BARE -> return CodeClass.Bare
+            CodeKind.HANDLE -> return CodeClass.Handle
+            CodeKind.NAME -> return CodeClass.Name
+            CodeKind.PLAIN -> Unit
+        }
+        val listed = wordlist.toHashSet()
+        val nearWords = linkedMapOf<Int, List<String>>()
+        var allListed = true
+        code.words.forEachIndexed { index, part ->
+            if (part in listed) return@forEachIndexed
+            allListed = false
+            if (!isLettersOnly(part) || part in NUMBER_WORDS) return@forEachIndexed
+            val candidates = nearCandidates(part, wordlist, maxNearDistance)
+            if (candidates.isNotEmpty()) nearWords[index + 1] = candidates
+        }
+        if (nearWords.isNotEmpty()) return CodeClass.Confirm(nearWords)
+        return if (allListed) CodeClass.Word else CodeClass.Field
+    }
+
+    /** Every list word within the limit, by distance, then by list index. */
+    fun nearCandidates(part: String, wordlist: List<String>, limit: Int = MAX_NEAR_DISTANCE): List<String> =
+        wordlist.asSequence()
+            .filter { kotlin.math.abs(it.length - part.length) <= limit }
+            .map { it to Levenshtein.distance(part, it) }
+            .filter { it.second <= limit }
+            .toList()
+            .sortedBy { it.second }
+            .map { it.first }
+
+    private fun isLettersOnly(part: String): Boolean = part.isNotEmpty() && part.all { it in 'a'..'z' }
+}
+
+/**
+ * Levenshtein distance over lowercase ASCII letters (spec 003 FR-003): insert,
+ * delete, or substitute one letter, each costing 1, so a swap of two letters
+ * costs 2.
+ */
+object Levenshtein {
+    fun distance(a: String, b: String): Int {
         if (a == b) return 0
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
         var previous = IntArray(b.length + 1) { it }
         var current = IntArray(b.length + 1)
         for (i in 1..a.length) {
@@ -67,66 +109,4 @@ object Classifier {
         }
         return previous[b.length]
     }
-}
-
-/** The matching key for field codes (Section 2.2a G10, spec 003 FR-024). */
-object MatchKey {
-    private val ALL_DIGITS = Regex("^[0-9]+$")
-    private val FOLD = mapOf('o' to '0', 'i' to '1', 'l' to '1', 's' to '5', 'z' to '2', 'b' to '8')
-
-    /** The key of a parsed code: number words to digits, the fold, then digit runs joined. Parts only. */
-    fun of(code: ParseResult.Code): String {
-        val numbered = code.parts.map { part ->
-            val n = Classifier.NUMBER_WORDS.indexOf(part)
-            if (n >= 0) n.toString() else part
-        }
-        val folded = numbered.map { part -> part.map { FOLD[it] ?: it }.joinToString("") }
-        val joined = mutableListOf<String>()
-        for (part in folded) {
-            val last = joined.lastOrNull()
-            if (last != null && ALL_DIGITS.matches(last) && ALL_DIGITS.matches(part)) {
-                joined[joined.size - 1] = last + part
-            } else {
-                joined += part
-            }
-        }
-        return joined.joinToString("-")
-    }
-
-    /** The key of any input, or null when it does not parse to a code with content. */
-    fun of(input: String): String? = (Grammar.parse(input) as? ParseResult.Code)
-        ?.takeIf { it.kind != CodeKind.BARE }
-        ?.let(::of)
-}
-
-/** Check-word results (zzThis spec 003 FR-018). */
-sealed interface Verify {
-    data object Ok : Verify
-    data object CheckMismatch : Verify
-    data object WrongLength : Verify
-    data class UnknownWord(val position: Int) : Verify
-}
-
-/**
- * The spec 003 check word: check index = (index(word1) + 2 * index(word2)) mod N,
- * with N the list length, which is prime. Two data words and one check word.
- */
-object CheckWord {
-    const val DATA_WORDS = 2
-
-    fun checkIndex(d1: Int, d2: Int, n: Int): Int = ((d1.toLong() + 2L * d2) % n).toInt()
-
-    /** Verifies the parts of a plain code against the list. Null when the list cannot carry a check word. */
-    fun verify(parts: List<String>, list: WordList): Verify? {
-        if (!list.supportsCheckWord) return null
-        parts.forEachIndexed { i, part -> if (part !in list) return Verify.UnknownWord(i + 1) }
-        if (parts.size != DATA_WORDS + 1) return Verify.WrongLength
-        val d1 = list.indexOf(parts[0])!!
-        val d2 = list.indexOf(parts[1])!!
-        val check = list.indexOf(parts[2])!!
-        return if (checkIndex(d1, d2, list.size) == check) Verify.Ok else Verify.CheckMismatch
-    }
-
-    fun verify(code: ParseResult.Code, list: WordList): Verify? =
-        if (code.kind == CodeKind.PLAIN) verify(code.parts, list) else null
 }

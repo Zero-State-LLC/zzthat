@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The camera writes the scan photo here (runtime.md, Read pipeline step 1). -->
+<paths>
+    <cache-path name="scan_photos" path="scan-photos/" />
+</paths>
