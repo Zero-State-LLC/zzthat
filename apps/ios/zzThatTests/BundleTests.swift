@@ -127,7 +127,7 @@ struct BundleTests {
     }
 
     /// T087: the Licenses screen shows the zzThis NOTICE and OFL.txt as
-    /// pinned, then one block per pinned package from the generated notices.
+    /// pinned, then one block per package from the generated notices.
     @Test func licensesShowTheBundledFiles() throws {
         let folder = Self.repo.appendingPathComponent("apps/ios/zzThat/Resources/Licenses")
         let pinned = try ["NOTICE", "OFL.txt"].map {
@@ -135,27 +135,41 @@ struct BundleTests {
         }
         let texts = LicensesScreen.bundledTexts()
         #expect(Array(texts.prefix(2)) == pinned, "NOTICE, then OFL.txt, exactly as pinned")
-        #expect(texts.count == 2 + (try Self.lockedPins().count), "one block per pinned package")
+        #expect(texts.count == 2 + (try Self.noticeBlocks().count), "one block per listed package")
     }
 
-    /// T087: the generated notices name every package the app's lock pins,
-    /// with its version, its repository, and its license text.
-    @Test func thirdPartyNoticesListEveryPinnedPackage() throws {
+    /// The package blocks of the bundled Licenses/ThirdPartyNotices.txt.
+    static func noticeBlocks() throws -> [String] {
         let url = try #require(Bundle.main.resourceURL?.appendingPathComponent("Licenses/ThirdPartyNotices.txt"))
-        let notices = try String(contentsOf: url, encoding: .utf8)
-        let blocks = notices.components(separatedBy: "\n\(LicensesScreen.noticeSeparator)\n")
-        for pin in try Self.lockedPins() {
-            let location = try #require(pin["location"] as? String)
-            let state = pin["state"] as? [String: Any]
-            let version = try #require((state?["version"] ?? state?["revision"]) as? String)
-            let block = blocks.first { $0.contains("\n\(location)\n") }
-            #expect(block != nil, "no notice for \(location)")
-            guard let block else { continue }
-            let header = block.trimmingCharacters(in: .newlines).split(separator: "\n", maxSplits: 1)
-            #expect(header.first?.hasSuffix(" \(version)") == true, "\(location) is not at \(version)")
-            // The license text follows the name and repository lines.
-            #expect(block.count > location.count + 200, "no license text for \(location)")
+        return try String(contentsOf: url, encoding: .utf8)
+            .components(separatedBy: "\n\(LicensesScreen.noticeSeparator)\n")
+            .map { $0.trimmingCharacters(in: .newlines) }
+    }
+
+    /// T087 and S4: the notices list only the packages linked into the app.
+    /// The build derives them from the app target's package products and
+    /// fails when the linker reads a package the notices miss; this checks
+    /// what it bundled. Each listed package is pinned at its listed version
+    /// and has license text, and test and build-tool packages are not listed.
+    @Test func thirdPartyNoticesListTheLinkedPackages() throws {
+        let pins = try Self.lockedPins()
+        let blocks = try Self.noticeBlocks()
+        #expect(blocks.count < pins.count, "the lock pins test and build tools the app does not link")
+        var listed: [String] = []
+        for block in blocks {
+            let lines = block.split(separator: "\n", maxSplits: 2).map(String.init)
+            try #require(lines.count == 3, "a header and license text")
+            let location = lines[1]
+            listed.append(location)
+            let pin = pins.first { ($0["location"] as? String) == location }
+            let state = pin?["state"] as? [String: Any]
+            let version = (state?["version"] ?? state?["revision"]) as? String
+            #expect(version != nil && lines[0].hasSuffix(" \(version ?? "")"), "\(location) is pinned at its version")
+            #expect(lines[2].count > 200, "\(location) has its license text")
         }
+        #expect(listed.contains { $0.contains("GoogleSignIn-iOS") }, "the app's GoogleSignIn product is listed")
+        #expect(!listed.contains { $0.contains("swift-snapshot-testing") }, "a test-only package is not listed")
+        #expect(!listed.contains { $0.contains("swift-openapi-generator") }, "a build-tool plugin is not listed")
     }
 }
 

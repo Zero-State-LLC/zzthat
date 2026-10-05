@@ -58,6 +58,9 @@ jobs:
       - name: Manifest check (T075)
         if: ${{ !cancelled() }}
         run: python3 scripts/check-manifests.py
+      - name: iOS third-party notices generator (T087)
+        if: ${{ !cancelled() }}
+        run: python3 -m unittest discover -s apps/ios/scripts -p "test_*.py" -v
 
   android:
     runs-on: ubuntu-latest

@@ -101,11 +101,22 @@ targets:
             mkdir -p "$resources/Licenses"
             cp "$file" "$resources/Licenses/"
           done
+          # Only the packages the app links (S4): the closure of this target's
+          # package products, checked against the linker's own input lists.
           # Xcode writes the app's package lock into Packages/ZZAPI, and keeps
           # the resolved checkouts in SourcePackages beside Build.
+          link_lists=""
+          for arch in $ARCHS; do
+            link_lists="$link_lists $OBJECT_FILE_DIR_normal/$arch/$PRODUCT_NAME.LinkFileList"
+          done
+          # shellcheck disable=SC2086
           /usr/bin/python3 "$SRCROOT/scripts/third_party_notices.py" \
+            --project "$PROJECT_FILE_PATH" --target "$TARGET_NAME" \
             --resolved "$SRCROOT/Packages/ZZAPI/Package.resolved" \
             --source-packages "${BUILD_DIR%/Build/*}/SourcePackages" \
+            --built-products "$BUILT_PRODUCTS_DIR" \
+            --link-file-list $link_lists \
+            --cache "$TARGET_TEMP_DIR/third-party-notices" \
             --out "$resources/Licenses/ThirdPartyNotices.txt"
       - name: Version from apps/VERSION
         basedOnDependencyAnalysis: false
