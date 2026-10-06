@@ -1,11 +1,11 @@
 # Plan: zzThat apps
 
-Feature: [spec.md](spec.md). Status: proposal, not built. No application source in this change.
+Feature: [spec.md](spec.md). Status: implementation in progress. The planned trees now exist; unchecked tasks remain requirements until verified by their named evidence.
 Decisions: [decisions.md](decisions.md).
 
 ## Workflows (copied from the spec)
 
-anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. An implementation change may add `.github/workflows/apps-ci.yml` for app tests and must name that addition in this plan before the file lands. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
+anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. App tests: `.github/workflows/apps-ci.yml`. End-to-end: `.github/workflows/apps-e2e.yml`. Store submission, spend, production credentials, and privacy-policy publication stay human-gated. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
 
 ## Technical context
 
