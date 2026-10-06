@@ -153,7 +153,7 @@ Acceptance:
 | FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. The one exception is verbatim third-party license text: the Licenses screen shows the bundled `NOTICE` and `OFL.txt` exactly as pinned, and the copy rules (FR-030) do not apply to it. | [ZZTHIS SPEC] design/UX.md. The license text exception is [INFERRED], because a license must be shown as written. |
 | FR-043 | Fonts are the IBM Plex files from zzThis `design/fonts/` at the pin. Colors and type come from the pinned token files. | [ZZTHIS SPEC] design/README.md |
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
-| FR-045 | The app offers the photo upload (FR-005) only when `GET /v1` reports `photo_reads: true`. It is false in v1, so v1 never uploads a photo. When it is offered, the file is JPEG only and at most 8388608 bytes (8 MiB). The server checks the JPEG signature (bytes FF D8 FF). Another type is 400 `malformed`. A larger body is 413 `payload-too-large` and is not stored. | [ZZTHIS SPEC] spec 005 US5 and FR-013 |
+| FR-045 | v1 never uploads a scan photo for recognition and never offers the dormant `POST /v1/reads` path because discovery reports `photo_reads: false`. Any future photo-read activation is outside this v1 app contract and requires a new accepted privacy/product decision. | [ZZTHIS SPEC] spec 005 US5 and Q18 no-cloud decision |
 | FR-046 | The record body is shown as plain text. Links in it are not tappable. | [ZZTHIS SPEC] spec 005 FR-007 |
 | FR-047 | The Account screen shows the support contact (`support@zer0state.com`) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
@@ -244,10 +244,10 @@ The edge purge clears only the data center that handled the write. Other data ce
 
 ## On-device and cloud recognition
 
-- Option A ships first: on device where it is good enough, cloud vision only after the FR-005 confirm [ZZTHIS SPEC] Section 10.3 and Section 10.8.
-- Option B stays a zzThis benchmark, not a zzThat deliverable [ZZTHIS SPEC].
-- zzThis Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): on-device reading only in v1, with no cloud reader. `GET /v1` reports `photo_reads: false` and `POST /v1/reads` returns `not-ready` [ZZTHIS SPEC] spec 005 US5, so the apps do not offer the upload (FR-045).
-- The recognizer is not semantic authority. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar/check-word path remains authoritative (runtime.md, Read pipeline).
+- v1 camera capture is on-device only. Terminal `zz` marks are detected/paired as fiducials before payload OCR (FR-050). There is no cloud recognition fallback.
+- `GET /v1` continues to report `photo_reads: false` and the apps do not offer `POST /v1/reads` in v1 (FR-045). The dormant server route is not part of the scan flow.
+- The recognizer is not semantic authority. Apple Vision is the iOS payload baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar/check-word path remains authoritative (runtime.md, Read pipeline).
+- A custom recognizer or VLM remains a later zzThis qualification track, not a v1 dependency.
 - The app does not train a model [INFERRED].
 - No accuracy figure is a release criterion (FR-029).
 - Voice is out of the first release (FR-014).
@@ -258,7 +258,7 @@ The edge purge clears only the data center that handled the write. Other data ce
 |---|---|---|
 | Camera | iOS asks when a scan starts, with a purpose string. Android uses the system camera app and declares no camera permission. | FR-011 [INFERRED] |
 | Photos | System picker only, and only to choose an existing photo. | FR-012 [INFERRED] |
-| Photo upload | Only after the FR-005 sentence. | FR-005 [ZZTHIS SPEC] |
+| Photo upload | None for recognition in v1. | FR-004, FR-045 |
 | Microphone | Not requested. | FR-014 |
 | Location | Not requested. | FR-013 |
 | Canonical code | Sent on resolve. Mint does not send one. | FR-006, FR-017 |
@@ -311,7 +311,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | SC-1 | iOS and Android each pass every row of the pinned `contracts/vectors.json`: grammar (G9), classifier, matching key, scanner, and check word (FR-007, FR-039). |
 | SC-2 | Resolve sends the canonical code and does not send a photo. Mint sends no canonical code and no photo (FR-004, FR-006, FR-017). |
 | SC-3 | Unknown, expired, used, and revoked codes show one not-found state (FR-010). |
-| SC-4 | A photo upload happens only after the FR-005 sentence (FR-005). |
+| SC-4 | No v1 scan/write-check path uploads the raw photo or reaches a cloud recognition endpoint (FR-004, FR-045, FR-050). |
 | SC-5 | The repo contains no resolver and no database of record (FR-002). |
 | SC-6 | A cached public resolve follows FR-041 under a fake clock (60 seconds online, 360 seconds offline). `no-store` responses are not kept. Issue and revoke are refused offline (FR-022). |
 | SC-7 | User-facing strings follow FR-030. |
