@@ -1,7 +1,7 @@
 # Plan: zzThat apps
 
 Feature: [spec.md](spec.md). Status: implementation in progress. The planned trees now exist; unchecked tasks remain requirements until verified by their named evidence.
-Decisions: [decisions.md](decisions.md).
+Decisions: [decisions.md](decisions.md). Recognition integration: [recognition.md](recognition.md).
 
 ## Workflows (copied from the spec)
 
@@ -72,3 +72,7 @@ The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks
 - Handwriting recognition quality on each platform is unmeasured. No accuracy number is a release criterion (FR-029).
 - A purge clears only the data center that handled the write. Other data centers keep their copy until `max-age` ends, so 60 seconds at the edge is the normal worst case, not only when a purge fails [ZZTHIS SPEC] spec 005 FR-019(c). The app still drops its copy when `Cache-Control` says so, and at once after the owner's own write (FR-041).
 - The age rating is a filing default. It is not a legal opinion.
+
+## Recognition implementation rule
+
+`recognition.md` is the downstream adapter and lifecycle contract. It does not duplicate zz grammar or qualification authority. When upstream spec 004 changes, the committed zzThis pin moves through the normal sync workflow, then downstream behavior is reconciled against that exact SHA. Release camera Accept requires a qualification PASS for the pinned adapter/configuration. NO_PROMOTION keeps typed entry and does not weaken shared validation.
