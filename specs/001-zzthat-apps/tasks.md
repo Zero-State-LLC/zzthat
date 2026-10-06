@@ -26,8 +26,14 @@ Done when: both apps launch in Demo with the three tabs, the pinned fonts, and t
 
 - [ ] T020 Grammar, classifier, matching key, scanner, and check word in `ZZCore` and `:core-grammar`. Every row of `contracts/vectors.json` passes on both. Do not edit a row to match a bug (FR-007, FR-039).
 - [ ] T021 The list loader for `contracts/wordlists/`. Local check word only when the versions match (FR-044).
-- [ ] T022 Band logic with the values in one constants file (FR-025). One test per band trigger in zzThis spec 004. The band function takes (token, line index, line confidence) rows, not recognizer objects. A word takes its line's confidence, and a candidate takes the lowest line among its words (runtime.md, Read pipeline step 2). Shared band rows run in `ZZCore` (`swift test`) and in the `:core-grammar` JVM tests, and both give the same band: all lines at 0.80 is accept, one line at 0.79 is clarify, and a code wrapped across lines at 0.90 and 0.45 is retry.
-- [ ] T023 The read pipeline: Vision on iOS, ML Kit on Android (runtime.md, Read pipeline).
+- [ ] T022 Band logic with the values in one constants file (FR-025). It consumes normalized recognition evidence plus grammar/check-word results, never Vision/ML Kit/PP-OCR objects. Where meaningful line confidence exists, preserve the existing lowest-relevant-line rule. Missing confidence stays missing and must have a qualification-backed adapter policy before promotion.
+- [ ] T023 Define the platform-neutral `RecognitionResult` boundary in both app stacks: engine id/version, raw candidates, confidence when meaningful, and geometry/line provenance when available. No resolver/live-code query is permitted in the adapter.
+- [ ] T024 iOS Apple Vision adapter, on device, behind `RecognitionResult`.
+- [ ] T025 Android ML Kit Text Recognition adapter, on device, behind `RecognitionResult`.
+- [ ] T026 Android PP-OCR mobile/ONNX prototype adapter for qualification only. Do not make it a shipping dependency until dependency/license/security review and ZZ-OCR-QUAL-001 promotion.
+- [ ] T027 Add the ZZ-OCR-QUAL-001 fixture/result format and harness. The private image corpus is not committed. Every engine uses the same corpus manifest and expected canonical outputs.
+- [ ] T028 Run qualification and report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, Accept/Clarify/Retry/Abstain distribution, wrapped/multi-code behavior, latency, and package/runtime footprint. False-valid-decode behavior is the primary safety metric.
+- [ ] T029 Record the Android promotion decision (ML Kit or PP-OCR) with engine/version pin and evidence. Apple Vision must also pass the same product-level qualification; if it does not, stop rather than weaken the decoder or bands.
 
 Done when: every vector row passes on both platforms, and a rendered image of `zz-copper-lantern-sky-zz` yields that one candidate on both.
 
