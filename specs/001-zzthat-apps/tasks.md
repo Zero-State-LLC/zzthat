@@ -138,3 +138,7 @@ Done when: both end-to-end runs pass against the local zzThis Worker at the pin,
 ## Recognition convergence gate
 
 Before T023/T040 can be called complete, upstream zzThis #89 must be merged and the zzThis pin advanced through the normal sync flow. Reconcile recognition.md against the merged upstream SHA, run both shared-vector suites, and attach the qualification receipt or explicitly record NO_PROMOTION. Presence of a native OCR SDK or a rendered-image smoke test is not qualification evidence.
+
+## Recognition convergence gate
+
+Before T023/T040 are complete, upstream zzThis #89 must merge and the zzThis pin must advance through the normal sync flow. Reconcile recognition.md against that merged SHA, run both shared-vector suites, and attach the qualification receipt or record NO_PROMOTION. SDK presence and a rendered-image smoke test are not qualification evidence.
