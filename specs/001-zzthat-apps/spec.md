@@ -1,7 +1,7 @@
 # Feature spec: zzThat apps
 
 Feature ID: 001-zzthat-apps
-Status: not built. Specification only. No application source in this change.
+Status: implementation in progress. Native iOS/Android source and tests exist; this specification remains the product authority. Production/store readiness and OCR qualification are not established.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
