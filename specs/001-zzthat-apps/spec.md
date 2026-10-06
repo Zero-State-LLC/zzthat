@@ -46,7 +46,7 @@ As a person with a marked thing, I point the camera at a handwritten code and ge
 
 Acceptance:
 
-1. The person takes one still photo with the system camera. Recognition runs on the device. Only the canonical code goes to the API. The photo stays on the device unless the person confirms a retry [ZZTHIS SPEC] Section 10.3, and v1 offers no retry upload (FR-045).
+1. The person takes one still photo with the system camera. Recognition runs on the device behind an engine-neutral recognition adapter. Only the canonical code goes to the API. The raw photo stays on the device in v1; there is no retry upload (FR-045).
 2. The reading passes the v1 grammar (zzThis Section 2.2a) before it is sent [ZZTHIS SPEC] spec 004 FR-008.
 3. If the view holds more than one code, the person picks. The app never picks for them [ZZTHIS SPEC] spec 004 FR-013 and FR-014.
 4. If the person denies the camera, typed entry still works (US2a).
@@ -111,8 +111,8 @@ Acceptance:
 | FR-001 | The products in this repo are an iOS app and an Android app, shipped together. The later web client is built in the zzthis repo, which is also the central server. The site that repo publishes today is the marketing page for zzThis. | [DANNY 2026-10-04]. ZQ1. The both-platforms default is the one stated on zzThis issue #57. |
 | FR-002 | The apps are thin clients. They contain no resolver, no database of record, and no second HTTP API. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.1 |
 | FR-003 | Resolve, issue, revoke, and record updates are HTTP calls to the zzThis central server. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.6 |
-| FR-004 | Recognition runs on the device first. The photo stays on the device by default. | [ZZTHIS SPEC] Section 10.3 |
-| FR-005 | A photo is uploaded only after the person confirms a retry or hard case. The confirm sentence is: "Send this photo so we can read the code? It leaves your phone only for this retry, and it may be kept for review of this read. It is not used to train a model." | [ZZTHIS SPEC] Section 10.3 and the object-storage label "photos for retries and review". The sentence is ZQ14. |
+| FR-004 | Recognition runs on device in v1 behind an engine-neutral evidence adapter. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; the promoted Android engine is selected by ZZ-OCR-QUAL-001. Raw photos stay on device. | [ZZTHIS SPEC] spec 004 as refined 2026-10-06; accepted recognizer-qualification intent |
+| FR-005 | v1 does not upload a raw scan photo for recognition. Hard cases rescan, clarify, abstain, or use typed entry. A future cloud/VLM retry is v2 and requires a new product/privacy decision. | [ZZTHIS SPEC] spec 004 refined 2026-10-06 |
 | FR-006 | Every reading is parsed with the v1 text grammar, and the client sends only the canonical form. | [ZZTHIS SPEC] Section 2.2a and spec 004 FR-008 |
 | FR-007 | The apps do not publish a second grammar. iOS and Android both pass every G9 vector in zzThis Section 2.2a. | [ZZTHIS SPEC] |
 | FR-008 | Snapping to the wordlist and local check-word verification follow zzThis specs 003 and 004. Until that library and list exist, the app must not show a local check word as passed. | [ZZTHIS SPEC]. The algorithm, list size, and word source were decided in zzThis on 2026-10-04 (Q30 to Q32, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). A local pass still needs the library and a matching list version (FR-044). |
@@ -246,7 +246,7 @@ The edge purge clears only the data center that handled the write. Other data ce
 - Option A ships first: on device where it is good enough, cloud vision only after the FR-005 confirm [ZZTHIS SPEC] Section 10.3 and Section 10.8.
 - Option B stays a zzThis benchmark, not a zzThat deliverable [ZZTHIS SPEC].
 - zzThis Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): on-device reading only in v1, with no cloud reader. `GET /v1` reports `photo_reads: false` and `POST /v1/reads` returns `not-ready` [ZZTHIS SPEC] spec 005 US5, so the apps do not offer the upload (FR-045).
-- The on-device readers are Apple Vision on iOS and ML Kit text recognition on Android (runtime.md, Read pipeline).
+- The recognizer is not semantic authority. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar/check-word path remains authoritative (runtime.md, Read pipeline).
 - The app does not train a model [INFERRED].
 - No accuracy figure is a release criterion (FR-029).
 - Voice is out of the first release (FR-014).
