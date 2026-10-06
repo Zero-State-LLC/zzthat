@@ -111,6 +111,7 @@ Acceptance:
 | FR-001 | The products in this repo are an iOS app and an Android app, shipped together. The later web client is built in the zzthis repo, which is also the central server. The site that repo publishes today is the marketing page for zzThis. | [DANNY 2026-10-04]. ZQ1. The both-platforms default is the one stated on zzThis issue #57. |
 | FR-002 | The apps are thin clients. They contain no resolver, no database of record, and no second HTTP API. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.1 |
 | FR-003 | Resolve, issue, revoke, and record updates are HTTP calls to the zzThis central server. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.6 |
+| FR-050 | In camera capture, the terminal `zz` marks act as structural fiducial/index marks. The app detects and pairs them before payload OCR, uses them to localize/orient/rectify the ROI, and never fabricates a missing endpoint. They remain literal grammar markers and are not payload fields. | [ZZTHIS SPEC] spec 004 FR-018 to FR-022 |
 | FR-004 | Recognition runs on device in v1 behind an engine-neutral evidence adapter. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; the promoted Android engine is selected by ZZ-OCR-QUAL-001. Raw photos stay on device. | [ZZTHIS SPEC] spec 004 as refined 2026-10-06; accepted recognizer-qualification intent |
 | FR-005 | v1 does not upload a raw scan photo for recognition. Hard cases rescan, clarify, abstain, or use typed entry. A future cloud/VLM retry is v2 and requires a new product/privacy decision. | [ZZTHIS SPEC] spec 004 refined 2026-10-06 |
 | FR-006 | Every reading is parsed with the v1 text grammar, and the client sends only the canonical form. | [ZZTHIS SPEC] Section 2.2a and spec 004 FR-008 |
@@ -324,7 +325,9 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 ## Edge cases
 
 - Camera denied: typed entry still works (FR-011).
-- Two codes in one photo: the person picks (FR-026).
+- Two codes in one photo: terminal fiducials produce separate plausible ROIs; the person picks when more than one valid candidate remains (FR-026, FR-050).
+- One terminal fiducial only: Retry. Never infer the missing endpoint from payload text.
+- False `zz` in surrounding prose or ambiguous endpoint pairing: expose/reject through geometry plus shared validation; never choose using resolver existence.
 - A code across two lines: one code, per the grammar [ZZTHIS SPEC] Section 2.2a.
 - Bare mark: not resolved (FR-027).
 - Check-word mismatch on a word code: confirm, do not auto-correct (FR-028).
