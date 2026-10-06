@@ -1,0 +1,108 @@
+# Recognition integration contract
+
+Status: normative for zzThat implementation on this branch.
+Upstream authority: zzThis spec 004 and ZZ-OCR-QUAL-001 after the zzThis pin advances to the merged recognition-spec commit.
+
+## Boundary
+
+Both native apps expose the same conceptual adapter contract:
+
+```text
+RecognitionResult
+  engine_id: non-empty string
+  engine_version: non-empty string
+  candidates: ordered list
+    raw_text: string
+    confidence: optional engine-native meaningful score
+    regions / line_provenance: optional
+  capture_quality: optional
+```
+
+Vendor SDK objects stop at the adapter. `ZZCore` and `:core-grammar` consume normalized evidence only. They own scanner rules, grammar/classification, wordlist behavior, check-word verification, and decision bands.
+
+## Platform implementations
+
+| Platform | Candidate | v1 disposition |
+|---|---|---|
+| iOS | Apple Vision accurate text recognition | Baseline, but release eligibility still requires upstream qualification PASS |
+| Android | Bundled ML Kit Latin text recognition | Qualification candidate |
+| Android | PP-OCR mobile/ONNX prototype | Qualification candidate; cannot become shipping dependency before license/security/package review |
+| Either | cloud OCR or VLM | Not reachable in v1 |
+| Either | custom zz model | v2 only |
+
+## Attempt lifecycle
+
+```text
+IDLE
+ -> CAPTURING
+ -> RECOGNIZING
+ -> DECODING
+ -> ACCEPT | CLARIFY | RETRY | ABSTAIN
+ -> RESOLVING only from ACCEPT or explicit user selection/confirmation required by spec
+ -> IDLE/RESULT
+
+RETRY -> CAPTURING or TYPED_ENTRY
+CLARIFY -> DECODING after user input, or TYPED_ENTRY/CANCEL
+ABSTAIN -> TYPED_ENTRY/RESCAN/CANCEL
+```
+
+A new image creates a new attempt id. No confidence, candidate ordering, or image state carries across attempts. Two Retry results in one scan flow surface typed entry alongside rescan. There is no cloud escalation.
+
+## Data lifetime
+
+| Data | Lifetime / destination |
+|---|---|
+| Raw image | Local cache only; delete/end access when attempt/flow ends |
+| Vendor recognition objects | Memory for current attempt only |
+| RecognitionResult | Memory for current attempt/clarification only |
+| Canonical code | May proceed to API only after shared decoder/user-selection gates |
+| Qualification private image | Private corpus only; never Git/CI/PR/logs |
+| Debug logs | No image bytes, candidate text, canonical code, token, or private corpus identifiers that can reveal content |
+
+Cancellation, app background/termination recovery, decode exception, recognizer exception, and navigation away all use the same cleanup path for the raw image and transient evidence.
+
+## Error mapping
+
+- recognizer unavailable/init failure -> Abstain with typed entry;
+- no text/candidate -> Retry;
+- partial marker / recoverable image-quality failure -> Retry;
+- unsupported script, reserved symbol, invalid grammar, unsafe evidence -> Abstain;
+- near-word, uncertain word, check-word ambiguity -> Clarify;
+- multiple valid candidates -> list all and wait for a user selection;
+- wrong-but-valid candidate -> must be caught by qualification evidence; resolver existence is never used as a recognition oracle.
+
+Engine exceptions never become Accept and never cause a network fallback.
+
+## Configuration
+
+Engine/model/runtime versions, preprocessing, and confidence-to-band mapping are explicit configuration with test coverage. Release builds use the qualified pinned configuration. Debug/local builds may expose candidate selection for qualification, but Release has one promoted adapter per platform and no runtime remote switch that can bypass qualification.
+
+## Upstream pin movement
+
+Do not copy this branch's upstream prose into the committed zzThis pin. After zzThis PR #89 merges:
+
+1. advance `contracts/ZZTHIS-API-PIN` through the existing sync flow;
+2. regenerate/sync governed artifacts;
+3. reconcile this contract against the merged spec 004 and qualification protocol;
+4. run spec lint, pin checks, shared vectors, native tests, and qualification adapter tests in the same PR;
+5. record any intentional downstream delta as a ZQ decision rather than silently diverging.
+
+## Release and rollback
+
+Camera Accept is enabled only for an adapter/configuration with a PASS qualification receipt. FAIL or INCOMPLETE means no camera Accept for that platform release. Typed entry remains available.
+
+A regression can roll back to the last qualified adapter/configuration or disable camera Accept. Rollback cannot enable cloud OCR, lower shared decoder validation, or change the wordlist/check-word algorithm.
+
+## Traceability
+
+| Upstream invariant | zzThat implementation | Test/evidence | Task owner |
+|---|---|---|---|
+| Engine-neutral evidence | native RecognitionResult adapters | adapter contract tests | T023 |
+| Same decoder semantics | ZZCore / core-grammar | shared vectors | T020-T022 |
+| Raw image local only | cache + cleanup path | lifecycle/network tests | T023 |
+| Missing confidence explicit | optional confidence | adapter tests | T022-T023 |
+| Multi-code never auto-pick | Scan UI candidate list | UI/instrumented test | T040 |
+| Two Retry fallback | Scan state machine | state/UI test | T023/T040 |
+| No cloud v1 | no network reader dependency/path | manifest + network test | T023/T075 |
+| Qualified engine only | release config | PASS receipt + config test | T023 |
+| Rollback safe | last-qualified/disable-Accept path | release-config test | T023 |
