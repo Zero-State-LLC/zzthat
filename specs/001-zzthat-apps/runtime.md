@@ -233,7 +233,8 @@ zzThis spec 004, Client read pipeline, on each platform.
 3. Order the normalized evidence in reading order where geometry permits, then feed it to the shared scanner. Engine-specific objects never enter `ZZCore` or `:core-grammar`.
 4. `ZZCore` and `:core-grammar` run the scanner, classify, check the word when the list versions match (FR-044), and set the band. The existing prototype values remain parameters (accept 0.80, retry below 0.50). For adapters with meaningful line confidence, preserve the lowest-relevant-line rule. An adapter without comparable confidence needs a qualification-backed band mapping before promotion; it must not invent a 0-to-1 value.
 5. The Scan screen draws a box on the photo for each candidate and lists them (design/UX.md, Scan with the camera).
-6. v1 deletes/ends access to the scan photo when the scan flow ends and never uploads it for recognition. Hard cases rescan, clarify, abstain, or use typed entry.
+6. v1 deletes/ends access to the scan photo when the scan flow ends and never uploads it for recognition. Hard cases rescan, clarify, abstain, or use typed entry. After two Retry results in one scan flow, typed entry is surfaced alongside rescan. A rescan is a new attempt; it does not reuse confidence from the previous image.
+7. A platform adapter is release-eligible only with a reproducible ZZ-OCR-QUAL-001 PASS receipt from the upstream spec 004 protocol. If no adapter qualifies, camera recognition does not reach Accept in the release build; typed entry remains available.
 
 ## Privacy
 
@@ -269,7 +270,7 @@ The apps are analytics-free.
 | Spec lint and the pinned OpenAPI check | `.github/workflows/ci.yml` |
 | Every row of `contracts/vectors.json` (grammar, classifier, matching key, scanner, check word) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests |
 | Recognizer adapter smoke test on a rendered `zz-copper-lantern-sky-zz` | iOS: Vision adapter on macOS/device. Android: each qualification candidate on an emulator/device where supported. This is a smoke test, not promotion evidence. |
-| ZZ-OCR-QUAL-001 | Same frozen private corpus and expected canonical outputs for every candidate. Report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, band distribution, wrapped/multi-code behavior, latency, and footprint. Private photos do not enter the repo or CI artifacts. |
+| ZZ-OCR-QUAL-001 | Consume the normative upstream spec 004 qualification protocol. Same frozen private corpus/final split for candidates; writer-isolated splits; reproducible receipt; False Accept and false-valid disposition; license/security review; PASS/FAIL/INCOMPLETE. Private photos do not enter Git, PR attachments, logs, or CI artifacts. |
 | Band rows: line confidences in, one band out (T022) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests, from one shared table |
 | API fixtures for every error row | iOS: a stub transport. Android: the OkHttp test server. |
 | FR-041 with a fake clock | Both |
