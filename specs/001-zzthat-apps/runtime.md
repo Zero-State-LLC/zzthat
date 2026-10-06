@@ -227,10 +227,13 @@ A `no-store` response is never written. Every `/v1` response except a cacheable 
 zzThis spec 004, Client read pipeline, on each platform.
 
 1. Camera. iOS: `UIImagePickerController` with the camera source. iOS shows `scan.camera_purpose` as `NSCameraUsageDescription` (design.md, Sync). Android: `ActivityResultContracts.TakePicture` into a `FileProvider` file in the cache folder, which needs no camera permission. Every build on both platforms also offers the system photo picker for an existing photo (FR-012): `PhotosPicker` on iOS and `PickVisualMedia` on Android. The iOS simulator has no camera, so Demo and Local runs there use the picker.
-2. Reader. iOS: Vision `VNRecognizeTextRequest`, recognition level accurate, language correction off, language `en-US`. Android: ML Kit text recognition, Latin, bundled model. Each recognized line keeps its confidence: on iOS the top candidate's `VNRecognizedText.confidence`, on Android `Text.Line.getConfidence()`. Never use ML Kit Element or Symbol confidence. A word takes its line's confidence. A candidate takes the lowest confidence among the lines its words came from, so a code that wraps onto two lines takes the lower one [INFERRED]. zzThis spec 004, Client read pipeline step 1, states the same rule before either platform codes it.
-3. Order the lines top to bottom, then left to right, and join them with spaces.
-4. `ZZCore` and `:core-grammar` run the scanner, classify, check the word when the list versions match (FR-044), and set the band with the values in one constants file (accept 0.80, retry below 0.50).
+2. Reader adapter. Both platforms emit a normalized `RecognitionResult` before shared grammar code runs. It carries engine id/version, raw text candidates, confidence when the engine exposes a meaningful score, and geometry/line provenance when available. Missing confidence is explicit and is never synthesized. The adapter cannot query the resolver, live codes, or nearby valid codes.
+   - iOS baseline: Vision `VNRecognizeTextRequest`, recognition level accurate, language correction off, language `en-US`.
+   - Android qualification candidates: bundled ML Kit Latin text recognition and a PP-OCR mobile/ONNX prototype. Only the engine promoted by ZZ-OCR-QUAL-001 ships enabled by default. PP-OCR does not become a shipping dependency until dependency/license/security review passes.
+3. Order the normalized evidence in reading order where geometry permits, then feed it to the shared scanner. Engine-specific objects never enter `ZZCore` or `:core-grammar`.
+4. `ZZCore` and `:core-grammar` run the scanner, classify, check the word when the list versions match (FR-044), and set the band. The existing prototype values remain parameters (accept 0.80, retry below 0.50). For adapters with meaningful line confidence, preserve the lowest-relevant-line rule. An adapter without comparable confidence needs a qualification-backed band mapping before promotion; it must not invent a 0-to-1 value.
 5. The Scan screen draws a box on the photo for each candidate and lists them (design/UX.md, Scan with the camera).
+6. v1 deletes/ends access to the scan photo when the scan flow ends and never uploads it for recognition. Hard cases rescan, clarify, abstain, or use typed entry.
 
 ## Privacy
 
@@ -265,7 +268,8 @@ The apps are analytics-free.
 |---|---|
 | Spec lint and the pinned OpenAPI check | `.github/workflows/ci.yml` |
 | Every row of `contracts/vectors.json` (grammar, classifier, matching key, scanner, check word) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests |
-| The read pipeline on a rendered image of `zz-copper-lantern-sky-zz` | iOS: `ZZCore` tests on macOS (Vision). Android: an instrumented test (ML Kit) on the `apps-ci.yml` android job's emulator. |
+| Recognizer adapter smoke test on a rendered `zz-copper-lantern-sky-zz` | iOS: Vision adapter on macOS/device. Android: each qualification candidate on an emulator/device where supported. This is a smoke test, not promotion evidence. |
+| ZZ-OCR-QUAL-001 | Same frozen private corpus and expected canonical outputs for every candidate. Report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, band distribution, wrapped/multi-code behavior, latency, and footprint. Private photos do not enter the repo or CI artifacts. |
 | Band rows: line confidences in, one band out (T022) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests, from one shared table |
 | API fixtures for every error row | iOS: a stub transport. Android: the OkHttp test server. |
 | FR-041 with a fake clock | Both |
