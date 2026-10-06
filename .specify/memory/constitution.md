@@ -1,6 +1,6 @@
 # zzThat constitution
 
-Version 1.3.0. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
+Version 1.3.1. Ratified: pending (draft for Danny's acceptance in the pull request that adds this file). Amend through a pull request that bumps the version and records the change at the end of this file.
 
 This file is the governing contract for every zzThat spec, plan, and task under `specs/`. When an artifact conflicts with this file, this file wins until it is amended. Product-true locks from Michael, and operator locks from Danny, win over this file.
 
@@ -34,7 +34,7 @@ The server matches the exact code. It does not suggest other live codes. Unknown
 
 ### IV. Honest status
 
-zzThis has no validated codebook, no controlled comparisons, and no tested recognition or resolver yet [ZZTHIS SPEC]. The apps are not built. Public copy and store listings never claim pilots, customers, endorsement, adoption, or accuracy results. Research targets are not acceptance criteria and are not copied into this repo [ZZTHIS SPEC].
+Native app source exists and implementation/verification are in progress. That does not establish production readiness, store readiness, recognition qualification, or resolver validation. Public copy and store listings never claim pilots, customers, endorsement, adoption, or accuracy results without accepted evidence. Research targets are not reported as results [ZZTHIS SPEC].
 
 ### V. Do not invent the code format
 
@@ -50,7 +50,7 @@ This repository ships iOS and Android apps, together [DANNY 2026-10-04]. It does
 
 ### VIII. Spec before code
 
-Work follows Spec Kit order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. Each `spec.md` has a `## Workflows` section. Plans and tasks copy that list and do not replace it. No application source is added until Danny accepts spec 001.
+Work follows Spec Kit order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. Each `spec.md` has a `## Workflows` section. Plans and tasks copy that list and do not replace it. Existing application source remains governed by the accepted spec; new behavior is not considered complete until its contract, acceptance evidence, and task traceability converge.
 
 ### IX. Human gates
 
@@ -67,7 +67,7 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 ## Engineering standards
 
 - Default workflows: anti-slop-code, production-systems, google-developer-style.
-- Spec lint is `.github/workflows/ci.yml` (`python3 scripts/lint-specs.py`). App tests use `.github/workflows/apps-ci.yml`, added only when the test targets exist. Do not invent a green app check before that file exists.
+- Spec lint is `.github/workflows/ci.yml` (`python3 scripts/lint-specs.py`). App tests use `.github/workflows/apps-ci.yml`; end-to-end uses `.github/workflows/apps-e2e.yml`. A present or skipped workflow is not evidence of a passing platform gate.
 - The apps are native Swift with SwiftUI, and Kotlin with Jetpack Compose. Minimums are iOS 17 and Android 8.0 (API 26). Decided in ZQ17 and ZQ21. Both apps must pass the same zzThis G9 vectors.
 - Developer prose follows the Google developer documentation style guide, including principle XI.
 
@@ -86,3 +86,4 @@ Say "demo", not "mock" [MICHAEL 2026-10-03] [DANNY 2026-10-04]. Say "check word"
 | 1.1.1 | 2026-10-04 | Danny: zzthis is the central server and the later web client, and "Try zzThat" links to its marketing page. ZQ11 reversed: the server chooses the words for every code, including free public. |
 | 1.2.0 | 2026-10-04 | Runtime build contract, design consumption TODO, spec-lint CI, and the zzThat board. |
 | 1.3.0 | 2026-10-04 | One zzThis pin for everything. Deepened for a one-shot build: ZQ22 to ZQ26, sign-in by ID token, the read pipeline, strings from `copy.json`. |
+| 1.3.1 | 2026-10-06 | Honest-status and spec-before-code language reconciled with existing native source and CI. Recognition remains unqualified until ZZ-OCR-QUAL-001 evidence exists. |
