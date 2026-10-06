@@ -11,7 +11,12 @@ Both native apps expose the same conceptual adapter contract:
 RecognitionResult
   engine_id: non-empty string
   engine_version: non-empty string
-  candidates: ordered list
+  fiducials: optional ordered endpoint evidence
+    role: opening | closing
+    region
+    detection_score: optional
+  roi / orientation / rectification_transform: optional
+  candidates: ordered payload list
     raw_text: string
     confidence: optional engine-native meaningful score
     regions / line_provenance: optional
@@ -30,12 +35,20 @@ Vendor SDK objects stop at the adapter. `ZZCore` and `:core-grammar` consume nor
 | Either | cloud OCR or VLM | Not reachable in v1 |
 | Either | custom zz model | v2 only |
 
+## Fiducial-first camera contract
+
+For camera input, terminal `zz` marks are structural index/fiducial marks as well as literal grammar markers. The app first detects and pairs endpoint regions, uses the pair to localize/orient the code ROI, optionally rectifies that ROI, then recognizes the interior payload. It reconstructs normalized evidence with literal boundary markers before shared grammar runs. Endpoint confidence is not payload-word confidence.
+
+One/missing/cut endpoint cannot be inferred. Ambiguous pairs remain multiple candidates. Pair selection cannot consult resolver existence, live-code data, or payload wordlist proximity. Typed input bypasses visual fiducial detection and continues to use literal grammar markers.
+
 ## Attempt lifecycle
 
 ```text
 IDLE
  -> CAPTURING
- -> RECOGNIZING
+ -> FINDING_FIDUCIALS
+ -> LOCALIZING_ROI
+ -> RECOGNIZING_PAYLOAD
  -> DECODING
  -> ACCEPT | CLARIFY | RETRY | ABSTAIN
  -> RESOLVING only from ACCEPT or explicit user selection/confirmation required by spec
@@ -64,7 +77,11 @@ Cancellation, app background/termination recovery, decode exception, recognizer 
 ## Error mapping
 
 - recognizer unavailable/init failure -> Abstain with typed entry;
-- no text/candidate -> Retry;
+- no usable fiducial pair -> Retry;
+- one/cut/occluded endpoint -> Retry;
+- multiple plausible endpoint pairings -> list/Clarify; never choose by resolver or payload plausibility;
+- unusable ROI/rectification -> Retry;
+- no payload text after a valid ROI -> Retry;
 - partial marker / recoverable image-quality failure -> Retry;
 - unsupported script, reserved symbol, invalid grammar, unsafe evidence -> Abstain;
 - near-word, uncertain word, check-word ambiguity -> Clarify;
@@ -97,6 +114,7 @@ A regression can roll back to the last qualified adapter/configuration or disabl
 
 | Upstream invariant | zzThat implementation | Test/evidence | Task owner |
 |---|---|---|---|
+| Fiducial-first localization | native endpoint detector/pairer + ROI/rectification | localization/pairing corpus tests | T023 |
 | Engine-neutral evidence | native RecognitionResult adapters | adapter contract tests | T023 |
 | Same decoder semantics | ZZCore / core-grammar | shared vectors | T020-T022 |
 | Raw image local only | cache + cleanup path | lifecycle/network tests | T023 |
