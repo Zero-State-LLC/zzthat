@@ -124,3 +124,9 @@ A regression can roll back to the last qualified adapter/configuration or disabl
 | No cloud v1 | no network reader dependency/path | manifest + network test | T023/T075 |
 | Qualified engine only | release config | PASS receipt + config test | T023 |
 | Rollback safe | last-qualified/disable-Accept path | release-config test | T023 |
+
+## Qualification artifact consumption
+
+After the upstream pin advances, zzThat consumes the upstream ZZ-OCR-QUAL-001 manifest schema, receipt schema, and scoring rules as test/qualification contracts. It does not fork them. Native harness output must validate against the pinned receipt schema, and fixture/replay data must validate against the pinned manifest schema. Any platform-only field belongs in adapter configuration or the receipt's permitted review/configuration area, not in a second incompatible schema.
+
+The public repository may contain synthetic fixture metadata and generated non-sensitive test images. Private corpus images remain outside Git and CI artifacts. A native qualification runner may read them from an operator-supplied local path; that path and its contents are never committed.
