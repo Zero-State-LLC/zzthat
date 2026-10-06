@@ -1,8 +1,8 @@
 # Runtime: zzThat apps
 
-Feature: [spec.md](spec.md). This file is the build contract for the iOS and Android apps. It does not add application source.
+Feature: [spec.md](spec.md). This file is the build contract for the iOS and Android apps.
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
-Status: specification, deepened 2026-10-04 for a one-shot build. Danny accepts spec 001 before the trees below are created.
+Status: implementation in progress. The trees below now exist; this document remains normative for implementation and verification. A path being present does not mean its task or acceptance evidence is complete.
 
 Every named screen uses the pattern in zzThis `design/UX.md` at pin `424395f665587de8a73dae2cbdff3dbd9593b6c3`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
