@@ -35,7 +35,7 @@ Done when: both apps launch in Demo with the three tabs, the pinned fonts, and t
 - [ ] T028 Run qualification and report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, Accept/Clarify/Retry/Abstain distribution, wrapped/multi-code behavior, latency, and package/runtime footprint. False-valid-decode behavior is the primary safety metric.
 - [ ] T029 Record the Android promotion decision (ML Kit or PP-OCR) with engine/version pin and evidence. Apple Vision must also pass the same product-level qualification; if it does not, stop rather than weaken the decoder or bands.
 
-Done when: every vector row passes on both platforms, and a rendered image of `zz-copper-lantern-sky-zz` yields that one candidate on both.
+Done when: every vector row passes on both platforms; a rendered `zz-copper-lantern-sky-zz` is a smoke test only; recognition.md lifecycle/privacy tests pass; and no Release configuration can enable an unqualified or cloud adapter. Product promotion still requires the upstream ZZ-OCR-QUAL-001 receipt.
 
 ## Phase 3: API client ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
@@ -134,3 +134,7 @@ Done when: both end-to-end runs pass against the local zzThis Worker at the pin,
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
 - Live video scanning, and the photo upload, when zzThis turns `photo_reads` on (v2).
+
+## Recognition convergence gate
+
+Before T023/T040 can be called complete, upstream zzThis #89 must be merged and the zzThis pin advanced through the normal sync flow. Reconcile recognition.md against the merged upstream SHA, run both shared-vector suites, and attach the qualification receipt or explicitly record NO_PROMOTION. Presence of a native OCR SDK or a rendered-image smoke test is not qualification evidence.
