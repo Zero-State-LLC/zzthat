@@ -58,7 +58,7 @@ Done when: in a Local build against `npm run dev:api`, developer sign-in, sign-o
 - [ ] T041 More than one candidate: list them, draw their boxes, and wait for a tap (FR-026).
 - [ ] T042 Resolve shows `record.title` and `record.body` as plain text, or one not-found state (FR-010, FR-036, FR-046). Signed-out resolve works (FR-016).
 - [ ] T043 Typed entry uses the same library and the same resolve call (US2a).
-- [ ] T044 No photo upload offer while `photo_reads` is false (FR-045).
+- [ ] T044 Never offer or call a photo-read/upload endpoint in V1, even if `photo_reads` is true. Add request-level tests proving no captured image, crop, or OCR transcript leaves the app; only a selected canonical code may be sent for resolution (FR-004, FR-045).
 
 Done when: the Scan, Pick, Clarify, Type, and Resolve snapshots exist for each state, and the fixture flow resolves a typed code.
 
@@ -127,4 +127,4 @@ Done when: both end-to-end runs pass against the local zzThis Worker at the pin,
 - A web client. It is built in zzThis, not in this repo (ZQ1, FR-001).
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
-- Live video scanning, and the photo upload, when zzThis turns `photo_reads` on (v2).
+- Live video scanning and any server-side photo reading are outside V1. `photo_reads` alone never enables an app upload; a future capability requires explicit product/privacy/security promotion.

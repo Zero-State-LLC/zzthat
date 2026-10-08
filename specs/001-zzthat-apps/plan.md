@@ -1,6 +1,6 @@
 # Plan: zzThat apps
 
-Feature: [spec.md](spec.md). Status: proposal, not built. No application source in this change.
+Feature: [spec.md](spec.md). Status: implementation in progress; V1 capture and release gates remain open.
 Decisions: [decisions.md](decisions.md).
 
 ## Workflows (copied from the spec)
@@ -18,7 +18,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Minimum OS | iOS 17. Android 8.0 (API 26). | ZQ21 |
 | Grammar | Each app implements zzThis Section 2.2a and fails on any G9 miss. | [ZZTHIS SPEC] |
 | Check word and wordlist | Follow spec 003. Build it in T020 and T021. A local pass shows only when the bundled list version equals `wordlist_version` (FR-044). | [ZZTHIS SPEC] spec 003. Q30 to Q32 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): `(d1 + 2 * d2) mod N` with N prime, and the EFF long list. |
-| Recognition | Option A. On device first. Cloud only after the FR-005 sentence. | [ZZTHIS SPEC] Section 10.3. Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): Option A on the device (Vision on iOS, ML Kit on Android), no cloud reader in v1. |
+| Recognition | V1 is on-device only: Apple Vision on iOS and a qualified on-device Android engine behind the same result contract. No photo, crop, or OCR transcript upload, regardless of `photo_reads`. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903); qualification gate is draft PR #89. |
 | API | zzThis spec 005 and the pinned `contracts/zzthis-v1.openapi.yaml`. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
 | Auth | Native Apple or Google sign-in, a server nonce, and the provider ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 [DANNY 2026-10-04] (Q66). ZQ23. |
 | Create | Shows the Unavailable state until `GET /v1` says `free_public` is true. It is never hidden. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |

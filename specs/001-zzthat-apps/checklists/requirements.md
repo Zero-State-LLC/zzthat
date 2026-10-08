@@ -1,10 +1,10 @@
 # Requirements checklist: 001-zzthat-apps
 
-Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decided, and again after the one-shot deepening (ZQ22 to ZQ26, zzThis pin `484100308376bce01c88f30f871dff3e13082fe0`). The apps are not built. Rows below check the spec, not a binary.
+Checked 2026-10-04 against this spec package, and updated 2026-10-07 for the native app source and V1 no-upload decision. Native app source exists; the checklist below distinguishes spec completeness from release qualification. Source presence is not binary, device, staging, or store qualification.
 
 ## Completeness
 
-- [x] Spec has a `## Workflows` section naming workflows and the CI file to add later.
+- [x] Spec has a `## Workflows` section naming the workflows and CI files.
 - [x] Plan and tasks copy that workflow list and do not replace it.
 - [x] Each user story US1 to US6 has acceptance.
 - [x] Functional requirements have IDs FR-001 to FR-049, and each row has a source tag.
@@ -24,7 +24,7 @@ Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decid
 - [x] design.md pins zzThis at one sha with `scripts/sync-zzthis.sh`, including fonts and `copy.json`. No token values or sentences are invented here.
 - [x] Every screen in runtime.md names a pattern in zzThis `design/UX.md`. None is a TODO.
 - [x] runtime.md names the toolchain, build configurations, the read pipeline, and an end-to-end run.
-- [x] Spec lint is `.github/workflows/ci.yml`.
+- [x] Spec lint is `.github/workflows/ci.yml`; native app CI is `.github/workflows/apps-ci.yml`.
 
 ## Source and copy rules
 
@@ -42,10 +42,12 @@ Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decid
 - [x] Server-issued words (FR-017) match zzThis spec 002 US2, including free public codes. There is no person-written claim contract (ZQ11).
 - [x] Capture bands follow spec 004, and the marketing labels Manual, Rescan, Confirm, Resolve are not treated as the product contract.
 
-## Not verified, because nothing is built
+## Qualification and release evidence still open
 
-- [ ] SC-1 to SC-8 on a binary.
-- [ ] T011 fixture tests.
-- [ ] T020 `contracts/vectors.json` runs on iOS and Android.
-- [ ] T082 string check in CI.
-- [ ] A live call to the zzThis server. No such server is in this repo, and the sketch is not a versioned contract (DEP-009).
+- [ ] Green, commit-bound Android CI including instrumented OCR tests on the current change.
+- [ ] Green, commit-bound iOS CI including Vision OCR tests on the current change.
+- [ ] G9 grammar/check-word vectors and qualification receipts independently verified on both platforms, with the accepted thresholds and device/build identity recorded.
+- [ ] Camera and picker capture behavior qualified on supported physical devices, including cancellation, unreadable image, multiple candidates, and scratch-image deletion.
+- [ ] Request-level evidence confirms V1 sends only the selected canonical code to ordinary resolve and never sends an image, crop, or OCR transcript, regardless of `photo_reads`.
+- [ ] Staging end-to-end verification against the pinned API, using only canonical-code resolution; no production promotion until staging evidence is reviewed.
+- [ ] Store/privacy/accessibility readiness and human release decision. No store submission is authorized by this checklist.

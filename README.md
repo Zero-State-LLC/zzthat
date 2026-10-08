@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href=".github/workflows/ci.yml"><img alt="spec lint" src="https://github.com/Zero-State-LLC/zzthat/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="#status"><img alt="status: specification" src="https://img.shields.io/badge/status-specification-f85000"></a>
+  <a href="#status"><img alt="status: qualification in progress" src="https://img.shields.io/badge/status-qualification%20in%20progress-f85000"></a>
   <a href="#status"><img alt="platforms: iOS and Android" src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1c1b19"></a>
   <a href="specs/001-zzthat-apps/spec.md"><img alt="spec 001" src="https://img.shields.io/badge/spec-001--zzthat--apps-1c1b19"></a>
 </p>
@@ -27,7 +27,7 @@ zzThat is the free everyday-use iOS and Android apps for zz codes. A person writ
 
 zzThat is the apps portion of [zzThis](https://github.com/Zero-State-LLC/zzthis). The apps are thin clients. They call the zzThis central server to resolve, issue, and manage codes. They do not run a resolver [DANNY 2026-10-04]. The later web client is built in that same repo.
 
-This repository holds the spec and the repo tooling. It does not hold app source yet.
+This repository holds the iOS and Android app source, product specifications, and repo tooling.
 
 ## Contents
 
@@ -41,12 +41,12 @@ This repository holds the spec and the repo tooling. It does not hold app source
 
 ## Status
 
-zzThat is a **specification**. The apps are not built. Recognition, the resolver, and the wordlist are untested in zzThis, and this repo does not claim results [ZZTHIS SPEC].
+Native iOS and Android app source is present. On-device text recognition is implemented with Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: commit-bound platform CI, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The resolver and authoritative wordlist remain owned by zzThis [ZZTHIS SPEC].
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
 - Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
-- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The badge above tracks that workflow on `main` after this branch merges. App test CI is not added until the test targets exist.
+- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks run in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. A passing CI run alone does not qualify a release.
 
 ## Design tokens
 
@@ -101,13 +101,13 @@ flowchart LR
   end
   subgraph Server["zzthis repo: central server"]
     API["Resolve, mint, revoke, record versions"]
-    Vision["Cloud vision, confirmed retry only"]
   end
   iOS --> Local
   Android --> Local
   Local -->|"canonical code only"| API
-  Local -.->|"photo only after the person confirms"| Vision
 ```
+
+V1 recognition is on-device only. Images, crops, and OCR transcripts are never sent to the server; ordinary resolution receives only the selected canonical code. The `photo_reads` capability does not opt the client into a photo endpoint. Any future server-side photo reading requires a separate product, privacy, and security decision.
 
 The apps do not cache a source of truth. Only an active reusable public unauthenticated resolve may be kept, and only for the server's `Cache-Control` (`public, max-age=60, stale-while-revalidate=300`). Every other `/v1` response is `no-store` [ZZTHIS SPEC] spec 005 FR-018 and FR-028. They cannot issue or revoke offline.
 
@@ -115,7 +115,7 @@ The apps do not cache a source of truth. Only an active reusable public unauthen
 
 Work is tracked as GitHub issues and on the [zzThat board](https://github.com/orgs/Zero-State-LLC/projects/25). ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
 
-### Phase 0: Spec
+### Phase 0: Spec and native implementation
 
 - [x] Constitution, spec 001, plan, tasks, and checklist
 - [x] Decide ZQ1 to ZQ21 ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21), [log](specs/001-zzthat-apps/decisions.md))
@@ -123,13 +123,14 @@ Work is tracked as GitHub issues and on the [zzThat board](https://github.com/or
 - [x] Runtime build contract and the design pin (`scripts/pin-design.sh`)
 - [ ] Danny accepts the spec
 
-### Phase 1: Scaffold and on-device grammar
+### Phase 1: Native capture and qualification
 
-- [ ] Platform scaffold, SwiftUI and Compose ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
-- [ ] Grammar vectors on both platforms ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
-- [ ] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [x] Native SwiftUI and Compose app source and platform OCR readers ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22), [#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
+- [x] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [ ] Commit-bound iOS and Android CI, device qualification, parity and privacy gates ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26))
+- [ ] Staging end-to-end verification with canonical-code-only resolve; no production promotion until evidence is accepted
 
-### Phase 2: Everyday flows
+### Phase 2: Remaining everyday flows and release gates
 
 Live mint stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 

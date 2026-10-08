@@ -82,10 +82,8 @@ jobs:
         run: ./gradlew :core-api:compileKotlin
       - name: JVM unit tests (plain Kotlin modules)
         run: ./gradlew :core-grammar:test :core-api:test
-      # The Android modules (app, core-auth, core-design, core-storage) are not
-      # written yet and are left out of settings.gradle.kts. Every step below
-      # runs only once app/build.gradle.kts exists, so the job does not fail on
-      # modules that are not there; it is not a claim that Android is done.
+      # Keep the app-module gate for scaffold commits that precede the native
+      # module. Current mainline includes these modules, so their tests execute.
       - name: Android unit tests
         if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         run: >-

@@ -1,8 +1,8 @@
 # Runtime: zzThat apps
 
-Feature: [spec.md](spec.md). This file is the build contract for the iOS and Android apps. It does not add application source.
+Feature: [spec.md](spec.md). This file is the build and runtime contract for the iOS and Android apps; native source lives under `apps/ios` and `apps/android`.
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
-Status: specification, deepened 2026-10-04 for a one-shot build. Danny accepts spec 001 before the trees below are created.
+Status: implementation in progress. App trees exist; camera capture remains release-gated. V1 capture is on-device only and never sends a photo, crop, or OCR transcript.
 
 Every named screen uses the pattern in zzThis `design/UX.md` at pin `424395f665587de8a73dae2cbdff3dbd9593b6c3`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
@@ -218,9 +218,9 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Public reusable resolve | A small JSON file in the caches folder, keyed by canonical code, at most 50 entries, oldest dropped first | FR-041: 60 seconds online, 360 seconds offline. Dropped after a 2xx from the owner's revoke, re-roll, or record version for that code. `DELETE /v1/me` clears every entry. |
 | Last canonical text | App storage | Until the person clears it, so resolve can be retried |
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
-| Photo | The app's cache folder | Deleted when the scan or write check ends (FR-004) |
+| Photo | The app's cache folder | Temporary for the active scan or write check; deleted when that operation ends (FR-004) |
 
-A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, photos, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. A photo upload is JPEG only and at most 8 MiB (8388608 bytes).
+A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. The V1 client does not invoke a photo-read/upload route, even if discovery reports `photo_reads: true` (FR-045).
 
 ## Read pipeline
 
