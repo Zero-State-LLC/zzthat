@@ -22,6 +22,16 @@ import com.zer0state.zzthat.grammar.RecognizedLine
 import com.zer0state.zzthat.grammar.ScanKind
 import com.zer0state.zzthat.grammar.TypedRead
 import com.zer0state.zzthat.grammar.nearWords
+import kotlinx.coroutines.CancellationException
+
+/** Cancellation ends the read operation; only ordinary OCR errors become an empty result. */
+internal suspend fun <T> readOrNull(read: suspend () -> T): T? = try {
+    read()
+} catch (error: CancellationException) {
+    throw error
+} catch (error: Exception) {
+    null
+}
 
 /** The on-device reader (runtime.md, Read pipeline step 2): lines with their own confidence. */
 fun interface TextReader {
@@ -82,16 +92,15 @@ class ScanModel {
         reading = true
         message = null
         candidates = emptyList()
-        val lines = try {
-            reader.read(bitmap)
-        } catch (error: Exception) {
-            emptyList()
+        return try {
+            val lines = readOrNull { reader.read(bitmap) }.orEmpty()
+            val result = app.pipeline.read(lines)
+            candidates = result.candidates
+            if (result.candidates.isEmpty()) message = R.string.scan_no_code
+            result.autoOpen?.canonical
+        } finally {
+            reading = false
         }
-        val result = app.pipeline.read(lines)
-        reading = false
-        candidates = result.candidates
-        if (result.candidates.isEmpty()) message = R.string.scan_no_code
-        return result.autoOpen?.canonical
     }
 
     fun cameraIsOff() {
@@ -104,6 +113,7 @@ class ScanModel {
         photo = null
         candidates = emptyList()
         message = null
+        reading = false
     }
 }
 
