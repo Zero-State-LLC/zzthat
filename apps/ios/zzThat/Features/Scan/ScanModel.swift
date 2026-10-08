@@ -81,6 +81,7 @@ final class ScanModel {
         reading = true
         message = nil
         candidates = []
+        let recognize = self.recognize
         let task = Task.detached(priority: .userInitiated) { try await recognize(data) }
         recognitionTask = task
         defer {
