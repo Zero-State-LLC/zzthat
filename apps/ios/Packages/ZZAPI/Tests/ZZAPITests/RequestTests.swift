@@ -69,6 +69,26 @@ struct RequestTests {
         #expect(sent.body == nil)
     }
 
+    /// FR-045: discovery must not turn on image/OCR upload, even if the server advertises it.
+    @Test func photoReadsCapabilityNeverEnablesPhotoUpload() async throws {
+        let transport = StubTransport { sent in
+            if sent.operationID == "getDiscovery" {
+                return .init(200, nil).withBody(#"{"contract":"1","free_public":true,"auth_providers":["dev"],"scopes":["free_public"],"wordlist_version":"fixture-7","photo_reads":true}"#)
+            }
+            return Self.ok(sent)
+        }
+        let service = try await service(transport)
+        let discovery = try await service.discovery().get()
+        #expect(discovery.photoReads)
+        _ = try await service.resolve("zz-kathy-lost-cat-zz").get()
+
+        #expect(transport.sent.map(\.operationID) == ["getDiscovery", "resolveCode"])
+        let resolve = try #require(transport.sent.last)
+        #expect(resolve.request.method == .get)
+        #expect(resolve.request.path == "/v1/resolve/zz-kathy-lost-cat-zz")
+        #expect(resolve.body == nil)
+    }
+
     @Test func aNoStoreResolveIsNotCacheable() async throws {
         let transport = StubTransport { _ in .init(200, "resolve") }
         let response = try await service(transport).resolve("zz-kathy-lost-cat-zz").get()
