@@ -45,7 +45,9 @@ class ApiFailureException(val failure: ApiFailure) : IOException(failure.toStrin
  * token writes to disk.
  */
 class ZZService(
-    val apis: ZZApis,
+    // Expose only the V1 methods below; generated endpoints outside the app contract
+    // (including photo upload) must remain inaccessible to app features.
+    private val apis: ZZApis,
     val tokens: TokenStore,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
