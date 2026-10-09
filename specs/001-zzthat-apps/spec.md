@@ -5,6 +5,7 @@ Status: implementation in progress. Native app source exists, but camera capture
 Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
+Camera boundary: [recognition-adapter.md](recognition-adapter.md). Camera Accept remains blocked on the upstream contract and qualification gates.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
 zzThis pin: `424395f665587de8a73dae2cbdff3dbd9593b6c3`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
 Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/424395f665587de8a73dae2cbdff3dbd9593b6c3/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/424395f665587de8a73dae2cbdff3dbd9593b6c3/docs/ONE-SHOT-BRIEF.md).
@@ -157,6 +158,8 @@ Acceptance:
 | FR-047 | The Account screen shows the support contact (`support@zer0state.com`) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
 | FR-049 | The app turns off the HTTP library's own cache for `/v1` calls. FR-041 is the only resolve cache. | [INFERRED], so one rule owns caching |
+| FR-050 | Camera capture detects and geometrically pairs the literal terminal `zz` index markers before payload OCR. It shows all plausible complete, partial, and bare-marker boxes, never infers a missing marker, and never uses payload/grammar/wordlist/resolver evidence to choose a pair. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate; otherwise, the person selects before payload OCR. | zzThis spec 004 FR-018 to FR-020, proposed in draft PR #89; app behavior detail in `recognition-adapter.md` |
+| FR-051 | Payload OCR runs on device only inside the selected pair's validated interior ROI. Crop/rectify when geometry permits within the qualified envelope; wrapped/multiline support remains in scope. Unsafe, unsupported, or unresolved geometry fails closed. Qualification evaluates every complete predicted pair independently by `pair_id`, without ground-truth-driven selection; this does not change runtime selection-first behavior. | zzThis spec 004 FR-009 and FR-021, qualification scoring; proposed in draft PR #89; app behavior detail in `recognition-adapter.md` |
 
 ## API contract
 
