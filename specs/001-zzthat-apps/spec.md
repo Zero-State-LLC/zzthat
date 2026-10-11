@@ -37,7 +37,7 @@ Acceptance:
 2. If the server has no free public scope, the app does not invent a code. It shows an unavailable state (FR-018, ZQ3).
 3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11. The free app does not mint field codes or handles.
 4. After the person writes the minted code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017, with the spec 004 Client read pipeline.
-5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006.
+5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006. The Create UI may present server-chosen candidates in a suggested-word picker so the person feels they chose a code; the app still never sends a person-written code string (zzThis D-2026-10-11-01 option C, RM-113).
 6. The pitch lines `zz-kathy-lost-cat-zz` and `zz-moving-box-kitchen-3-zz` are examples in the copy [MICHAEL 2026-10-02]. Create does not claim those strings. Writing a code with no device at all stays zzThis Q25 and is not this screen.
 
 ### US2. Scan a handwritten code with the camera (P1)
@@ -124,11 +124,12 @@ Acceptance:
 | FR-014 | The first release does not request microphone permission. If voice is added later, the audio stays on the device. | [ZZTHIS SPEC] spec 004 names voice. ZQ10 keeps it out of the first release. On-device audio is [INFERRED] from Section 10.3. |
 | FR-015 | Issue, revoke, and record update require a signed-in owner. Unauthenticated write calls are the server's 401. | [ZZTHIS SPEC] spec 002 error states |
 | FR-016 | A signed-out person can resolve a public code. The app must not require an account for that read. Writes still require sign-in. The app sends no `Authorization` header on resolve, so a signed-in read stays cacheable [ZZTHIS SPEC] spec 005 FR-008. | [MICHAEL 2026-10-02] "anyone can scan". [ZZTHIS SPEC] spec 002 FR-020. ZQ6. The Section 10.6 line that every call is authenticated is an inferred sketch and does not win for this read. |
-| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [ZZTHIS SPEC] spec 005 FR-006. |
+| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. A suggested-word picker may show server-chosen candidates; it does not accept arbitrary user-typed code words (zzThis RM-113, D-2026-10-11-01). | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [ZZTHIS SPEC] spec 005 FR-006. D-2026-10-11-01 option C. |
 | FR-018 | Until the server exposes a free public scope, create shows an honest unavailable state and does not issue. | [ZZTHIS SPEC] spec 002 FR-016 (free public is v2). ZQ3 is [#3](https://github.com/Zero-State-LLC/zzthat/issues/3). |
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
 | FR-021 | Revoke and new record versions use the server. My codes uses `GET /v1/me/codes`. Code detail and Edit record take a code id. They find that code's row in `GET /v1/me/codes` (`limit` 50, following `next_cursor`), then read `GET /v1/records/{record_id}`. Revoke uses the code id. Versions use `record_id`. No matching row shows the one not-found state. | [ZZTHIS SPEC] spec 005 US3 and FR-030. Contract 1 has no single-code read, so the lookup by code id is [INFERRED]. |
+| FR-050 | The app offers a device-only Saved list of codes the person scanned and chose to save (canonical form, and an optional local thumbnail). Saved does not sync to the server and does not upload photos. The list is cleared on account deletion and by a Settings reset. Cloud sync of Saved is out of this release (zzThis RM-117). | zzThis D-2026-10-11-01 row 17; RM-115. |
 | FR-022 | The app may show a briefly cached signed record without a connection. It cannot issue, revoke, or mark a code used offline. | [ZZTHIS SPEC] Section 10.5 |
 | FR-023 | The app does not cache single-use or short-expiry codes for a later resolve. | [INFERRED] from the edge rule in [ZZTHIS SPEC] Section 10.2 |
 | FR-024 | The app may keep a local draft of a title and body, labeled "Not a code yet." That draft has no code words, is not issued, is not resolved, and is not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. ZQ11: words come from mint, not from the draft. |
@@ -346,7 +347,8 @@ zzThis spec 003 says "check word". zzThis `docs/SPEC.md` also says "checksum wor
 ## Out of scope
 
 - A web client in this repo (FR-001). The later web client is a zzthis task (ZQ1). The "Try zzThat" link target is the zzThis marketing page, not a zzthat.com site (ZQ2). zzThis spec 001 FR-016 still names zzthat.com; this repo does not edit that file.
-- A person-written claim, and a client uniqueness check (ZQ11).
+- A person-written claim, and a client uniqueness check (ZQ11). Real person-made claim is zzThis v2.0 / RM-116 (D-2026-10-11-01 option A), not this release.
+- Cloud sync of the Saved list or upload of Saved thumbnails (zzThis RM-117 / v2.2).
 - zzThing [ZZTHIS SPEC].
 - A backend, resolver, wordlist pipeline, or check-word algorithm in this repo.
 - Logistics, postal, and enterprise product surfaces, except where the shared API requires the client to tolerate those code kinds.

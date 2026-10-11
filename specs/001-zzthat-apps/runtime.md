@@ -73,9 +73,9 @@ Each feature calls core modules. Features do not call each other except through 
 | App / `:app` | Process entry, tabs, dependency wiring, build configuration | HTTP, grammar rules, tokens |
 | Navigation | The route list below | Screen layout |
 | Scan | Camera handoff, candidate list, clarify, typed entry | Resolve rendering |
-| Create | Mint, re-roll, write check, unavailable state, draft | A person-typed code string |
+| Create | Mint, re-roll, suggested-word picker (RM-113), write check, unavailable state, draft | A person-typed code string (claim; not in v1.1) |
 | Resolve | Title and body, not-found, share, report entry | Issue |
-| Codes | My codes, Code detail, Edit record, revoke | Public resolve rules |
+| Codes | My codes, Saved (local, RM-115), Code detail, Edit record, revoke | Public resolve rules |
 | Account | Sign-in, sign-out, delete, support and privacy links, licenses | A profile form |
 | Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
@@ -86,7 +86,7 @@ Each feature calls core modules. Features do not call each other except through 
 
 ## Navigation
 
-Three tabs: Scan, Create, My codes. Account opens from a toolbar item on every tab. Report opens from Resolve.
+Three tabs: Scan, Create, My codes. Saved is a device-only list under My codes or a sibling entry (RM-115); it does not call the server. Account opens from a toolbar item on every tab. Report opens from Resolve.
 
 ```
 Scan
@@ -137,10 +137,11 @@ Each screen implements five states. Strings come from `copy.json`.
 | Clarify | Confirm one uncertain word or a check-word mismatch | Not used | `scan.check_mismatch` | Same | Fixture word | Scan with the camera, step 4 |
 | Type | Same parser and resolve as Scan (US2a) | `type.empty` | `type.malformed`, 429 | Keep the typed text. Resolve waits. | A fixture string labeled Demo | Scan |
 | Resolve | Title and body, or one not-found (US3) | Not used. Not-found is the error row. | `resolve.not_found` | FR-041, then `resolve.not_on_device` | Fixture title and body labeled Demo | Resolve |
-| Create | Mint a wordlist code (US1, ZQ11) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
+| Create | Mint a wordlist code (US1, ZQ11); optional suggested-word picker over server candidates (RM-113) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
 | Minted code | The canonical form and the check word, and re-roll | Not used after a 201 | `minted.reroll_cap` keeps the words | Hide re-roll. The words stay. | Demo words. The button does not call. | Minted code |
 | Write check | The photo of the handwriting matches the minted code (FR-037) | No photo yet | `writecheck.mismatch`. No upload. | Runs on the device | A fixture photo labeled Demo | Write check |
 | My codes | Owner list with titles | `codes.empty`, or `codes.signed_out` | 401, 403, 500 | `error.no_connection`. No list is kept, because owner responses are `no-store`. | Fixture rows labeled Demo | My codes |
+| Saved | Device-only list of scanned codes the person saved (RM-115) | `saved.empty` | Not used (local only) | Local list still shown | Fixture rows labeled Demo | Saved |
 | Code detail | One owned code: share, edit, revoke. Revoke shows only when the row's `status` is `active`. | Not used | `resolve.not_found` when no row has the code id, or the record read returns 404 | `error.no_connection`. Nothing owned is kept offline. | Fixture row labeled Demo | Code detail |
 | Edit record | New title and body | `create.title_required` | `create.content_refused`. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the fields. | Refuse the save | Demo fields. Save does not call. | Edit record |
 | Revoke confirm | One confirm, then revoke | Not used | `error.nothing_saved`. The code stays active. | Refuse | Demo confirm does not call | Revoke confirm |
