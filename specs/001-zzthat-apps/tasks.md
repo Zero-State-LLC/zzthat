@@ -126,7 +126,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [x] T091 [RM-104] The Data safety and privacy policy drafts list what the bundled ML Kit text recognition SDK sends Google, and no unqualified "no analytics" sentence remains.
 - [ ] T092 [RM-107] The privacy manifest adds Other Data Types for the IP-based rate-limit HMAC (not linked, not tracking, App Functionality). A Release archive's privacy report shows a manifest for every linked SDK and no undeclared required-reason API.
 - [ ] T093 [RM-106] A `release-android` job, run by hand only and behind a protected environment, builds `bundleProdRelease`, signs it with the upload key from Actions secrets, and uploads the `.aab` as a workflow artifact. No key, password, or keystore in the tree. Danny enrolls in Play App Signing at the first upload.
-- [x] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
+- [ ] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
 - [ ] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112), which waits on T095.
 - [ ] T097 [RM-101] Terms acceptance before the first create, after Danny approves the terms of use and content policy (zzThis RM-103).
