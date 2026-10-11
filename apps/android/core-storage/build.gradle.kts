@@ -1,5 +1,6 @@
 // Storage (runtime.md, Modules and Storage): the FR-041 resolve cache, the
-// draft, the last canonical text, the signed-in provider, and the scan photo.
+// draft, the last canonical text, the signed-in provider, the scan photo,
+// and the FR-035 hidden codes, kept on the device only.
 // Never a second source of truth, and never a no-store response.
 plugins {
     alias(libs.plugins.android.library)

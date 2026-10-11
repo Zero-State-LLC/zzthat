@@ -51,6 +51,12 @@ sealed interface ResolvePhase {
     /** A live record, or the FR-041 copy labeled offline. */
     data class Record(val view: ResolvedView, val offline: Boolean) : ResolvePhase
 
+    /**
+     * The person hid this code on this device (FR-035). It resolved as usual,
+     * and no title or body reaches the screen.
+     */
+    data object Hidden : ResolvePhase
+
     /** The one not-found state (FR-010). */
     data object NotFound : ResolvePhase
 
@@ -100,9 +106,18 @@ object ResolveLoader {
     }
 }
 
+/**
+ * One Resolve screen. A code hidden on this device resolves through the same
+ * path, scanned or typed, and then shows [ResolvePhase.Hidden] (FR-035). The
+ * resolved record stays in this model only, so Unhide shows it again at once
+ * and without a call.
+ */
 class ResolveModel(val canonical: String) {
     var phase by mutableStateOf<ResolvePhase>(ResolvePhase.Loading(null))
         private set
+
+    /** The last record this screen resolved, shown or hidden. */
+    private var record: ResolvePhase.Record? = null
 
     /** While a 429 wait runs, Try again stays off (FR-033). */
     var waiting by mutableStateOf(false)
@@ -116,21 +131,44 @@ class ResolveModel(val canonical: String) {
     }
 
     suspend fun load(app: AppModel) {
+        // A hidden record is not kept on screen while loading.
         phase = ResolvePhase.Loading((phase as? ResolvePhase.Record)?.view)
         val next = ResolveLoader.load(canonical, app)
-        phase = next
+        record = next as? ResolvePhase.Record
+        phase = if (next is ResolvePhase.Record && app.hidden.isHidden(canonical)) ResolvePhase.Hidden else next
         if (next is ResolvePhase.Failure && next.retryAfter != null) {
             waiting = true
             delay(maxOf(next.retryAfter, 1) * 1000L)
             waiting = false
         }
     }
+
+    /** Hide this code on this device. The title and body leave the screen at once. No server call. */
+    suspend fun hide(app: AppModel) {
+        app.hide(canonical)
+        sync(app)
+    }
+
+    /** Unhide this code on this device. The record shows again at once. No server call. */
+    suspend fun unhide(app: AppModel) {
+        app.unhide(canonical)
+        sync(app)
+    }
+
+    /** After a hide or unhide here or elsewhere (the Report sheet, the Account reset), show the stored state. No server call. */
+    suspend fun sync(app: AppModel) {
+        val shown = record ?: return
+        if (phase !is ResolvePhase.Record && phase !is ResolvePhase.Hidden) return
+        phase = if (app.hidden.isHidden(canonical)) ResolvePhase.Hidden else shown
+    }
 }
 
 /**
  * Resolve (US3, design/UX.md Resolve): the title and body as plain text, or
  * the one not-found state. Share sends the canonical code as text, never a
- * URL (FR-020). Report opens the FR-035 screen.
+ * URL (FR-020). Report opens the FR-035 screen, and Hide this code hides it on
+ * this device. A hidden code shows `resolve.hidden` and Unhide in place of
+ * its title and body (FR-035).
  */
 @Composable
 fun ResolveScreen(
@@ -141,6 +179,8 @@ fun ResolveScreen(
     onRetry: () -> Unit = {},
     onShare: (String) -> Unit = {},
     onReport: () -> Unit = {},
+    onHide: () -> Unit = {},
+    onUnhide: () -> Unit = {},
 ) {
     ZZScreen(demo = demo, loading = phase is ResolvePhase.Loading) {
         when (phase) {
@@ -150,6 +190,12 @@ fun ResolveScreen(
                 RecordBlock(phase.view)
                 ZZButton(stringResource(R.string.resolve_share), "resolve.share") { onShare(phase.view.shareText) }
                 ZZButton(stringResource(R.string.resolve_report), "resolve.report", ButtonKind.SECONDARY, onClick = onReport)
+                ZZButton(stringResource(R.string.resolve_hide), "resolve.hide", ButtonKind.SECONDARY, onClick = onHide)
+            }
+            ResolvePhase.Hidden -> {
+                CodeText(canonical)
+                Message(R.string.resolve_hidden)
+                ZZButton(stringResource(R.string.resolve_unhide), "resolve.unhide", ButtonKind.SECONDARY, onClick = onUnhide)
             }
             ResolvePhase.NotFound -> {
                 CodeText(canonical)

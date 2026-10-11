@@ -14,6 +14,7 @@ import com.zer0state.zzthat.app.BuildSettings
 import com.zer0state.zzthat.app.Connectivity
 import com.zer0state.zzthat.storage.AppClock
 import com.zer0state.zzthat.storage.DraftStore
+import com.zer0state.zzthat.storage.HiddenStore
 import com.zer0state.zzthat.storage.LastCanonicalStore
 import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
@@ -129,6 +130,7 @@ object TestApp {
             drafts = DraftStore(local),
             lastCanonical = LastCanonicalStore(local),
             providerStore = ProviderStore(local),
+            hidden = HiddenStore(local),
             photos = PhotoScratch(File(folder, "photos")),
             connectivity = Connectivity(online),
             bundledLists = bundledLists,
