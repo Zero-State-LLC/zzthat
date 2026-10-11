@@ -138,7 +138,7 @@ jobs:
 
   ios:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'ios-ci') }}
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ios]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
