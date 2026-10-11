@@ -16,7 +16,7 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list (superseded by SC1). No personal data in the code string. |
 | [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) | ZQ9 | Share the canonical code as text. `share.url` stays null. |
 | [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) | ZQ10 | No voice and no microphone in the first release. Later voice, if any, stays on the device. |
-| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. Suggested-word picker (server candidates only) is zzThis D-2026-10-11-01 option C / RM-113; person-made claim stays v2.0 (RM-116). |
 | [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) | ZQ12 | The useful page is a screen in the app. |
 | [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) | ZQ13 | No live-code suggestions. Exact match. |
 | [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) | ZQ14 | The retry consent sentence in spec.md FR-005. No training use. |
@@ -88,3 +88,13 @@ Danny accepted the 2026-10-09 store compliance audit in chat on 2026-10-09 at 23
 | SC3 | The Data safety draft lists what the bundled ML Kit SDK collects: App info and performance and Device or other IDs, not shared, for analytics and diagnostics, encrypted in transit. The privacy policy says the app has no analytics of its own and no advertising, and that Google's on-device text recognition sends Google anonymous diagnostics. iOS is unchanged: Vision sends nothing. | [ZZTHIS D-2026-10-10-25] item 4; [ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure), fetched 2026-10-10 |
 | SC4 | The privacy manifest adds Other Data Types for the IP-based rate-limit HMAC, and a Release archive's privacy report is checked for every linked SDK. | [ZZTHIS D-2026-10-10-25] item 7 |
 | SC5 | A hand-run, reviewer-gated `release-android` job signs an AAB with an upload key from Actions secrets; Danny enrolls in Play App Signing at the first upload. | [ZZTHIS D-2026-10-10-25] item 6 |
+
+## D-2026-10-11-01 follow-through (zzThis)
+
+Danny accepted Michael's MVP dispositions in zzThis [D-2026-10-11-01](https://github.com/Zero-State-LLC/zzthis/blob/main/specs/decisions-2026-10-11.md).
+
+| ID | Decision | Source |
+|---|---|---|
+| SC6 | Create keeps server-chosen words (ZQ11). RM-113 adds a suggested-word picker UI over server candidates only; the app still does not send a person-written code. | [ZZTHIS D-2026-10-11-01] option C |
+| SC7 | RM-115 adds a device-only Saved list of scanned codes; no cloud sync and no photo upload in v1.1. | [ZZTHIS D-2026-10-11-01] row 17 |
+| SC8 | Person-made claim is zzThis RM-116 (v2.0 contract 2), not an in-app typed mint on contract 1. | [ZZTHIS D-2026-10-11-01] option A |
