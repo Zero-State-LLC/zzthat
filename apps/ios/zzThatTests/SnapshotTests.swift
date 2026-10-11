@@ -229,6 +229,12 @@ struct SnapshotTests {
         Case("resolve-demo") {
             ResolveScreen(canonical: demoView.canonical, phase: .record(demoView, offline: false), demo: true)
         },
+        Case("resolve-hidden") {
+            ResolveScreen(canonical: demoView.canonical, phase: .record(demoView, offline: false), demo: false,
+                          hidden: true)
+        },
+        Case("report-sent") { report(ReportState(reason: .spam, phase: .sent)) },
+        Case("report-sent-hidden") { report(ReportState(reason: .spam, phase: .sent, hidden: true)) },
         Case("report-loading") { report(ReportState(reason: .spam, phase: .sending)) },
         Case("report-empty") { report(ReportState()) },
         Case("report-error") { report(ReportState(reason: .spam, phase: .failure(.resolveRateLimited))) },
@@ -366,6 +372,12 @@ struct SnapshotTests {
         Case("account-demo") {
             var state = signedInAccount
             state.demo = true
+            return account(state)
+        },
+        Case("account-unhide-all-done") {
+            var state = signedInAccount
+            state.signedIn = false
+            state.unhideAllDone = true
             return account(state)
         },
         Case("delete-confirm-loading") {
