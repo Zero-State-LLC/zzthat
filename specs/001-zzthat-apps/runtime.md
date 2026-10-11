@@ -80,7 +80,7 @@ Each feature calls core modules. Features do not call each other except through 
 | Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
-| Storage | Resolve cache, draft, last canonical | A second source of truth, or any `no-store` response |
+| Storage | Resolve cache, draft, last canonical, hidden codes | A second source of truth, or any `no-store` response |
 | Core (`ZZCore`, `:core-grammar`) | zzThis Section 2.2a, the spec 003 check word, the spec 004 scanner and bands, the list loader | A second grammar |
 | Design (`ZZDesign`, `:core-design`) | The pinned token files and fonts | Values authored in this repo |
 
@@ -220,6 +220,7 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Last canonical text | App storage | Until the person clears it, so resolve can be retried |
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
 | Photo | The app's cache folder | Deleted when the scan or write check ends (FR-004) |
+| Hidden codes | App storage, on this device only; never sent | Until Unhide, `account.unhide_all`, or account deletion (FR-035) |
 
 A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, photos, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. A photo upload is JPEG only and at most 8 MiB (8388608 bytes).
 

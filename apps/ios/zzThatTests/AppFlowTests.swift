@@ -445,3 +445,53 @@ struct FieldLimitTests {
         #expect(FieldLimits.oneLine("Lost\ncat\r\nflyer") == "Lost cat flyer")
     }
 }
+
+/// Hide this code (FR-035, zzThis D-2026-10-10-25, RM-101): a list on the
+/// device only.
+@MainActor
+@Suite("Hidden codes")
+struct HiddenCodeTests {
+    static let code = ResolveFlowTests.code
+
+    @Test func aHiddenCodeStillResolvesAndShowsOnlyTheHiddenState() async throws {
+        let transport = ResolveFlowTests.transport(cacheControl: "no-store")
+        let app = TestApp.make(service: try await TestApp.liveService(transport, signedIn: false))
+        app.hide(Self.code)
+        #expect(transport.operations.isEmpty, "hiding calls no server")
+        // Scanning and typing both open Resolve with the canonical code.
+        let model = ResolveModel(canonical: Self.code)
+        await model.load(app: app)
+        guard case .record(let view, offline: false) = model.phase else {
+            Issue.record("expected the record, got \(model.phase)")
+            return
+        }
+        #expect(view.title == "Lost cat")
+        #expect(app.isHidden(Self.code), "Resolve shows the hidden state, not the title and body")
+        #expect(transport.operations == ["resolveCode"])
+        app.unhide(Self.code)
+        #expect(!app.isHidden(Self.code))
+        #expect(transport.operations == ["resolveCode"], "unhiding calls no server")
+    }
+
+    @Test func theListOutlivesTheAppAndStaysOnTheDevice() {
+        let defaults = TestApp.defaults()
+        let store = HiddenStore(defaults: defaults)
+        store.codes = [Self.code]
+        #expect(HiddenStore(defaults: defaults).codes == [Self.code])
+        store.codes = []
+        #expect(defaults.object(forKey: "hidden.codes") == nil)
+    }
+
+    @Test func unhideAllAndAccountDeletionEmptyTheList() async throws {
+        let app = try await OwnerFlowTests.signedInDemo()
+        app.hide(Self.code)
+        app.hide("zz-copper-lantern-sky-zz")
+        app.unhideAll()
+        #expect(app.hiddenCodes.isEmpty)
+        #expect(app.hiddenStore.codes.isEmpty)
+        app.hide(Self.code)
+        try await app.deleteAccount().get()
+        #expect(app.hiddenCodes.isEmpty)
+        #expect(app.hiddenStore.codes.isEmpty)
+    }
+}

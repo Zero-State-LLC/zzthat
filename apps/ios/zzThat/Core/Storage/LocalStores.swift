@@ -50,6 +50,25 @@ final class LastCanonicalStore: @unchecked Sendable {
     }
 }
 
+/// The codes the person hid on this device (FR-035, zzThis D-2026-10-10-25).
+/// The list never leaves the phone: hiding and unhiding call no server.
+/// Account deletion and `account.unhide_all` empty it.
+final class HiddenStore: @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let key = "hidden.codes"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var codes: Set<String> {
+        get { Set(defaults.stringArray(forKey: key) ?? []) }
+        set {
+            if newValue.isEmpty { defaults.removeObject(forKey: key) } else { defaults.set(newValue.sorted(), forKey: key) }
+        }
+    }
+}
+
 /// The provider of the signed-in account, so Account can show it offline
 /// (runtime.md, Screens: Account, Offline). Not a secret.
 final class ProviderStore: @unchecked Sendable {
