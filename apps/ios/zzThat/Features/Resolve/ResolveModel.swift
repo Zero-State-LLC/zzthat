@@ -9,21 +9,26 @@ struct ResolvedView: Hashable, Sendable {
     let title: String
     let body: String
     let shareText: String
+    /// The owner's opaque reference (zzThis RM-112), null for a private
+    /// record or a server without it. Block this creator needs it.
+    let creator: String?
 
-    init(canonical: String, title: String, body: String, shareText: String) {
+    init(canonical: String, title: String, body: String, shareText: String, creator: String? = nil) {
         self.canonical = canonical
         self.title = title
         self.body = body
         self.shareText = shareText
+        self.creator = creator
     }
 
     init(_ record: ResolvedRecord) {
         self.init(canonical: record.canonical, title: record.record.title, body: record.record.body,
-                  shareText: record.share.text)
+                  shareText: record.share.text, creator: record.creator ?? nil)
     }
 
     init(_ entry: ResolveCache.Entry) {
-        self.init(canonical: entry.canonical, title: entry.title, body: entry.body, shareText: entry.shareText)
+        self.init(canonical: entry.canonical, title: entry.title, body: entry.body, shareText: entry.shareText,
+                  creator: entry.creator)
     }
 }
 

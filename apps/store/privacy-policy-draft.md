@@ -47,7 +47,8 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 - Your sign-in: a refresh token in the iOS Keychain, or encrypted with an Android Keystore key, until you sign out or delete your account. The short-lived access token is kept in memory only.
 - A copy of a public page you opened, for up to 6 minutes, so you can read it again without a connection.
 - The last code you opened, so you can try again.
-- The codes you hid with Hide this code. The list is never sent anywhere. Unhide everything on this device, or deleting your account, clears it.
+- The codes you hid with Hide this code, and the creators you blocked with Block this creator. A blocked creator is kept as an opaque reference that does not name the person. These lists are never sent anywhere. Unhide everything on this device, or deleting your account, clears them.
+- The codes you saved with Save. Only the codes are kept, no photos. The list is never sent anywhere. Clear saved codes on this device, or deleting your account, clears it.
 - A draft title and message, labeled "Not a code yet.", if you start a code while offline. It holds no code and is not sent anywhere until you create the code.
 
 ## Sign-in with Apple or Google

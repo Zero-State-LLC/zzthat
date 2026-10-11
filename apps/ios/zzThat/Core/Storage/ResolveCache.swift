@@ -21,6 +21,9 @@ final class ResolveCache: @unchecked Sendable {
         let updatedAt: Date
         let shareText: String
         let fetchedAt: Date
+        /// The Resolve `creator` (RM-112), so a cached copy of a blocked
+        /// creator's code stays blocked. Absent in entries written before it.
+        var creator: String?
     }
 
     enum Lookup: Hashable {
@@ -63,7 +66,8 @@ final class ResolveCache: @unchecked Sendable {
         guard response.cacheable else { return }
         let record = response.record
         let entry = Entry(canonical: canonical, title: record.record.title, body: record.record.body,
-                          updatedAt: record.record.updatedAt, shareText: record.share.text, fetchedAt: clock.now())
+                          updatedAt: record.record.updatedAt, shareText: record.share.text, fetchedAt: clock.now(),
+                          creator: record.creator ?? nil)
         lock.withLock {
             entries[entry.canonical] = entry
             while entries.count > Self.capacity,

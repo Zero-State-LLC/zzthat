@@ -120,6 +120,9 @@ struct SnapshotTests {
     static let demoRecord = DemoAPI.records["zz-kathy-lost-cat-zz"]!
     static let demoView = ResolvedView(canonical: "zz-kathy-lost-cat-zz", title: demoRecord.title,
                                        body: demoRecord.body, shareText: "zz-kathy-lost-cat-zz")
+    static let creatorView = ResolvedView(canonical: "zz-kathy-lost-cat-zz", title: demoRecord.title,
+                                          body: demoRecord.body, shareText: "zz-kathy-lost-cat-zz",
+                                          creator: DemoAPI.demoCreator)
     static let demoMint = DemoAPI.mintSequence[0]
     static let demoRows: [OwnedCode] = [
         OwnedCode(id: "demo-code-1", canonical: "zz-copper-lantern-sky-zz", checkWord: "sky", status: .active,
@@ -233,7 +236,22 @@ struct SnapshotTests {
             ResolveScreen(canonical: demoView.canonical, phase: .record(demoView, offline: false), demo: false,
                           hidden: true)
         },
+        Case("resolve-creator") {
+            ResolveScreen(canonical: demoView.canonical, phase: .record(creatorView, offline: false), demo: false)
+        },
+        Case("resolve-saved") {
+            ResolveScreen(canonical: demoView.canonical, phase: .record(creatorView, offline: false), demo: false,
+                          saved: true)
+        },
+        Case("resolve-blocked") {
+            ResolveScreen(canonical: demoView.canonical, phase: .record(creatorView, offline: false), demo: false,
+                          blocked: true)
+        },
         Case("report-sent") { report(ReportState(reason: .spam, phase: .sent)) },
+        Case("report-sent-block") { report(ReportState(reason: .spam, phase: .sent, canBlock: true)) },
+        Case("report-sent-blocked") {
+            report(ReportState(reason: .spam, phase: .sent, hidden: true, canBlock: true, blocked: true))
+        },
         Case("report-sent-hidden") { report(ReportState(reason: .spam, phase: .sent, hidden: true)) },
         Case("report-loading") { report(ReportState(reason: .spam, phase: .sending)) },
         Case("report-empty") { report(ReportState()) },
@@ -272,6 +290,10 @@ struct SnapshotTests {
             minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
                                      offline: true))
         },
+        Case("minted-kept") {
+            minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
+                                     kept: true))
+        },
         Case("minted-demo") {
             minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
                                      demo: true))
@@ -303,6 +325,10 @@ struct SnapshotTests {
         },
         Case("codes-offline") {
             CodesScreen(state: CodesScreenState(signedIn: true, phase: .failure(.errorNoConnection)))
+        },
+        Case("saved-empty") { SavedScreen(codes: [], demo: false) },
+        Case("saved-demo") {
+            SavedScreen(codes: ["zz-kathy-lost-cat-zz", "zz-copper-lantern-sky-zz"], demo: true)
         },
         Case("codes-demo") {
             CodesScreen(state: CodesScreenState(signedIn: true, rows: demoRows, phase: .loaded, demo: true))
@@ -378,6 +404,11 @@ struct SnapshotTests {
             var state = signedInAccount
             state.signedIn = false
             state.unhideAllDone = true
+            return account(state)
+        },
+        Case("account-clear-saved-done") {
+            var state = signedInAccount
+            state.clearSavedDone = true
             return account(state)
         },
         Case("delete-confirm-loading") {

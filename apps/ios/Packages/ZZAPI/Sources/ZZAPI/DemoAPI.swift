@@ -17,6 +17,10 @@ public actor DemoAPI: APIProtocol {
     public static let fixedDate = Date(timeIntervalSince1970: 1_791_072_000) // 2026-10-04T00:00:00Z
 
     /// Public demo records by canonical code.
+    /// The Resolve `creator` of every demo record (zzThis RM-112), so Block
+    /// this creator shows in Demo.
+    public static let demoCreator = "demo-creator"
+
     public static let records: [String: Record] = [
         "zz-kathy-lost-cat-zz": Record(title: "Lost cat", body: "Answers on this page."),
         "zz-copper-lantern-sky-zz": Record(
@@ -158,7 +162,8 @@ public actor DemoAPI: APIProtocol {
         let body = ResolvedRecord(
             view: ._public, canonical: canonical,
             record: .init(title: record.title, body: record.body, updatedAt: Self.fixedDate),
-            share: .init(text: canonical, url: nil))
+            share: .init(text: canonical, url: nil),
+            creator: Self.demoCreator)
         return .ok(.init(headers: .init(xZZContract: ._1, cacheControl: .noStore), body: .json(body)))
     }
 
