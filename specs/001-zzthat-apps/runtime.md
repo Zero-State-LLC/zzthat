@@ -77,7 +77,7 @@ Each feature calls core modules. Features do not call each other except through 
 | Resolve | Title and body, not-found, share, report entry | Issue |
 | Codes | My codes, Code detail, Edit record, revoke | Public resolve rules |
 | Account | Sign-in, sign-out, delete, support and privacy links, licenses | A profile form |
-| Report | The four reasons in FR-035 | A block list |
+| Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
 | Storage | Resolve cache, draft, last canonical | A second source of truth, or any `no-store` response |
@@ -301,6 +301,6 @@ zzThat is a private repo on GitHub Team, so hosted minutes come out of the organ
 
 1. `apps/VERSION` is the user-visible version. Build numbers come from the CI run number. This spec does not upload a build.
 2. The build adds `.github/workflows/apps-ci.yml` with the first test targets. It tests. It does not submit to App Store Connect or Play.
-3. The store listing text and the 12+ and Teen filing default stay in FR-031, drafted in `apps/store/listing-draft.md`. Danny may change the rating. Danny submits (constitution IX).
+3. The store listing text and the 13+ and Teen filing default stay in FR-031, drafted in `apps/store/listing-draft.md` with the questionnaire answers. Danny may change the rating. Danny submits (constitution IX).
 4. The privacy manifest and the Data safety answers (`apps/store/data-safety-draft.md`) are filled from the privacy table before he submits. They are drafts until his yes.
 5. The production API origin, the client ids, and signing credentials are not committed. A Demo build needs none of them.

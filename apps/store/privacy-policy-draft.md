@@ -14,7 +14,7 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 - To create codes, you sign in with Apple or Google. We keep an account ID. We do not keep your name or email address.
 - The title and message you write for a code are public. Anyone who scans the code can read them.
 - Photos are read on your phone. The apps do not upload photos.
-- The apps have no analytics, no ads, and no tracking.
+- The apps have no analytics of our own, no ads, and no tracking. On Android, Google's on-device text recognition sends Google anonymous diagnostics, such as the device model and how long a read took.
 - You can delete your account in the app at any time.
 
 ## What the apps collect, and why
@@ -25,6 +25,7 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 | The title and message of a code | When you create a code or edit its page | To show them to anyone who scans the code | The zzThis server. They are public. Do not include anything you do not want anyone to see. |
 | A code | When you open a code by scanning or typing it | To look up its page | The zzThis server receives only the code, never the photo. Codes the apps create never contain a phone number or other personal data. When you create a code, the server chooses the words, and the app sends no code. |
 | A report | When you report a code | So the operator can review it | The zzThis server keeps the code, the reason you chose, and the note you add, if any. You can report without an account. |
+| Diagnostics from Google's text recognition (Android only) | When the Android app reads a code from a photo | Google's ML Kit text recognition, which reads the code on your phone, sends them to Google so Google can keep the feature working | Google receives device information (such as the manufacturer, model, and system version), the app's package name and version, performance numbers (such as how long a read took), error codes, and an identifier for this installation that is not meant to identify you or your phone. It never receives the photo or the text. Google does not pass this data to third parties. The iOS app reads codes with Apple's Vision, which sends nothing. |
 | A one-way code of your network address (an HMAC of the IP address) | When you use the app without signing in, and when you send a report | To limit how often requests can be made, which prevents fraud and abuse and keeps the service secure | The zzThis server keeps it only as a rate-limit count. It is not the address itself, it is not linked to you, and it is not used to track you. |
 
 ## Photos and the camera
@@ -36,7 +37,7 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 
 ## What the apps never collect
 
-- No analytics, no advertising ID, and no tracking across apps or websites.
+- No analytics of our own, no advertising ID, and no tracking across apps or websites. The only diagnostics are Google's text recognition diagnostics on Android, described above.
 - No crash reporter that uploads data.
 - No location, and no microphone.
 - No contacts, and no name or email address.
@@ -94,6 +95,6 @@ Questions: support@zer0state.com
 
 Decided by delegation and applied here: how policy changes are announced (S1), [DELEGATED 2026-10-05, zzThat #43].
 
-1. Held (B2): the legal name and address of the company that publishes the apps, the effective date, a children's section (the default store ratings are Apple 12+ and Google Play Teen, FR-031), and EU and California rights. These are legal facts, so the build does not decide them.
+1. Held (B2): the legal name and address of the company that publishes the apps, the effective date, a children's section (the default store ratings are Apple 13+ and Google Play Teen, FR-031), and EU and California rights. These are legal facts, so the build does not decide them.
 2. Before publishing: the privacy page URL. The apps link to the zzThis marketing site's privacy page (ZQ25), which does not exist until Danny publishes this.
 3. Before submission: the `support@zer0state.com` mailbox exists (ZQ25).

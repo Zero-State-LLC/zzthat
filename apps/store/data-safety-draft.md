@@ -40,8 +40,12 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 | App activity: Other user-generated content: page titles and messages | Yes | No | No | Optional | App functionality |
 | App activity: Other user-generated content: report notes (S2, [DELEGATED 2026-10-05, zzThat #43]) | Yes | No | No | Optional | App functionality (abuse review) |
 | Device or other IDs: the IP-based rate-limit HMAC (B4b; the category is S3, [DELEGATED 2026-10-05, zzThat #43]) | Yes | No | No | Required for signed-out use and reports | Fraud prevention, security, and compliance |
+| App info and performance: Diagnostics, and Other app performance data (latency, error codes, API configuration), collected by the bundled ML Kit text recognition SDK (SC3) | Yes | No | No | Required: the SDK sends them when the app reads a code from a photo | Analytics |
+| Device or other IDs: the ML Kit per-installation identifier, not intended to identify a person or a device (SC3) | Yes | No | No | Required, as above | Analytics |
 
-Not collected: name, email address, phone number, address, location, photos and videos (read on the phone only), audio, files, contacts, calendar, messages, financial info, health and fitness, web browsing, crash logs, diagnostics, and the advertising ID. Codes a person looks up are not listed as collected (B4a, [DANNY 2026-10-05 #43]): the server keeps nothing from a lookup (FR-027).
+The two ML Kit rows follow zzThis D-2026-10-10-25 item 4 and Google's [ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure) (fetched 2026-10-10; the page covers the latest SDK version, and the app pins `com.google.mlkit:text-recognition` 16.0.1). Google lists device information, app information, per-installation identifiers, performance metrics, API configuration, input and output size, feature version, event type, and error codes, sent over HTTPS for diagnostics and usage analytics, and not transferred to third parties. Play holds the developer responsible for what a bundled SDK collects. Re-check the page when the ML Kit version changes.
+
+Not collected: name, email address, phone number, address, location, photos and videos (read on the phone only), audio, files, contacts, calendar, messages, financial info, health and fitness, web browsing, crash logs, and the advertising ID. Diagnostics are collected only by the ML Kit SDK, as listed above. Codes a person looks up are not listed as collected (B4a, [DANNY 2026-10-05 #43]): the server keeps nothing from a lookup (FR-027).
 
 ## App Store privacy (App Store Connect)
 
@@ -54,7 +58,7 @@ These match the privacy manifest, which declares no tracking and no tracking dom
 | User Content | Other User Content: report notes (S2, [DELEGATED 2026-10-05, zzThat #43]) | No. Reports are stored without the reporter. | No | App Functionality (abuse review) |
 | Other Data | Other Data Types: the IP-based rate-limit HMAC (B4b; the category is S3, [DELEGATED 2026-10-05, zzThat #43]) | No | No | App Functionality (Apple counts preventing fraud and keeping the service secure here) |
 
-Data Used to Track You: none. The apps contain no analytics, no advertising identifier, and no crash reporter that uploads (runtime.md, Privacy).
+Data Used to Track You: none. The iOS app contains no analytics, no advertising identifier, and no crash reporter that uploads (runtime.md, Privacy). It reads codes with Apple's Vision, which sends nothing, so the ML Kit rows apply to Google Play only (SC3).
 
 App Store Connect takes one linked answer per data type. Pages are linked, so Other User Content is entered as linked; the report-note row records that the notes themselves are not linked.
 
