@@ -127,6 +127,7 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
                     canonical = code,
                     record = ResolveRecord(record.title, record.body, FIXED_DATE),
                     share = ResolveShare(text = code, url = null),
+                    creator = DEMO_CREATOR,
                 ),
             )
         }
@@ -171,6 +172,9 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
     companion object {
         /** 2026-10-04T00:00:00Z. */
         val FIXED_DATE: OffsetDateTime = OffsetDateTime.of(2026, 10, 4, 0, 0, 0, 0, ZoneOffset.UTC)
+
+        /** The Resolve `creator` of every demo record (zzThis RM-112), so Block this creator shows in Demo. */
+        const val DEMO_CREATOR = "demo-creator"
 
         /** Public demo records by canonical code. */
         val RECORDS: Map<String, Record> = mapOf(

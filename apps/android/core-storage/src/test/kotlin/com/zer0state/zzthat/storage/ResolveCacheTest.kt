@@ -29,12 +29,13 @@ class ResolveCacheTest {
 
     private val code = "zz-kathy-lost-cat-zz"
 
-    private fun response(canonical: String, cacheable: Boolean = true) = ResolveResponse(
+    private fun response(canonical: String, cacheable: Boolean = true, creator: String? = null) = ResolveResponse(
         Resolve(
             Resolve.View.`public`,
             canonical,
             ResolveRecord("Lost cat", "Answers on this page.", OffsetDateTime.of(2026, 10, 4, 0, 0, 0, 0, ZoneOffset.UTC)),
             ResolveShare(canonical, null),
+            creator,
         ),
         cacheable,
     )
@@ -109,6 +110,31 @@ class ResolveCacheTest {
         ResolveCache(file(), clock).store(response(code), code)
         clock.advance(30)
         assertTrue(ResolveCache(file(), clock).lookup(code, online = true) is ResolveCache.Lookup.Fresh)
+    }
+
+    /** FR-035 and RM-112: the entry keeps the Resolve `creator`, so an offline copy of a blocked creator's code stays blocked. */
+    @Test
+    fun theCreatorIsKeptAcrossLaunches() {
+        val clock = FakeClock()
+        ResolveCache(file(), clock).store(response(code, creator = "creator-a"), code)
+        ResolveCache(file(), clock).store(response("zz-copper-lantern-sky-zz"), "zz-copper-lantern-sky-zz")
+        clock.advance(30)
+        val reloaded = ResolveCache(file(), clock)
+        assertEquals("creator-a", (reloaded.lookup(code, online = false) as ResolveCache.Lookup.Offline).entry.creator)
+        assertEquals(null, (reloaded.lookup("zz-copper-lantern-sky-zz", online = false) as ResolveCache.Lookup.Offline).entry.creator)
+    }
+
+    /** A file written before the `creator` field still decodes: a missing creator is null. */
+    @Test
+    fun anEntryWrittenBeforeTheCreatorFieldStillDecodes() {
+        val clock = FakeClock()
+        file().writeText(
+            """[{"canonical":"$code","title":"Lost cat","body":"Answers on this page.","updatedAtMillis":1791072000000,""" +
+                """"shareText":"$code","fetchedAtMillis":${clock.nowMillis()}}]""",
+        )
+        val entry = (ResolveCache(file(), clock).lookup(code, online = true) as ResolveCache.Lookup.Fresh).entry
+        assertEquals("Lost cat", entry.title)
+        assertEquals(null, entry.creator)
     }
 
     @Test

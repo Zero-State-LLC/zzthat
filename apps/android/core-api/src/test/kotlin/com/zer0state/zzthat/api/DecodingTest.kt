@@ -46,6 +46,24 @@ class DecodingTest {
         assertEquals("zz-kathy-lost-cat-zz", response.record.share.text)
     }
 
+    /**
+     * The optional Resolve `creator` (zzThis RM-112, contract 1 revision 1.1):
+     * a string when the server sends one, and null when it is null or left out
+     * by an older server.
+     */
+    @Test
+    fun resolveCreator() = runBlocking {
+        val withCreator = Fixtures.RESOLVE.replace(Fixtures.MILLIS, "2026-10-04T00:00:00Z").removeSuffix("}") + ""","creator":"creator-a"}"""
+        val nullCreator = withCreator.replace("\"creator-a\"", "null")
+        val noCreator = Fixtures.RESOLVE.replace(Fixtures.MILLIS, "2026-10-04T00:00:00Z")
+        for ((text, expected) in listOf(withCreator to "creator-a", nullCreator to null, noCreator to null)) {
+            ApiStub { ApiStub.Reply(200, text) }.use { stub ->
+                val response = (stub.service().resolve("zz-kathy-lost-cat-zz") as ApiResult.Ok).value
+                assertEquals(text, expected, response.record.creator)
+            }
+        }
+    }
+
     @Test
     fun account() = each(Fixtures.ACCOUNT, 200) { service, nanos ->
         val account = (service.me() as ApiResult.Ok).value

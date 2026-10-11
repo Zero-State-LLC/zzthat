@@ -76,8 +76,12 @@ class ProviderStore(private val store: DataStore<Preferences>) {
  * or body. The list never leaves the device: hiding and unhiding make no
  * server call. Account deletion and the Account screen reset clear it.
  *
- * Each list is one string set under its own key, so the blocked creators of
- * FR-035 (after zzThis RM-112) join as a second key that [clear] also removes.
+ * The creators the person blocked (FR-035, zzThis RM-112) are a second list:
+ * the opaque Resolve `creator` references, never an account id. A code whose
+ * creator is blocked resolves to the blocked state. Blocking and unblocking
+ * make no server call either.
+ *
+ * Each list is one string set under its own key, and [clear] removes both.
  */
 class HiddenStore(private val store: DataStore<Preferences>) {
     suspend fun isHidden(canonical: String): Boolean = canonical in members(CODES)
@@ -85,6 +89,12 @@ class HiddenStore(private val store: DataStore<Preferences>) {
     suspend fun hide(canonical: String) = add(CODES, canonical)
 
     suspend fun unhide(canonical: String) = remove(CODES, canonical)
+
+    suspend fun isBlocked(creator: String): Boolean = creator in members(CREATORS)
+
+    suspend fun block(creator: String) = add(CREATORS, creator)
+
+    suspend fun unblock(creator: String) = remove(CREATORS, creator)
 
     /** Every list this store keeps. */
     suspend fun clear() {
@@ -106,6 +116,47 @@ class HiddenStore(private val store: DataStore<Preferences>) {
 
     private companion object {
         val CODES = stringSetPreferencesKey("hide.codes")
-        val LISTS = listOf(CODES)
+        val CREATORS = stringSetPreferencesKey("hide.creators")
+        val LISTS = listOf(CODES, CREATORS)
+    }
+}
+
+/**
+ * Saved (FR-050, zzThis RM-115): the canonical codes the person chose to
+ * save, newest first. Canonical text only: no title, no body, no thumbnail,
+ * and no photo. The list never leaves the device, and saving, removing, and
+ * clearing make no server call. Account deletion and the Account screen's
+ * Clear saved codes empty it.
+ */
+class SavedStore(private val store: DataStore<Preferences>) {
+    /** The saved codes, newest first. */
+    suspend fun list(): List<String> = decode(store.data.first()[CODES])
+
+    suspend fun isSaved(canonical: String): Boolean = canonical in list()
+
+    /** Saves [canonical] as the newest entry. Saving it again moves it to the top. */
+    suspend fun save(canonical: String) {
+        store.edit { it[CODES] = encode(listOf(canonical) + (decode(it[CODES]) - canonical)) }
+    }
+
+    suspend fun unsave(canonical: String) {
+        store.edit {
+            val left = decode(it[CODES]) - canonical
+            if (left.isEmpty()) it.remove(CODES) else it[CODES] = encode(left)
+        }
+    }
+
+    suspend fun clear() {
+        store.edit { it.remove(CODES) }
+    }
+
+    private companion object {
+        /** One string, a canonical code per line. A canonical code never holds a line break. */
+        val CODES = stringPreferencesKey("saved.codes")
+        const val SEPARATOR = "\n"
+
+        fun decode(value: String?): List<String> = value?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
+
+        fun encode(codes: List<String>): String = codes.joinToString(SEPARATOR)
     }
 }

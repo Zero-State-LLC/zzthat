@@ -30,6 +30,12 @@ class ResolveCache(private val file: File, private val clock: AppClock = SystemC
         val updatedAtMillis: Long,
         val shareText: String,
         val fetchedAtMillis: Long,
+        /**
+         * The Resolve `creator` (FR-035, zzThis RM-112), so a cached copy of a
+         * blocked creator's code still shows blocked. Null for a private
+         * record, an older server, or an entry written before the field.
+         */
+        val creator: String? = null,
     )
 
     sealed interface Lookup {
@@ -57,6 +63,7 @@ class ResolveCache(private val file: File, private val clock: AppClock = SystemC
             updatedAtMillis = record.record.updatedAt.toInstant().toEpochMilli(),
             shareText = record.share.text,
             fetchedAtMillis = clock.nowMillis(),
+            creator = record.creator,
         )
         synchronized(lock) {
             entries[canonical] = entry
