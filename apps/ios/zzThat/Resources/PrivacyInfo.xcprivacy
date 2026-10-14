@@ -3,8 +3,10 @@
 <!-- The Apple privacy manifest (runtime.md, Privacy). Tracking is off. The
      collected types follow the spec.md privacy table: the account id from
      sign-in and the title and body the person writes, both for app function
-     only. Photos stay on the device and are not collected. A draft until
-     Danny's yes (runtime.md, Release step 4). -->
+     only, and the server's IP-based rate-limit HMAC, which is not linked to
+     the person (B4b, S3, SC4). Photos stay on the device and are not
+     collected. Matches the App Store rows in apps/store/data-safety-draft.md.
+     A draft until Danny's yes (runtime.md, Release step 4). -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -30,6 +32,18 @@
 			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>
