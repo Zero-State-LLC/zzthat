@@ -12,12 +12,16 @@ The listing text is the everyday-use sentences from FR-031 [MICHAEL 2026-10-02],
 
 The listing makes no claim of measured accuracy, a pilot, a customer, an endorsement, or adoption (FR-029).
 
+## Early release
+
+The listing and the app call this release "early release" (zzThis D-2026-10-11-06). Never "alpha", "beta", or "test": Apple rejects public apps labeled that way. The early-release clauses are in the Terms.
+
 ## Age rating to file
 
 | Store | Rating | Why |
 |---|---|---|
-| Apple App Store | 13+ | The pages are user-written public text. Apple's age ratings go from 9+ to 13+ (FR-031; zzThis D-2026-10-10-25 item 5). |
-| Google Play | Teen, through the IARC questionnaire | The same reason. The target audience is 13 and over, so the Families policy does not apply (FR-031; D-2026-10-10-25 item 5). |
+| Apple App Store | Whatever the age rating questionnaire gives (13+ expected) | Michael's answer 15 (zzThis D-2026-10-11-08): the store ratings follow the questionnaires, and the Terms say 18+ (D-2026-10-11-05). |
+| Google Play | Whatever the IARC questionnaire gives (Teen expected); target audience 18 and over | The same. With an 18+ audience the Families policy does not apply. |
 
 ### Questionnaire answers
 
@@ -44,8 +48,8 @@ Danny may change the rating or any answer before he submits.
 |---|---|---|
 | App name | zzThat | spec.md, Why |
 | Bundle and application id | `com.zer0state.zzthat` | ZQ24. Registering it needs Danny's yes (T083). |
-| Support contact | support@zer0state.com | ZQ25. Danny creates the mailbox. |
-| Privacy policy | The privacy page on the zzThis marketing site | ZQ25. Drafted in [privacy-policy-draft.md](privacy-policy-draft.md). Danny publishes it. |
+| Support contact | zzsupport@zer0state.com | zzThis D-2026-10-11-04 (Michael). Danny creates the mailbox first (RM-122). |
+| Privacy policy | Proposed: `zzthat.com/privacy` (zzThis D-2026-10-11-09, PROPOSED) | Drafted in [privacy-policy-draft.md](privacy-policy-draft.md). Danny publishes it. No zzThis host or name on zzThat surfaces (D-2026-10-11-07). |
 | Data disclosures | [data-safety-draft.md](data-safety-draft.md) for Google Play and the App Store privacy answers; the iOS privacy manifest | runtime.md, Release step 4 |
 | In-app account deletion | Account, then Delete account | FR-034 |
 | Account deletion link for Google Play | https://zz.zer0state.com/account/ | B1, [DANNY 2026-10-05 #43] |
@@ -55,7 +59,8 @@ Danny may change the rating or any answer before he submits.
 
 - [ ] Michael's square app icon artwork replaces the placeholder icon.
 - [ ] The `support@zer0state.com` mailbox exists.
-- [ ] The privacy policy is published on the zzThis marketing site, and its URL is set as the Release build setting.
+- [ ] The privacy policy is published at the decided host (D-2026-10-11-09), and its URL is set as the Release build setting.
+- [ ] The Terms of Use and content policy ([terms-draft.md](terms-draft.md)) are approved by Michael and published (RM-124).
 - [ ] Danny supplies the legal name and address, the effective date, a children's section, and EU and California rights (B2).
 - [ ] Danny says yes to the submission, the developer accounts, and the bundle id registration (T083).
 
