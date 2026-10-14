@@ -1,0 +1,102 @@
+name: Release Android
+
+# The signed Android App Bundle for Google Play (zzThis D-2026-10-10-25 item
+# 6, tasks.md T093). Run by hand only. The job waits on the play-release
+# environment, whose required reviewer Danny sets, and it uploads nothing to
+# Play: the .aab is a workflow artifact, and Danny uploads it in Play
+# Console. At the first upload Danny enrolls the app in Play App Signing, so
+# Google holds the app signing key and this job signs with the upload key.
+#
+# Danny sets these on the play-release environment. Nothing is committed.
+#   Secrets:   ZZ_UPLOAD_KEYSTORE_BASE64 (the upload keystore, base64),
+#              ZZ_UPLOAD_STORE_PASSWORD, ZZ_UPLOAD_KEY_ALIAS,
+#              ZZ_UPLOAD_KEY_PASSWORD
+#   Variables: ZZ_API_ORIGIN, ZZ_GOOGLE_WEB_CLIENT_ID, ZZ_PRIVACY_URL,
+#              ZZ_SUPPORT_EMAIL, and ZZ_UPLOAD_CERT_SHA256 (the upload
+#              certificate's SHA-256 fingerprint, the form keytool prints)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-android
+  cancel-in-progress: false
+
+jobs:
+  release-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: play-release
+    defaults:
+      run:
+        working-directory: apps/android
+    env:
+      ZZ_API_ORIGIN: ${{ vars.ZZ_API_ORIGIN }}
+      ZZ_GOOGLE_WEB_CLIENT_ID: ${{ vars.ZZ_GOOGLE_WEB_CLIENT_ID }}
+      ZZ_PRIVACY_URL: ${{ vars.ZZ_PRIVACY_URL }}
+      ZZ_SUPPORT_EMAIL: ${{ vars.ZZ_SUPPORT_EMAIL }}
+      ZZ_UPLOAD_CERT_SHA256: ${{ vars.ZZ_UPLOAD_CERT_SHA256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check the release settings
+        env:
+          KEYSTORE_SET: ${{ secrets.ZZ_UPLOAD_KEYSTORE_BASE64 != '' }}
+          STORE_PASSWORD_SET: ${{ secrets.ZZ_UPLOAD_STORE_PASSWORD != '' }}
+          KEY_ALIAS_SET: ${{ secrets.ZZ_UPLOAD_KEY_ALIAS != '' }}
+          KEY_PASSWORD_SET: ${{ secrets.ZZ_UPLOAD_KEY_PASSWORD != '' }}
+        run: |
+          missing=""
+          for name in ZZ_API_ORIGIN ZZ_GOOGLE_WEB_CLIENT_ID ZZ_PRIVACY_URL ZZ_SUPPORT_EMAIL ZZ_UPLOAD_CERT_SHA256; do
+            eval "value=\${$name}"
+            [ -n "$value" ] || missing="$missing $name"
+          done
+          [ "$KEYSTORE_SET" = true ] || missing="$missing ZZ_UPLOAD_KEYSTORE_BASE64"
+          [ "$STORE_PASSWORD_SET" = true ] || missing="$missing ZZ_UPLOAD_STORE_PASSWORD"
+          [ "$KEY_ALIAS_SET" = true ] || missing="$missing ZZ_UPLOAD_KEY_ALIAS"
+          [ "$KEY_PASSWORD_SET" = true ] || missing="$missing ZZ_UPLOAD_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "Set these on the play-release environment:$missing" >&2
+            exit 1
+          fi
+          case "$ZZ_API_ORIGIN" in
+            https://*) ;;
+            *) echo "ZZ_API_ORIGIN must be an https origin." >&2; exit 1 ;;
+          esac
+      - name: Write the upload keystore
+        env:
+          ZZ_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ZZ_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          umask 077
+          printf '%s' "$ZZ_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+      - name: Build the signed bundle (bundleProdRelease)
+        env:
+          ZZ_UPLOAD_STORE_FILE: ${{ runner.temp }}/upload.jks
+          ZZ_UPLOAD_STORE_PASSWORD: ${{ secrets.ZZ_UPLOAD_STORE_PASSWORD }}
+          ZZ_UPLOAD_KEY_ALIAS: ${{ secrets.ZZ_UPLOAD_KEY_ALIAS }}
+          ZZ_UPLOAD_KEY_PASSWORD: ${{ secrets.ZZ_UPLOAD_KEY_PASSWORD }}
+        run: >-
+          ./gradlew :app:bundleProdRelease
+          "-PzzApiOrigin=$ZZ_API_ORIGIN"
+          "-PzzGoogleWebClientId=$ZZ_GOOGLE_WEB_CLIENT_ID"
+          "-PzzPrivacyUrl=$ZZ_PRIVACY_URL"
+          "-PzzSupportEmail=$ZZ_SUPPORT_EMAIL"
+      - name: Verify the signature and the upload certificate
+        run: sh ../../scripts/verify-aab.sh app/build/outputs/bundle/prodRelease/app-prod-release.aab "$ZZ_UPLOAD_CERT_SHA256"
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zzthat-${{ github.run_number }}-prod-release-aab
+          path: apps/android/app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          if-no-files-found: error
+          retention-days: 30
