@@ -80,11 +80,13 @@ public struct ZZService: Sendable {
         let transport = transport ?? URLSessionTransport(
             configuration: .init(session: URLSession(configuration: sessionConfiguration())))
         let configuration = Configuration(dateTranscoder: LenientISO8601Transcoder())
+        // EnumToleranceMiddleware is first, so it sees the final response,
+        // after the one 401 retry (T106).
         let refresh = Client(serverURL: origin, configuration: configuration, transport: transport,
-                             middlewares: [ContractMiddleware()])
+                             middlewares: [EnumToleranceMiddleware(), ContractMiddleware()])
         return (refresh, { tokens in
             Client(serverURL: origin, configuration: configuration, transport: transport,
-                   middlewares: [ContractMiddleware(), AuthMiddleware(tokens: tokens)])
+                   middlewares: [EnumToleranceMiddleware(), ContractMiddleware(), AuthMiddleware(tokens: tokens)])
         })
     }
 

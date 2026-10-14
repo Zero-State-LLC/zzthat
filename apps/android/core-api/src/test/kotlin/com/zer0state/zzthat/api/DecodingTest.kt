@@ -85,10 +85,17 @@ class DecodingTest {
         }
     }
 
+    /**
+     * Before T106 this body was refused. zzThis D-2026-10-13-09 (RM-075, #54)
+     * reverses that: a value contract 1 does not list decodes to the
+     * generator's unknown case, and the rest of the body is kept.
+     */
     @Test
-    fun anEnumValueOutsideContract1IsRefused() = runBlocking {
+    fun anEnumValueOutsideContract1DecodesToTheUnknownCase() = runBlocking {
         ApiStub { ApiStub.Reply(200, Fixtures.ACCOUNT.replace("\"dev\"", "\"github\"")) }.use { stub ->
-            assertEquals(ApiFailure.Unavailable, stub.service(accessToken = "a").me().failureOrNull)
+            val account = (stub.service(accessToken = "a").me() as ApiResult.Ok).value
+            assertEquals(listOf(Account.Providers.unknown_default_open_api), account.providers)
+            assertEquals("account-1", account.id)
         }
     }
 }

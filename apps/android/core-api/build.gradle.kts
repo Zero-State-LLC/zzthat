@@ -47,7 +47,18 @@ val openApiGenerate = tasks.register<JavaExec>("openApiGenerate") {
             "dateLibrary=java8",
             "sourceFolder=src/main/kotlin",
             "omitGradleWrapper=true",
+            // zzThis RM-075, D-2026-10-13-09 (tasks.md T106, #54): a value the
+            // contract does not list yet decodes to the generated
+            // unknown_default_open_api case instead of failing the whole
+            // response. Every `when` over a generated enum handles that case.
+            "enumUnknownDefaultCase=true",
         ).joinToString(","),
+        // The generator escapes Discovery's `contract` property as a reserved
+        // word. With enumUnknownDefaultCase, its enum serializer template then
+        // writes the escaped name HTML-encoded (`&#x60;Contract&#x60;Serializer`),
+        // which does not compile (OpenAPI Generator 7.25.0). Only the Kotlin
+        // name changes; the wire name stays "contract".
+        "--name-mappings", "contract=contractVersion",
         "--global-property", "apiTests=false,modelTests=false,apiDocs=false,modelDocs=false",
         // Generator configuration, not hand-written types (runtime.md, API
         // client step 6). The app builds its own Retrofit and OkHttp

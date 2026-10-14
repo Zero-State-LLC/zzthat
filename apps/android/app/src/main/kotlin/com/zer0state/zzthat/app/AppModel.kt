@@ -86,8 +86,13 @@ class AppModel(
     /** The read pipeline with the bundled lists and the server's list version (FR-044). */
     val pipeline: ReadPipeline get() = ReadPipeline.of(bundledLists, discovery?.wordlistVersion)
 
-    /** Discovery decides the sign-in buttons (FR-040). */
-    val authProviders: List<String> get() = discovery?.authProviders.orEmpty().map { it.value }
+    /**
+     * Discovery decides the sign-in buttons (FR-040). A provider the contract
+     * does not list yet has no button, so it is dropped (T106), as on iOS.
+     */
+    val authProviders: List<String> get() = discovery?.authProviders.orEmpty()
+        .filter { it != Discovery.AuthProviders.unknown_default_open_api }
+        .map { it.value }
 
     // MARK: Launch and foreground
 
@@ -124,7 +129,8 @@ class AppModel(
 
     /** Account shows the provider the server reports (runtime.md, Localization). */
     suspend fun noteAccount(account: Account) {
-        val first = account.providers.firstOrNull() ?: return
+        // A provider the contract does not list yet has no name to show (T106).
+        val first = account.providers.firstOrNull { it != Account.Providers.unknown_default_open_api } ?: return
         providerStore.set(first.value)
         provider = first.value
     }
