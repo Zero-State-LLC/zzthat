@@ -10,3 +10,7 @@ apps/android/.gradle/
 apps/android/.kotlin/
 **/build/
 apps/android/local.properties
+# Signing keys are Actions secrets, never files in the tree (T093).
+*.jks
+*.keystore
+

@@ -13,14 +13,14 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#5](https://github.com/Zero-State-LLC/zzthat/issues/5) | ZQ5 | The resolved page is an in-app title and body. No phone field. |
 | [#6](https://github.com/Zero-State-LLC/zzthat/issues/6) | ZQ6 | A public code resolves with no account. Writes require sign-in. |
 | [#7](https://github.com/Zero-State-LLC/zzthat/issues/7) | ZQ7 | A free account is Sign in with Apple or Sign in with Google. The server stores the id and the provider. |
-| [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list. No personal data in the code string. |
+| [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list (superseded by SC1). No personal data in the code string. |
 | [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) | ZQ9 | Share the canonical code as text. `share.url` stays null. |
 | [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) | ZQ10 | No voice and no microphone in the first release. Later voice, if any, stays on the device. |
-| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. Suggested-word picker (server candidates only) is zzThis D-2026-10-11-01 option C / RM-113; person-made claim stays v2.0 (RM-116). |
 | [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) | ZQ12 | The useful page is a screen in the app. |
 | [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) | ZQ13 | No live-code suggestions. Exact match. |
 | [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) | ZQ14 | The retry consent sentence in spec.md FR-005. No training use. |
-| [#15](https://github.com/Zero-State-LLC/zzthat/issues/15) | ZQ15 | Listing text is the everyday-use sentences. Apple 12+ and Play Teen. Do not submit. |
+| [#15](https://github.com/Zero-State-LLC/zzthat/issues/15) | ZQ15 | Listing text is the everyday-use sentences. Play Teen; the Apple rating is now SC2 (13+). Do not submit. |
 | [#16](https://github.com/Zero-State-LLC/zzthat/issues/16) | ZQ16 | A local draft is allowed if labeled "Not a code yet." It is not issued offline. |
 | [#17](https://github.com/Zero-State-LLC/zzthat/issues/17) | ZQ17 | Swift and SwiftUI. Kotlin and Jetpack Compose. |
 | [#18](https://github.com/Zero-State-LLC/zzthat/issues/18) | ZQ18 | Native Sign in with Apple and Sign in with Google, then the provider ID token with a server nonce (`POST /v1/auth/nonce`, then `POST /v1/auth/token`). Danny said yes to zzThis Q66 [DANNY 2026-10-04]. The PKCE authorization-code exchange is dropped. The app sends no redirect URI. Access tokens last 15 minutes. Refresh tokens rotate. |
@@ -76,3 +76,39 @@ Danny delegated the remaining calls in a [comment on #43](https://github.com/Zer
 | S4 | Changed to shipped-only per Jev. The third-party notices (T087) list only the packages linked into the shipped app: the closure of the app's package products through their library targets. Test-only packages and build tools are not listed. The earlier call kept every pin, because trimming risked missing a dependency that ships; a build check now covers that risk, failing the build when the app links a package the notices miss. | [DELEGATED 2026-10-05, zzThat #43]. Jev: `shipped_only`, confidence 0.86, which changed the earlier call (every pin). |
 | S5 | On Android, the two Google-only terms (the Android SDK License, used by 11 libraries, and the ML Kit Terms of Service, used by 7) are listed in the third-party notices by name with their official URL, not as full text. They are Google's terms, not open-source licenses whose text must travel with the binary. | [DELEGATED 2026-10-05, zzThat #43]. Jev: `link`, confidence 0.94. |
 | S6 | On Android, the notices include the `third_party_licenses` files embedded in the 23 Google libraries (Play services, ML Kit, Firebase, datatransport), de-duplicated by component and text, so the open-source code compiled into them is credited too. The notices asset grows to about 2.07 MB (574 KB compressed), and the Licenses screen loads it lazily. | [DELEGATED 2026-10-05, zzThat #43]. Jev: `include`, confidence 0.94. |
+
+## Store compliance for v1.1 (zzThis D-2026-10-10-25)
+
+Danny accepted the 2026-10-09 store compliance audit in chat on 2026-10-09 at 23:21 PT. zzThis records it as [D-2026-10-10-25](https://github.com/Zero-State-LLC/zzthis/blob/main/specs/decisions-2026-10-10.md) (merged in zzThis #149). These rows are the parts that change zzThat.
+
+| ID | Decision | Source |
+|---|---|---|
+| SC1 | FR-035 replaces "no block list": Hide this code and, after the Resolve `creator` field ships, Block this creator, kept on the device only and cleared by account deletion and by a reset on the Account screen. The Report sheet's sent state says the creator is reviewed within one day and can be suspended. Create asks for terms acceptance before the first create and again when the terms version changes. Supersedes ZQ8's "No on-device block list". | [ZZTHIS D-2026-10-10-25] item 1 and item 2; Apple 1.2; Play UGC |
+| SC2 | The age rating to file is Apple 13+ and Google Play Teen. Supersedes ZQ15's earlier Apple rating. | [ZZTHIS D-2026-10-10-25] item 5 |
+| SC3 | The Data safety draft lists what the bundled ML Kit SDK collects: App info and performance and Device or other IDs, not shared, for analytics and diagnostics, encrypted in transit. The privacy policy says the app has no analytics of its own and no advertising, and that Google's on-device text recognition sends Google anonymous diagnostics. iOS is unchanged: Vision sends nothing. | [ZZTHIS D-2026-10-10-25] item 4; [ML Kit data disclosure](https://developers.google.com/ml-kit/android-data-disclosure), fetched 2026-10-10 |
+| SC4 | The privacy manifest adds Other Data Types for the IP-based rate-limit HMAC, and a Release archive's privacy report is checked for every linked SDK. | [ZZTHIS D-2026-10-10-25] item 7 |
+| SC5 | A hand-run, reviewer-gated `release-android` job signs an AAB with an upload key from Actions secrets; Danny enrolls in Play App Signing at the first upload. | [ZZTHIS D-2026-10-10-25] item 6 |
+
+## D-2026-10-11-01 follow-through (zzThis)
+
+Danny accepted Michael's MVP dispositions in zzThis [D-2026-10-11-01](https://github.com/Zero-State-LLC/zzthis/blob/main/specs/decisions-2026-10-11.md).
+
+| ID | Decision | Source |
+|---|---|---|
+| SC6 | Create keeps server-chosen words (ZQ11). RM-113 adds a suggested-word picker UI over server candidates only; the app still does not send a person-written code. | [ZZTHIS D-2026-10-11-01] option C |
+| SC7 | RM-115 adds a device-only Saved list of scanned codes; no cloud sync and no photo upload in v1.1. | [ZZTHIS D-2026-10-11-01] row 17 |
+| SC8 | Person-made claim is zzThis RM-116 (v2.0 contract 2), not an in-app typed mint on contract 1. | [ZZTHIS D-2026-10-11-01] option A |
+
+## Michael's store and privacy answers (zzThis D-2026-10-11)
+
+Michael answered the store and privacy questions on 2026-10-11. zzThis records them as D-2026-10-11-02 to D-2026-10-11-15 on zzThis #164, which Danny merges. These rows are the parts that change zzThat.
+
+| ID | Decision | Source |
+|---|---|---|
+| SC9 | The app is for people 18 and older, stated in the Terms; store age ratings follow the questionnaires. Supersedes SC2's 13+. | [ZZTHIS D-2026-10-11-05, D-2026-10-11-08 answer 15] |
+| SC10 | The release is called "early release", never alpha, beta, or test. | [ZZTHIS D-2026-10-11-06] |
+| SC11 | No zzThis name or host on any zzThat surface a person sees: app copy, listings, the privacy policy, and the Terms. | [ZZTHIS D-2026-10-11-07] |
+| SC12 | The public contact is zzsupport@zer0state.com, once the mailbox exists. | [ZZTHIS D-2026-10-11-04] |
+| SC13 | The store privacy answers declare what Google's sign-in SDK collects, per Xcode's privacy report, and the same approach on Google Play. | [ZZTHIS D-2026-10-11-08 answers 1 and 3] |
+| SC14 | The Terms of Use and content policy are drafted in `apps/store/terms-draft.md` for Michael's review. | [ZZTHIS D-2026-10-11-10, RM-124] |
+

@@ -22,6 +22,7 @@ import com.zer0state.zzthat.grammar.ReadPipeline
 import com.zer0state.zzthat.grammar.WordList
 import com.zer0state.zzthat.grammar.WordListLoader
 import com.zer0state.zzthat.storage.DraftStore
+import com.zer0state.zzthat.storage.HiddenStore
 import com.zer0state.zzthat.storage.LastCanonicalStore
 import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
@@ -45,6 +46,8 @@ class AppModel(
     val drafts: DraftStore,
     val lastCanonical: LastCanonicalStore,
     val providerStore: ProviderStore,
+    /** The codes hidden on this device (FR-035). Never sent anywhere. */
+    val hidden: HiddenStore,
     val photos: PhotoScratch,
     val connectivity: Connectivity,
     /** The wordlists bundled from contracts/wordlists (FR-044). */
@@ -62,6 +65,10 @@ class AppModel(
 
     /** Bumped after an owner write, so My codes and Code detail reload. */
     var ownerRevision by mutableIntStateOf(0)
+        private set
+
+    /** Bumped after a hide, an unhide, or the Account reset, so an open Resolve shows the new state. */
+    var hiddenRevision by mutableIntStateOf(0)
         private set
 
     val isDemo: Boolean get() = config.isDemo
@@ -122,11 +129,13 @@ class AppModel(
         ownerRevision += 1
     }
 
-    /** `DELETE /v1/me`, then the tokens, the draft, and every cache (Auth step 9). */
+    /** `DELETE /v1/me`, then the tokens, the draft, the hidden codes, and every cache (Auth step 9, FR-035). */
     suspend fun deleteAccount(): ApiResult<Unit> {
         val result = service.deleteAccount()
         if (result !is ApiResult.Ok) return result
         drafts.discard()
+        hidden.clear()
+        hiddenRevision += 1
         withContext(Dispatchers.IO) {
             cache.removeAll()
             photos.purge()
@@ -141,6 +150,26 @@ class AppModel(
     suspend fun needsSignIn() {
         isSignedIn = withContext(Dispatchers.IO) { service.tokens.hasSession }
         if (!isSignedIn) sessionEnded()
+    }
+
+    // MARK: Hidden codes
+
+    /** Hide this code on this device (FR-035). No server call. */
+    suspend fun hide(canonical: String) {
+        hidden.hide(canonical)
+        hiddenRevision += 1
+    }
+
+    /** Unhide this code on this device (FR-035). No server call. */
+    suspend fun unhide(canonical: String) {
+        hidden.unhide(canonical)
+        hiddenRevision += 1
+    }
+
+    /** The Account screen reset: every hidden code shows again (FR-035). No server call. */
+    suspend fun unhideAll() {
+        hidden.clear()
+        hiddenRevision += 1
     }
 
     // MARK: Owner writes
@@ -181,6 +210,7 @@ class AppModel(
                 drafts = DraftStore(local),
                 lastCanonical = LastCanonicalStore(local),
                 providerStore = ProviderStore(local),
+                hidden = HiddenStore(local),
                 photos = PhotoScratch(PhotoScratch.defaultDirectory(context.cacheDir)),
                 connectivity = connectivity,
                 bundledLists = loadBundledLists(context),

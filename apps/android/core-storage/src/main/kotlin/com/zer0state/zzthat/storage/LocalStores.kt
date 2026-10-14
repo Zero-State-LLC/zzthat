@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.first
 
 /**
@@ -66,5 +67,45 @@ class ProviderStore(private val store: DataStore<Preferences>) {
 
     private companion object {
         val KEY = stringPreferencesKey("account.provider")
+    }
+}
+
+/**
+ * The codes the person hid on this device (FR-035, zzThis RM-101). A hidden
+ * code still resolves, and Resolve shows the hidden state without its title
+ * or body. The list never leaves the device: hiding and unhiding make no
+ * server call. Account deletion and the Account screen reset clear it.
+ *
+ * Each list is one string set under its own key, so the blocked creators of
+ * FR-035 (after zzThis RM-112) join as a second key that [clear] also removes.
+ */
+class HiddenStore(private val store: DataStore<Preferences>) {
+    suspend fun isHidden(canonical: String): Boolean = canonical in members(CODES)
+
+    suspend fun hide(canonical: String) = add(CODES, canonical)
+
+    suspend fun unhide(canonical: String) = remove(CODES, canonical)
+
+    /** Every list this store keeps. */
+    suspend fun clear() {
+        store.edit { preferences -> LISTS.forEach { preferences.remove(it) } }
+    }
+
+    private suspend fun members(key: Preferences.Key<Set<String>>): Set<String> = store.data.first()[key].orEmpty()
+
+    private suspend fun add(key: Preferences.Key<Set<String>>, value: String) {
+        store.edit { it[key] = it[key].orEmpty() + value }
+    }
+
+    private suspend fun remove(key: Preferences.Key<Set<String>>, value: String) {
+        store.edit {
+            val left = it[key].orEmpty() - value
+            if (left.isEmpty()) it.remove(key) else it[key] = left
+        }
+    }
+
+    private companion object {
+        val CODES = stringSetPreferencesKey("hide.codes")
+        val LISTS = listOf(CODES)
     }
 }

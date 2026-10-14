@@ -1,4 +1,4 @@
-# Repository hygiene audit — 2026-10-06
+# Repository hygiene audit  -  2026-10-06
 
 Scope: documentation/source-of-truth hygiene, collaboration metadata, native-app/spec parity, recognition/privacy consistency, and visible repository controls. This audit does not claim access to every GitHub organization or repository setting.
 
