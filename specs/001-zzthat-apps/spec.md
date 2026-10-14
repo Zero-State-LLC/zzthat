@@ -130,7 +130,7 @@ Acceptance:
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
 | FR-021 | Revoke and new record versions use the server. My codes uses `GET /v1/me/codes`. Code detail and Edit record take a code id. They find that code's row in `GET /v1/me/codes` (`limit` 50, following `next_cursor`), then read `GET /v1/records/{record_id}`. Revoke uses the code id. Versions use `record_id`. No matching row shows the one not-found state. | [ZZTHIS SPEC] spec 005 US3 and FR-030. Contract 1 has no single-code read, so the lookup by code id is [INFERRED]. |
-| FR-050 | The app offers a device-only Saved list of codes the person scanned and chose to save (canonical form, and an optional local thumbnail). Saved does not sync to the server and does not upload photos. The list is cleared on account deletion and by a Settings reset. Cloud sync of Saved is out of this release (zzThis RM-117). | zzThis D-2026-10-11-01 row 17; RM-115. |
+| FR-050 | The app offers a device-only Saved list of canonical codes the person chose to save. Saved stores no photo and no thumbnail, does not sync to the server, and does not upload photos. The person removes one code, `account.clear_saved` on the Account screen clears the list, and account deletion clears it. `account.unhide_all` does not clear it. Cloud sync of Saved is out of this release (zzThis RM-117). | zzThis D-2026-10-11-01 row 17; RM-115, as built in #65. |
 | FR-022 | The app may show a briefly cached signed record without a connection. It cannot issue, revoke, or mark a code used offline. | [ZZTHIS SPEC] Section 10.5 |
 | FR-023 | The app does not cache single-use or short-expiry codes for a later resolve. | [INFERRED] from the edge rule in [ZZTHIS SPEC] Section 10.2 |
 | FR-024 | The app may keep a local draft of a title and body, labeled "Not a code yet." That draft has no code words, is not issued, is not resolved, and is not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. ZQ11: words come from mint, not from the draft. |
@@ -159,7 +159,7 @@ Acceptance:
 | FR-047 | The Account screen shows the support contact (`zzsupport@zer0state.com`, zzThis D-2026-10-11-04, after the mailbox exists, RM-122) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
 | FR-049 | The app turns off the HTTP library's own cache for `/v1` calls. FR-041 is the only resolve cache. | [INFERRED], so one rule owns caching |
-| FR-050 | Camera capture detects and geometrically pairs the literal terminal `zz` index markers before payload OCR. Only same-baseline markers in plausible reading order can form a pair. It shows all plausible complete, partial, and bare-marker boxes, never infers a missing marker, and never uses payload/grammar/wordlist/resolver evidence to choose a pair. Versioned marker/pair limits are frozen before final qualification; overflow rejects the whole frame without truncation or payload OCR. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate; otherwise, the person selects before payload OCR. | zzThis spec 004 FR-018 to FR-020, app behavior detail in `recognition-adapter.md` |
+| FR-052 | Camera capture detects and geometrically pairs the literal terminal `zz` index markers before payload OCR. Only same-baseline markers in plausible reading order can form a pair. It shows all plausible complete, partial, and bare-marker boxes, never infers a missing marker, and never uses payload/grammar/wordlist/resolver evidence to choose a pair. Versioned marker/pair limits are frozen before final qualification; overflow rejects the whole frame without truncation or payload OCR. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate; otherwise, the person selects before payload OCR. | zzThis spec 004 FR-018 to FR-020, app behavior detail in `recognition-adapter.md` |
 | FR-051 | Payload OCR runs on device only inside the selected pair's validated interior ROI. V1 may crop/rotate but does not apply perspective/projective rectification. Flat two-line payloads are supported when markers form a valid same-baseline pair and the ROI is safe; perspective-dependent or curved/wrapped-surface geometry fails closed. Qualification evaluates every safe, supported complete predicted pair independently by `pair_id`, without ground-truth-driven selection; this does not change runtime selection-first behavior. | zzThis spec 004 FR-009 and FR-021, qualification scoring; app behavior detail in `recognition-adapter.md` |
 
 ## API contract
@@ -247,7 +247,7 @@ The edge purge clears only the data center that handled the write. Other data ce
 
 ## On-device recognition
 
-- V1 recognition is on-device only. Terminal `zz` marks are detected and paired as same-baseline fiducials before payload OCR (FR-050). There is no cloud vision, image upload, or server-side photo analysis.
+- V1 recognition is on-device only. Terminal `zz` marks are detected and paired as same-baseline fiducials before payload OCR (FR-052). There is no cloud vision, image upload, or server-side photo analysis.
 - zzThis Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): on-device reading only in v1, with no cloud reader. The V1 client never offers or calls `POST /v1/reads`, regardless of the `photo_reads` discovery value (FR-045).
 - The recognizer is not semantic authority. Apple Vision is the iOS payload baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar and check-word path remains authoritative (runtime.md, Read pipeline).
 - Option B, a custom recognizer, and a VLM stay a later zzThis track, not a zzThat v1 deliverable [ZZTHIS SPEC].
@@ -314,7 +314,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | SC-1 | iOS and Android each pass every row of the pinned `contracts/vectors.json`: grammar (G9), classifier, matching key, scanner, and check word (FR-007, FR-039). |
 | SC-2 | Resolve sends the canonical code and does not send a photo. Mint sends no canonical code and no photo (FR-004, FR-006, FR-017). |
 | SC-3 | Unknown, expired, used, and revoked codes show one not-found state (FR-010). |
-| SC-4 | In every V1 build and for every `photo_reads` value, no captured image, crop, or OCR transcript is transmitted, and no scan path reaches a cloud recognition endpoint. Outbound resolution requests contain only the user-selected canonical code. The temporary photo is deleted when the scan ends (FR-004, FR-005, FR-045, FR-050). |
+| SC-4 | In every V1 build and for every `photo_reads` value, no captured image, crop, or OCR transcript is transmitted, and no scan path reaches a cloud recognition endpoint. Outbound resolution requests contain only the user-selected canonical code. The temporary photo is deleted when the scan ends (FR-004, FR-005, FR-045). |
 | SC-5 | The repo contains no resolver and no database of record (FR-002). |
 | SC-6 | A cached public resolve follows FR-041 under a fake clock (60 seconds online, 360 seconds offline). `no-store` responses are not kept. Issue and revoke are refused offline (FR-022). |
 | SC-7 | User-facing strings follow FR-030. |
@@ -328,7 +328,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 ## Edge cases
 
 - Camera denied: typed entry still works (FR-011).
-- Two codes in one photo: terminal fiducials produce separate plausible ROIs; the person picks when more than one valid candidate remains (FR-026, FR-050).
+- Two codes in one photo: terminal fiducials produce separate plausible ROIs; the person picks when more than one valid candidate remains (FR-026, FR-052).
 - One terminal fiducial only: Retry. Never infer the missing endpoint from payload text.
 - False `zz` in surrounding prose or ambiguous endpoint pairing: expose/reject through geometry plus shared validation; never choose using resolver existence.
 - A code across two lines: one code, per the grammar [ZZTHIS SPEC] Section 2.2a.

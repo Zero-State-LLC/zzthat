@@ -1,7 +1,7 @@
 # Recognition integration contract
 
-Status: normative for zzThat implementation on this branch.
-Upstream authority: zzThis spec 004 and ZZ-OCR-QUAL-001 after the zzThis pin advances to the merged recognition-spec commit.
+Status: normative for the recognition boundary. Application code for T023 to T025 waits on zzThat #77.
+Upstream authority: zzThis spec 004 and ZZ-OCR-QUAL-001 at the pinned commit (`contracts/ZZTHIS-API-PIN`, zzThat #76, which contains merged zzThis #89).
 
 ## Boundary
 
@@ -96,7 +96,7 @@ Engine/model/runtime versions, preprocessing, and confidence-to-band mapping are
 
 ## Upstream pin movement
 
-Do not copy this branch's upstream prose into the committed zzThis pin. After zzThis PR #89 merges:
+Do not copy unmerged upstream prose into the committed zzThis pin. zzThis #89 is merged. zzThat #76 advanced `contracts/ZZTHIS-API-PIN` to `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, which contains that merge. #44 and #45 reconciled this contract against the merged spec 004. Building T023 to T025 waits on zzThat #77. The next pin movement uses the same flow:
 
 1. advance `contracts/ZZTHIS-API-PIN` through the existing sync flow;
 2. regenerate/sync governed artifacts;
@@ -127,6 +127,6 @@ A regression can roll back to the last qualified adapter/configuration or disabl
 
 ## Qualification artifact consumption
 
-After the upstream pin advances, zzThat consumes the upstream ZZ-OCR-QUAL-001 manifest schema, receipt schema, and scoring rules as test/qualification contracts. It does not fork them. Native harness output must validate against the pinned receipt schema, and fixture/replay data must validate against the pinned manifest schema. Any platform-only field belongs in adapter configuration or the receipt's permitted review/configuration area, not in a second incompatible schema.
+At the current pin (zzThat #76), zzThat consumes the upstream ZZ-OCR-QUAL-001 manifest schema, receipt schema, and scoring rules as test/qualification contracts. It does not fork them. Native harness output must validate against the pinned receipt schema, and fixture/replay data must validate against the pinned manifest schema. Any platform-only field belongs in adapter configuration or the receipt's permitted review/configuration area, not in a second incompatible schema.
 
 The public repository may contain synthetic fixture metadata and generated non-sensitive test images. Private corpus images remain outside Git and CI artifacts. A native qualification runner may read them from an operator-supplied local path; that path and its contents are never committed.
