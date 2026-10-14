@@ -61,7 +61,7 @@ The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks
 
 ## Risks
 
-- Free public codes are still v2 on the resolver [ZZTHIS SPEC] spec 002 FR-016. US1 runs end to end on the local Worker, where the flag is on, but not on a live server until Danny turns the scope on. ZQ3 keeps the gate.
+- Free public codes open at the v1.1 gate if Danny confirms zzThis D-2026-10-10-21; until then they stay off on the resolver [ZZTHIS SPEC] spec 002 FR-016. US1 runs end to end on the local Worker, where the flag is on, but not on a live server until Danny turns the scope on. ZQ3 keeps the gate.
 - The HTTP shapes are the pinned OpenAPI. A shipped app must not call a server that has not published `X-ZZ-Contract: 1`.
 - Two native parsers can drift. FR-039 is the control.
 - ZQ11 matches spec 002 US2. The server chooses the words for free public codes too. This repo does not propose a person-written claim.
