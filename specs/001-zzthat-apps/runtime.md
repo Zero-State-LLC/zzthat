@@ -302,6 +302,6 @@ zzThat is a private repo on GitHub Team, so hosted minutes come out of the organ
 
 1. `apps/VERSION` is the user-visible version. Build numbers come from the CI run number. This spec does not upload a build.
 2. The build adds `.github/workflows/apps-ci.yml` with the first test targets. It tests. It does not submit to App Store Connect or Play.
-3. The store listing text and the 13+ and Teen filing default stay in FR-031, drafted in `apps/store/listing-draft.md` with the questionnaire answers. Danny may change the rating. Danny submits (constitution IX).
+3. The store listing text, the early-release wording, and the questionnaire ratings with an 18+ audience stay in FR-031, drafted in `apps/store/listing-draft.md` with the questionnaire answers. Danny may change the rating. Danny submits (constitution IX).
 4. The privacy manifest and the Data safety answers (`apps/store/data-safety-draft.md`) are filled from the privacy table before he submits. They are drafts until his yes.
 5. The production API origin, the client ids, and signing credentials are not committed. A Demo build needs none of them.
