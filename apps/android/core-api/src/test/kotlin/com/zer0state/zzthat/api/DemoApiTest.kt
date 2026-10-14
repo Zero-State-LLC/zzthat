@@ -24,6 +24,7 @@ class DemoApiTest {
         val found = (service.resolve("zz-kathy-lost-cat-zz") as ApiResult.Ok).value
         assertEquals("Lost cat", found.record.record.title)
         assertNull(found.record.share.url)
+        assertEquals("Block this creator shows in Demo", DemoApi.DEMO_CREATOR, found.record.creator)
         assertFalse("demo answers are no-store", found.cacheable)
         assertEquals(ApiFailure.NotFound, service.resolve("zz-hello-zz").failureOrNull)
     }

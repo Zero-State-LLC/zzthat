@@ -6,6 +6,9 @@ import ZZAPI
 enum CodesRoute: Hashable {
     case detail(id: String, row: OwnedCode?)
     case edit(id: String, row: OwnedCode?)
+    /// The device-only Saved list (FR-050), and a saved code's Resolve.
+    case saved
+    case resolve(String)
 }
 
 struct CodesTab: View {
@@ -23,7 +26,8 @@ struct CodesTab: View {
                         onSignIn: { sheets.signIn = true },
                         onSelect: { path.append(.detail(id: $0.id, row: $0)) },
                         onLastRow: { Task { await model.loadMore(app: app) } },
-                        onRetry: { Task { await model.reload(app: app) } })
+                        onRetry: { Task { await model.reload(app: app) } },
+                        onSaved: { path.append(.saved) })
                 .navigationTitle(Text(.navMyCodes))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { AccountToolbarItem() }
@@ -38,6 +42,12 @@ struct CodesTab: View {
                         CodeDetailRoute(codeID: id, row: row, savedCodeID: $savedCodeID, path: $path)
                     case .edit(let id, let row):
                         EditRecordRoute(codeID: id, row: row, savedCodeID: $savedCodeID, path: $path)
+                    case .saved:
+                        SavedScreen(codes: app.savedCodes, demo: app.isDemo) { path.append(.resolve($0)) }
+                            .navigationTitle(Text(.savedTitle))
+                            .navigationBarTitleDisplayMode(.inline)
+                    case .resolve(let canonical):
+                        ResolveRoute(canonical: canonical)
                     }
                 }
         }

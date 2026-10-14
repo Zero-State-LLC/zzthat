@@ -50,12 +50,14 @@ final class LastCanonicalStore: @unchecked Sendable {
     }
 }
 
-/// The codes the person hid on this device (FR-035, zzThis D-2026-10-10-25).
-/// The list never leaves the phone: hiding and unhiding call no server.
-/// Account deletion and `account.unhide_all` empty it.
+/// The codes the person hid and the creators they blocked on this device
+/// (FR-035, zzThis D-2026-10-10-25). Neither list leaves the phone: hiding,
+/// blocking, and undoing them call no server. Account deletion and
+/// `account.unhide_all` empty both.
 final class HiddenStore: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key = "hidden.codes"
+    private let creatorsKey = "hidden.creators"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -65,6 +67,37 @@ final class HiddenStore: @unchecked Sendable {
         get { Set(defaults.stringArray(forKey: key) ?? []) }
         set {
             if newValue.isEmpty { defaults.removeObject(forKey: key) } else { defaults.set(newValue.sorted(), forKey: key) }
+        }
+    }
+
+    /// Blocked creator references (the Resolve `creator`, RM-112).
+    var creators: Set<String> {
+        get { Set(defaults.stringArray(forKey: creatorsKey) ?? []) }
+        set {
+            if newValue.isEmpty {
+                defaults.removeObject(forKey: creatorsKey)
+            } else {
+                defaults.set(newValue.sorted(), forKey: creatorsKey)
+            }
+        }
+    }
+}
+
+/// The codes the person saved on this device, newest first (FR-050, zzThis
+/// RM-115). Only canonical codes: no photo and no thumbnail. Never sent
+/// anywhere. Account deletion and `account.clear_saved` empty it.
+final class SavedStore: @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let key = "saved.codes"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var codes: [String] {
+        get { defaults.stringArray(forKey: key) ?? [] }
+        set {
+            if newValue.isEmpty { defaults.removeObject(forKey: key) } else { defaults.set(newValue, forKey: key) }
         }
     }
 }

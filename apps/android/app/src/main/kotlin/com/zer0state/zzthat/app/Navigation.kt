@@ -77,6 +77,8 @@ import com.zer0state.zzthat.resolve.ResolveLoader
 import com.zer0state.zzthat.resolve.ResolveModel
 import com.zer0state.zzthat.resolve.ResolvePhase
 import com.zer0state.zzthat.resolve.ResolveScreen
+import com.zer0state.zzthat.saved.SavedScreen
+import com.zer0state.zzthat.saved.SavedScreenState
 import com.zer0state.zzthat.scan.CandidateAction
 import com.zer0state.zzthat.scan.ClarifyInput
 import com.zer0state.zzthat.scan.ClarifyModel
@@ -119,12 +121,17 @@ class TabModels {
  * Opens a canonical code. Offline with nothing cached, resolve waits and the
  * screen says so (US6 acceptance 4); a cached copy still opens.
  */
-suspend fun openCanonical(canonical: String, app: AppModel, nav: NavHostController): Int? {
+suspend fun openCanonical(
+    canonical: String,
+    app: AppModel,
+    nav: NavHostController,
+    destination: (String) -> Any = ::ResolveDestination,
+): Int? {
     if (!app.isOnline && ResolveLoader.offline(canonical, app) == ResolvePhase.NotOnDevice) {
         app.lastCanonical.set(canonical)
         return R.string.resolve_not_on_device
     }
-    nav.onMain { navigate(ResolveDestination(canonical)) }
+    nav.onMain { navigate(destination(canonical)) }
     return null
 }
 
@@ -193,11 +200,13 @@ fun Root(app: AppModel, models: TabModels, reader: TextReader, reducedMotion: Bo
                     composable<CodesHome> { CodesRoute(app, models, nav) }
                     composable<DetailDestination> { DetailRoute(app, models, it.toRoute<DetailDestination>().codeId, nav) }
                     composable<EditDestination> { EditRoute(app, models, it.toRoute<EditDestination>().codeId, nav) }
+                    composable<SavedDestination> { SavedRoute(app, nav) }
+                    composable<SavedResolveDestination> { ResolveRoute(app, it.toRoute<SavedResolveDestination>().canonical, nav) }
                 }
                 composable<AccountDestination> { AccountRoute(app, nav) }
                 composable<LicensesDestination> { LicensesRoute(app, nav) }
                 composable<SignInDestination> { SignInRoute(app, nav) }
-                composable<ReportDestination> { ReportRoute(app, it.toRoute<ReportDestination>().canonical, nav) }
+                composable<ReportDestination> { ReportRoute(app, it.toRoute(), nav) }
             }
         }
     }
@@ -338,26 +347,34 @@ private fun ResolveRoute(app: AppModel, canonical: String, nav: NavHostControlle
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(canonical) { model.loadOnce(app) }
-    // A hide from the Report sheet, or the Account reset, shows here on return.
+    // A hide or block from the Report sheet, or the Account reset, shows here on return.
     LaunchedEffect(app.hiddenRevision) { model.sync(app) }
+    // The Account screen's Clear saved codes shows here on return.
+    LaunchedEffect(app.savedRevision) { model.syncSaved(app) }
     Frame(stringResource(R.string.nav_scan), back(nav)) {
         ResolveScreen(
             canonical = canonical,
             phase = model.phase,
             demo = app.isDemo,
             waiting = model.waiting,
+            saved = model.saved,
             onRetry = { scope.launch { model.load(app) } },
             onShare = { share(context, it) },
-            onReport = { nav.navigate(ReportDestination(canonical)) },
+            onReport = { nav.navigate(ReportDestination(canonical, model.creator)) },
             onHide = { scope.launch { model.hide(app) } },
             onUnhide = { scope.launch { model.unhide(app) } },
+            onBlock = { scope.launch { model.block(app) } },
+            onUnblock = { scope.launch { model.unblock(app) } },
+            onSave = { scope.launch { model.save(app) } },
+            onUnsave = { scope.launch { model.unsave(app) } },
         )
     }
 }
 
 @Composable
-private fun ReportRoute(app: AppModel, canonical: String, nav: NavHostController) {
-    val model = remember(canonical) { ReportModel(canonical) }
+private fun ReportRoute(app: AppModel, destination: ReportDestination, nav: NavHostController) {
+    val canonical = destination.canonical
+    val model = remember(destination) { ReportModel(canonical, destination.creator) }
     val scope = rememberCoroutineScope()
     val offline = !app.isOnline
     LaunchedEffect(app.isDemo, offline) { model.state = model.state.copy(demo = app.isDemo, offline = offline) }
@@ -370,6 +387,7 @@ private fun ReportRoute(app: AppModel, canonical: String, nav: NavHostController
             onSend = { scope.launch { model.send(app) } },
             onDone = { nav.popBackStack() },
             onHide = { scope.launch { model.hide(app) } },
+            onBlock = { scope.launch { model.block(app) } },
         )
     }
 }
@@ -430,9 +448,11 @@ private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav:
                     phase = model.phase,
                     offline = !app.isOnline,
                     demo = app.isDemo,
+                    kept = model.kept,
                 ),
                 onReroll = { scope.launch { model.reroll(app) } },
                 onWriteCheck = { nav.navigate(WriteCheckDestination(model.code.canonical)) },
+                onKeep = model::keep,
             )
         }
     }
@@ -493,6 +513,23 @@ private fun CodesRoute(app: AppModel, models: TabModels, nav: NavHostController)
             onSelect = { nav.navigate(DetailDestination(it.id)) },
             onLastRow = { scope.launch { codes.loadMore(app) } },
             onRetry = { scope.launch { codes.reload(app) } },
+            onSaved = { nav.navigate(SavedDestination) },
+        )
+    }
+}
+
+/** Saved (FR-050): the list on this device, read again after every save, removal, or clear. A row opens Resolve. */
+@Composable
+private fun SavedRoute(app: AppModel, nav: NavHostController) {
+    val codes by produceState(emptyList<String>(), app.savedRevision) { value = app.saved.list() }
+    var message by remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
+    Frame(stringResource(R.string.saved_title), back(nav)) {
+        SavedScreen(
+            state = SavedScreenState(codes, message, app.isDemo),
+            onSelect = { canonical ->
+                scope.launch { message = openCanonical(canonical, app, nav, ::SavedResolveDestination) }
+            },
         )
     }
 }
@@ -569,6 +606,7 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
     var loading by remember { mutableStateOf(false) }
     var signInPhase by remember { mutableStateOf<SignInScreenState.Phase>(SignInScreenState.Phase.Idle) }
     var unhideAllDone by remember { mutableStateOf(false) }
+    var clearSavedDone by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(app.isSignedIn) {
@@ -591,6 +629,7 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
                 offline = !app.isOnline,
                 demo = app.isDemo,
                 unhideAllDone = unhideAllDone,
+                clearSavedDone = clearSavedDone,
             ),
             onSignOut = { scope.launch { app.signOut() } },
             onDelete = { confirmingDelete = true },
@@ -601,6 +640,12 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
                 scope.launch {
                     app.unhideAll()
                     unhideAllDone = true
+                }
+            },
+            onClearSaved = {
+                scope.launch {
+                    app.clearSaved()
+                    clearSavedDone = true
                 }
             },
         ) {

@@ -37,10 +37,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import llc.zerostate.zzthis.design.ZZSpace
 
-/** The record a resolve shows: the title and body from the server, and the share text, which is the canonical code (FR-020). */
-data class ResolvedView(val canonical: String, val title: String, val body: String, val shareText: String) {
+/**
+ * The record a resolve shows: the title and body from the server, and the
+ * share text, which is the canonical code (FR-020). [creator] is the opaque
+ * Resolve `creator` reference (FR-035, zzThis RM-112), null for a private
+ * record or an older server. It is never shown; it only decides blocking.
+ */
+data class ResolvedView(
+    val canonical: String,
+    val title: String,
+    val body: String,
+    val shareText: String,
+    val creator: String? = null,
+) {
     companion object {
-        fun of(entry: ResolveCache.Entry) = ResolvedView(entry.canonical, entry.title, entry.body, entry.shareText)
+        fun of(entry: ResolveCache.Entry) = ResolvedView(entry.canonical, entry.title, entry.body, entry.shareText, entry.creator)
     }
 }
 
@@ -49,13 +60,23 @@ sealed interface ResolvePhase {
     data class Loading(val previous: ResolvedView?) : ResolvePhase
 
     /** A live record, or the FR-041 copy labeled offline. */
-    data class Record(val view: ResolvedView, val offline: Boolean) : ResolvePhase
+    data class Record(val view: ResolvedView, val offline: Boolean) : ResolvePhase {
+        /** Block this creator is offered only when the server named one (FR-035, RM-112). */
+        val canBlock: Boolean get() = view.creator != null
+    }
 
     /**
      * The person hid this code on this device (FR-035). It resolved as usual,
      * and no title or body reaches the screen.
      */
     data object Hidden : ResolvePhase
+
+    /**
+     * The person blocked this code's creator on this device (FR-035, zzThis
+     * RM-112). It resolved as usual, and no title or body reaches the screen.
+     * It takes precedence over [Hidden].
+     */
+    data object Blocked : ResolvePhase
 
     /** The one not-found state (FR-010). */
     data object NotFound : ResolvePhase
@@ -85,7 +106,10 @@ object ResolveLoader {
                     if (response.cacheable) app.cache.store(response, canonical) else app.cache.remove(canonical)
                 }
                 val record = response.record
-                ResolvePhase.Record(ResolvedView(record.canonical, record.record.title, record.record.body, record.share.text), offline = false)
+                ResolvePhase.Record(
+                    ResolvedView(record.canonical, record.record.title, record.record.body, record.share.text, record.creator),
+                    offline = false,
+                )
             }
             is ApiResult.Err -> when (val failure = result.failure) {
                 ApiFailure.NotFound -> {
@@ -107,17 +131,25 @@ object ResolveLoader {
 }
 
 /**
- * One Resolve screen. A code hidden on this device resolves through the same
- * path, scanned or typed, and then shows [ResolvePhase.Hidden] (FR-035). The
- * resolved record stays in this model only, so Unhide shows it again at once
- * and without a call.
+ * One Resolve screen. A code hidden on this device, or one whose creator is
+ * blocked, resolves through the same path, scanned or typed, and then shows
+ * [ResolvePhase.Hidden] or [ResolvePhase.Blocked] (FR-035). The resolved
+ * record stays in this model only, so Unhide and Unblock show it again at
+ * once and without a call.
  */
 class ResolveModel(val canonical: String) {
     var phase by mutableStateOf<ResolvePhase>(ResolvePhase.Loading(null))
         private set
 
-    /** The last record this screen resolved, shown or hidden. */
+    /** The last record this screen resolved, shown, hidden, or blocked. */
     private var record: ResolvePhase.Record? = null
+
+    /** The resolved record's creator reference, for Report's Block this creator. Null until resolved, or when the server named none. */
+    val creator: String? get() = record?.view?.creator
+
+    /** This code is in Saved on this device (FR-050). */
+    var saved by mutableStateOf(false)
+        private set
 
     /** While a 429 wait runs, Try again stays off (FR-033). */
     var waiting by mutableStateOf(false)
@@ -135,7 +167,8 @@ class ResolveModel(val canonical: String) {
         phase = ResolvePhase.Loading((phase as? ResolvePhase.Record)?.view)
         val next = ResolveLoader.load(canonical, app)
         record = next as? ResolvePhase.Record
-        phase = if (next is ResolvePhase.Record && app.hidden.isHidden(canonical)) ResolvePhase.Hidden else next
+        saved = app.saved.isSaved(canonical)
+        phase = (next as? ResolvePhase.Record)?.let { shown(it, app) } ?: next
         if (next is ResolvePhase.Failure && next.retryAfter != null) {
             waiting = true
             delay(maxOf(next.retryAfter, 1) * 1000L)
@@ -155,20 +188,65 @@ class ResolveModel(val canonical: String) {
         sync(app)
     }
 
-    /** After a hide or unhide here or elsewhere (the Report sheet, the Account reset), show the stored state. No server call. */
+    /** Block this record's creator on this device. Every code of theirs shows blocked. No server call. */
+    suspend fun block(app: AppModel) {
+        app.block(creator ?: return)
+        sync(app)
+    }
+
+    /** Unblock this record's creator on this device. No server call. */
+    suspend fun unblock(app: AppModel) {
+        app.unblock(creator ?: return)
+        sync(app)
+    }
+
+    /** Save this code on this device (FR-050). No server call. */
+    suspend fun save(app: AppModel) {
+        app.save(canonical)
+        saved = true
+    }
+
+    /** Remove this code from Saved (FR-050). No server call. */
+    suspend fun unsave(app: AppModel) {
+        app.unsave(canonical)
+        saved = false
+    }
+
+    /**
+     * After a hide, unhide, block, or unblock here or elsewhere (the Report
+     * sheet, the Account reset), show the stored state. No server call.
+     */
     suspend fun sync(app: AppModel) {
         val shown = record ?: return
-        if (phase !is ResolvePhase.Record && phase !is ResolvePhase.Hidden) return
-        phase = if (app.hidden.isHidden(canonical)) ResolvePhase.Hidden else shown
+        if (phase !is ResolvePhase.Record && phase !is ResolvePhase.Hidden && phase !is ResolvePhase.Blocked) return
+        phase = shown(shown, app)
+    }
+
+    /** After a save or removal elsewhere (the Account screen's clear), read Saved again. No server call. */
+    suspend fun syncSaved(app: AppModel) {
+        saved = app.saved.isSaved(canonical)
+    }
+
+    /** A blocked creator first, then a hidden code, then the record (FR-035). */
+    private suspend fun shown(record: ResolvePhase.Record, app: AppModel): ResolvePhase {
+        val creator = record.view.creator
+        return when {
+            creator != null && app.hidden.isBlocked(creator) -> ResolvePhase.Blocked
+            app.hidden.isHidden(canonical) -> ResolvePhase.Hidden
+            else -> record
+        }
     }
 }
 
 /**
  * Resolve (US3, design/UX.md Resolve): the title and body as plain text, or
  * the one not-found state. Share sends the canonical code as text, never a
- * URL (FR-020). Report opens the FR-035 screen, and Hide this code hides it on
- * this device. A hidden code shows `resolve.hidden` and Unhide in place of
- * its title and body (FR-035).
+ * URL (FR-020). Save keeps the code in Saved on this device (FR-050). Report
+ * opens the FR-035 screen, Hide this code hides it on this device, and, when
+ * the server names the record's creator, Block this creator blocks every code
+ * of theirs on this device. A hidden code shows `resolve.hidden` and Unhide,
+ * and a blocked creator's code shows `resolve.blocked` and Unblock, in place
+ * of the title and body (FR-035).
  */
 @Composable
 fun ResolveScreen(
@@ -176,11 +254,16 @@ fun ResolveScreen(
     phase: ResolvePhase,
     demo: Boolean,
     waiting: Boolean = false,
+    saved: Boolean = false,
     onRetry: () -> Unit = {},
     onShare: (String) -> Unit = {},
     onReport: () -> Unit = {},
     onHide: () -> Unit = {},
     onUnhide: () -> Unit = {},
+    onBlock: () -> Unit = {},
+    onUnblock: () -> Unit = {},
+    onSave: () -> Unit = {},
+    onUnsave: () -> Unit = {},
 ) {
     ZZScreen(demo = demo, loading = phase is ResolvePhase.Loading) {
         when (phase) {
@@ -189,13 +272,26 @@ fun ResolveScreen(
                 if (phase.offline) OfflineBanner()
                 RecordBlock(phase.view)
                 ZZButton(stringResource(R.string.resolve_share), "resolve.share") { onShare(phase.view.shareText) }
+                if (saved) {
+                    ZZButton(stringResource(R.string.resolve_unsave), "resolve.unsave", ButtonKind.SECONDARY, onClick = onUnsave)
+                } else {
+                    ZZButton(stringResource(R.string.resolve_save), "resolve.save", ButtonKind.SECONDARY, onClick = onSave)
+                }
                 ZZButton(stringResource(R.string.resolve_report), "resolve.report", ButtonKind.SECONDARY, onClick = onReport)
                 ZZButton(stringResource(R.string.resolve_hide), "resolve.hide", ButtonKind.SECONDARY, onClick = onHide)
+                if (phase.canBlock) {
+                    ZZButton(stringResource(R.string.resolve_block_creator), "resolve.block_creator", ButtonKind.SECONDARY, onClick = onBlock)
+                }
             }
             ResolvePhase.Hidden -> {
                 CodeText(canonical)
                 Message(R.string.resolve_hidden)
                 ZZButton(stringResource(R.string.resolve_unhide), "resolve.unhide", ButtonKind.SECONDARY, onClick = onUnhide)
+            }
+            ResolvePhase.Blocked -> {
+                CodeText(canonical)
+                Message(R.string.resolve_blocked)
+                ZZButton(stringResource(R.string.resolve_unblock), "resolve.unblock", ButtonKind.SECONDARY, onClick = onUnblock)
             }
             ResolvePhase.NotFound -> {
                 CodeText(canonical)

@@ -66,6 +66,7 @@ struct CreateRoot: View {
 struct MintedRoute: View {
     @Environment(AppModel.self) private var app
     @State private var model: MintedModel
+    @State private var kept = false
     @Binding var path: [CreateRoute]
 
     init(code: MintedCode, path: Binding<[CreateRoute]>) {
@@ -75,9 +76,10 @@ struct MintedRoute: View {
 
     var body: some View {
         MintedScreen(state: MintedScreenState(canonical: model.code.canonical, checkWord: model.code.checkWord,
-                                              capReached: model.capReached, phase: model.phase,
+                                              capReached: model.capReached, kept: kept, phase: model.phase,
                                               offline: !app.isOnline, demo: app.isDemo),
                      onReroll: { Task { await model.reroll(app: app) } },
+                     onKeep: { kept = true },
                      onWriteCheck: { path.append(.writeCheck(model.code.canonical)) })
             .navigationBarTitleDisplayMode(.inline)
     }

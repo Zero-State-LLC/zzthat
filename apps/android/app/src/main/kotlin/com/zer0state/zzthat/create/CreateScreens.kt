@@ -136,15 +136,21 @@ data class MintedScreenState(
     val phase: MintedModel.Phase = MintedModel.Phase.Idle,
     val offline: Boolean = false,
     val demo: Boolean = false,
+    /** The person kept these words (RM-113). */
+    val kept: Boolean = false,
 )
 
 /**
  * Minted code (design/UX.md): the code is the largest text, in the mono font,
  * never truncated. The check word sits in place and has its own label and
- * accessibility label. Re-roll hides at the cap and offline.
+ * accessibility label. While re-rolls remain, the suggested-word picker
+ * (zzThis RM-113, FR-017) says the words were chosen for the person and
+ * offers Get different words and Keep these words. Keep closes the picker
+ * on the device, and the words stay as they do at the cap. Re-roll hides at
+ * the cap, once kept, and offline.
  */
 @Composable
-fun MintedScreen(state: MintedScreenState, onReroll: () -> Unit = {}, onWriteCheck: () -> Unit = {}) {
+fun MintedScreen(state: MintedScreenState, onReroll: () -> Unit = {}, onWriteCheck: () -> Unit = {}, onKeep: () -> Unit = {}) {
     ZZScreen(demo = state.demo, loading = state.phase == MintedModel.Phase.Rerolling) {
         RoleText(stringResource(R.string.minted_heading), TextRole.TITLE, Modifier.semantics { heading() })
         CodeText(state.canonical, state.checkWord, ZZType.TextLg, Modifier.testTag("minted.code"))
@@ -152,16 +158,25 @@ fun MintedScreen(state: MintedScreenState, onReroll: () -> Unit = {}, onWriteChe
             CheckWordLabel(it)
             RoleText(stringResource(R.string.minted_check_word_help), TextRole.SECONDARY)
         }
+        val picking = !state.capReached && !state.kept && !state.offline
+        if (picking) RoleText(stringResource(R.string.minted_pick_help), TextRole.BODY, Modifier.testTag("minted.pick_help"))
         (state.phase as? MintedModel.Phase.Failure)?.let { Message(it.key) }
-        if (state.capReached) {
+        if (state.capReached || state.kept) {
             if (state.phase != MintedModel.Phase.Failure(R.string.minted_reroll_cap)) Message(R.string.minted_reroll_cap)
-        } else if (!state.offline) {
+        } else if (picking) {
             ZZButton(
                 stringResource(R.string.minted_reroll),
                 "minted.reroll",
                 ButtonKind.SECONDARY,
                 enabled = state.phase != MintedModel.Phase.Rerolling,
                 onClick = onReroll,
+            )
+            ZZButton(
+                stringResource(R.string.minted_keep),
+                "minted.keep",
+                ButtonKind.SECONDARY,
+                enabled = state.phase != MintedModel.Phase.Rerolling,
+                onClick = onKeep,
             )
         }
         ZZButton(stringResource(R.string.minted_write_check), "minted.write_check", onClick = onWriteCheck)

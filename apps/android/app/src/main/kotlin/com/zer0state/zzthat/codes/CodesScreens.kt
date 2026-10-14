@@ -52,7 +52,11 @@ data class CodesScreenState(
     val demo: Boolean = false,
 )
 
-/** My codes (design/UX.md): rows with the code in mono, the record title, and a status word when the code is not active. */
+/**
+ * My codes (design/UX.md): rows with the code in mono, the record title, and
+ * a status word when the code is not active. Saved (FR-050) opens from here,
+ * signed in or out: it is a list on this device and needs no account.
+ */
 @Composable
 fun CodesScreen(
     state: CodesScreenState,
@@ -60,8 +64,10 @@ fun CodesScreen(
     onSelect: (OwnedCode) -> Unit = {},
     onLastRow: () -> Unit = {},
     onRetry: () -> Unit = {},
+    onSaved: () -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.phase == CodesModel.Phase.Loading) {
+        ZZButton(stringResource(R.string.saved_title), "codes.saved", ButtonKind.SECONDARY, onClick = onSaved)
         val failure = state.phase as? CodesModel.Phase.Failure
         when {
             !state.signedIn -> {

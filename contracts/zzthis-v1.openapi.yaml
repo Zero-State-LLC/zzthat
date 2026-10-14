@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: zzThis API
-  version: "1"
+  version: "1.1"
   license:
     name: Proprietary
     identifier: LicenseRef-Proprietary
@@ -812,6 +812,9 @@ components:
         photo_reads:
           type: boolean
           description: False until a photo reader is configured (Q18).
+        creator_refs:
+          type: boolean
+          description: True when Resolve carries the optional creator reference (contract 1 revision 1.1, D-2026-10-10-12 exception, RM-112). Optional, so a client reads a missing value as false.
     Nonce:
       type: object
       required: [nonce, expires_in]
@@ -996,6 +999,9 @@ components:
             url:
               type: [string, "null"]
               description: Always null in contract 1.
+        creator:
+          type: [string, "null"]
+          description: An opaque, stable reference to the record's owner, for blocking a creator on the device (RM-112, revision 1.1). The same owner gives the same value on every public code; it is never the account id and cannot be turned back into one. Null for a private record. Optional, so an older server may leave it out.
     ReadResult:
       type: object
       required: [canonical, band, reason]

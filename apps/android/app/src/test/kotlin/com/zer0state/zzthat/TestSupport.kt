@@ -19,6 +19,7 @@ import com.zer0state.zzthat.storage.LastCanonicalStore
 import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
 import com.zer0state.zzthat.storage.ResolveCache
+import com.zer0state.zzthat.storage.SavedStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,8 +101,10 @@ class Stub(private val handler: (String, RecordedRequest) -> Reply) : Closeable 
 object Fixtures {
     const val PUBLIC_CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=300"
 
-    fun resolveJson(canonical: String, title: String = "Lost cat", body: String = "Answers on this page.") =
-        """{"view":"public","canonical":"$canonical","record":{"title":"$title","body":"$body","updated_at":"2026-10-04T00:00:00.123Z"},"share":{"text":"$canonical","url":null}}"""
+    /** A public resolve. [creator] is the optional RM-112 reference, left out when null, as an older server does. */
+    fun resolveJson(canonical: String, title: String = "Lost cat", body: String = "Answers on this page.", creator: String? = null) =
+        """{"view":"public","canonical":"$canonical","record":{"title":"$title","body":"$body","updated_at":"2026-10-04T00:00:00.123Z"},""" +
+            """"share":{"text":"$canonical","url":null}${if (creator != null) ""","creator":"$creator"""" else ""}}"""
 
     const val NOT_FOUND = """{"error":"not-found"}"""
     const val FAILED = """{"error":"failed"}"""
@@ -131,6 +134,7 @@ object TestApp {
             lastCanonical = LastCanonicalStore(local),
             providerStore = ProviderStore(local),
             hidden = HiddenStore(local),
+            saved = SavedStore(local),
             photos = PhotoScratch(File(folder, "photos")),
             connectivity = Connectivity(online),
             bundledLists = bundledLists,

@@ -73,8 +73,10 @@ data class AccountScreenState(
     val loading: Boolean = false,
     val offline: Boolean = false,
     val demo: Boolean = false,
-    /** The reset ran: everything hidden on this device shows again (FR-035). */
+    /** The reset ran: everything hidden or blocked on this device shows again (FR-035). */
     val unhideAllDone: Boolean = false,
+    /** Saved on this device was cleared (FR-050). */
+    val clearSavedDone: Boolean = false,
 ) {
     sealed interface DeletePhase {
         data object Idle : DeletePhase
@@ -90,7 +92,8 @@ data class AccountScreenState(
  * contact and privacy link from build settings (FR-047), and
  * `account.licenses`. No profile form (ZQ7). Signed out, it shows Sign in.
  * Signed in or out, it offers the FR-035 reset, Unhide everything on this
- * device: hiding needs no account.
+ * device, which also unblocks every creator, and the FR-050 Clear saved
+ * codes on this device: hiding, blocking, and saving need no account.
  */
 @Composable
 fun AccountScreen(
@@ -101,6 +104,7 @@ fun AccountScreen(
     onSupport: (String) -> Unit = {},
     onPrivacy: (String) -> Unit = {},
     onUnhideAll: () -> Unit = {},
+    onClearSaved: () -> Unit = {},
     signedOut: @Composable ColumnScope.() -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.loading || state.deletePhase == AccountScreenState.DeletePhase.Deleting) {
@@ -128,6 +132,8 @@ fun AccountScreen(
         }
         ZZButton(stringResource(R.string.account_unhide_all), "account.unhide_all", ButtonKind.SECONDARY, onClick = onUnhideAll)
         if (state.unhideAllDone) Message(R.string.account_unhide_all_done)
+        ZZButton(stringResource(R.string.account_clear_saved), "account.clear_saved", ButtonKind.SECONDARY, onClick = onClearSaved)
+        if (state.clearSavedDone) Message(R.string.account_clear_saved_done)
         AccountLinks(state.supportEmail, state.privacyUrl, onSupport, onPrivacy, onLicenses)
     }
 }

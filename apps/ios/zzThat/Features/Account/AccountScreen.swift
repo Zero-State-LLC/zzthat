@@ -16,6 +16,8 @@ struct AccountScreenState {
     var deletePhase: DeletePhase = .idle
     /// `account.unhide_all` ran: `account.unhide_all_done` shows (FR-035).
     var unhideAllDone = false
+    /// `account.clear_saved` ran: `account.clear_saved_done` shows (FR-050).
+    var clearSavedDone = false
     var loading = false
     var offline = false
     var demo = false
@@ -31,6 +33,7 @@ struct AccountScreen<SignedOut: View>: View {
     var onDelete: () -> Void = {}
     var onLicenses: () -> Void = {}
     var onUnhideAll: () -> Void = {}
+    var onClearSaved: () -> Void = {}
     @ViewBuilder var signedOut: SignedOut
 
     var body: some View {
@@ -60,6 +63,14 @@ struct AccountScreen<SignedOut: View>: View {
                 Button(action: onUnhideAll) { Text(.accountUnhideAll) }
                     .buttonStyle(.zzSecondary)
                     .accessibilityIdentifier("account.unhide_all")
+            }
+            if state.clearSavedDone {
+                Message(key: .accountClearSavedDone)
+                    .accessibilityIdentifier("account.clear_saved_done")
+            } else {
+                Button(action: onClearSaved) { Text(.accountClearSaved) }
+                    .buttonStyle(.zzSecondary)
+                    .accessibilityIdentifier("account.clear_saved")
             }
             AccountLinks(supportEmail: state.supportEmail, privacyURL: state.privacyURL, onLicenses: onLicenses)
         }
@@ -192,6 +203,7 @@ struct AccountSheet: View {
     @State private var path: [AccountRoute] = []
     @State private var deletePhase: AccountScreenState.DeletePhase = .idle
     @State private var unhideAllDone = false
+    @State private var clearSavedDone = false
     @State private var confirmingDelete = false
     @State private var loading = false
     @State private var signInPhase: SignInScreenState.Phase = .idle
@@ -201,13 +213,18 @@ struct AccountSheet: View {
             AccountScreen(state: AccountScreenState(signedIn: app.isSignedIn, provider: app.provider,
                                                     supportEmail: app.config.supportEmail,
                                                     privacyURL: app.config.privacyURL, deletePhase: deletePhase,
-                                                    unhideAllDone: unhideAllDone, loading: loading, offline: !app.isOnline, demo: app.isDemo),
+                                                    unhideAllDone: unhideAllDone, clearSavedDone: clearSavedDone,
+                                                    loading: loading, offline: !app.isOnline, demo: app.isDemo),
                           onSignOut: { Task { await app.signOut() } },
                           onDelete: { confirmingDelete = true },
                           onLicenses: { path.append(.licenses) },
                           onUnhideAll: {
                               app.unhideAll()
                               unhideAllDone = true
+                          },
+                          onClearSaved: {
+                              app.clearSaved()
+                              clearSavedDone = true
                           }) {
                 SignInBody(phase: $signInPhase, embedded: true)
             }

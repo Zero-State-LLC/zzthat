@@ -495,3 +495,106 @@ struct HiddenCodeTests {
         #expect(app.hiddenStore.codes.isEmpty)
     }
 }
+
+/// Block this creator (FR-035, zzThis RM-112) and Saved (FR-050, RM-115):
+/// lists on the device only.
+@MainActor
+@Suite("Blocked creators and Saved")
+struct BlockAndSavedTests {
+    static let creator = "c-alice"
+
+    static func transport(creators: [String: String]) -> AppStubTransport {
+        AppStubTransport { operation, request in
+            guard operation == "resolveCode" else { return .init(status: 500, json: #"{"error":"failed"}"#) }
+            let path = request.path ?? ""
+            let canonical = creators.keys.first { path.contains($0) } ?? ""
+            return .init(status: 200, json: Fixtures.resolveJSON(canonical, creator: creators[canonical]),
+                         headers: ["Cache-Control": Fixtures.publicCacheControl])
+        }
+    }
+
+    @Test func blockingACreatorCoversEveryCodeThatNamesItWithNoServerCall() async throws {
+        let first = "zz-kathy-lost-cat-zz", second = "zz-copper-lantern-sky-zz", other = "zz-river-falcon-sky-zz"
+        let transport = Self.transport(creators: [first: Self.creator, second: Self.creator, other: "c-bob"])
+        let app = TestApp.make(service: try await TestApp.liveService(transport, signedIn: false))
+        guard case .record(let view, _) = await ResolveLoader.load(first, app: app) else {
+            Issue.record("expected the record")
+            return
+        }
+        #expect(view.creator == Self.creator)
+        let calls = transport.operations.count
+        app.block(creator: Self.creator)
+        #expect(transport.operations.count == calls, "blocking calls no server")
+        guard case .record(let same, _) = await ResolveLoader.load(second, app: app),
+              case .record(let bobs, _) = await ResolveLoader.load(other, app: app) else {
+            Issue.record("expected the records")
+            return
+        }
+        #expect(app.isBlocked(creator: same.creator), "another code from the same creator is blocked")
+        #expect(!app.isBlocked(creator: bobs.creator))
+        app.unblock(creator: Self.creator)
+        #expect(!app.isBlocked(creator: same.creator))
+        #expect(transport.operations.count == calls + 2, "unblocking calls no server")
+    }
+
+    @Test func theCachedCopyKeepsTheCreatorSoOfflineStaysBlocked() async throws {
+        let code = "zz-kathy-lost-cat-zz"
+        let app = TestApp.make(service: try await TestApp.liveService(Self.transport(creators: [code: Self.creator]),
+                                                                          signedIn: false))
+        _ = await ResolveLoader.load(code, app: app)
+        app.block(creator: Self.creator)
+        // The offline rule reads the same FR-041 copy (Resolve offline).
+        guard case .record(let view, offline: true) = ResolveLoader.offline(code, app: app) else {
+            Issue.record("expected the offline copy")
+            return
+        }
+        #expect(app.isBlocked(creator: view.creator))
+    }
+
+    @Test func aRecordWithNoCreatorOffersNoBlock() async throws {
+        let code = "zz-kathy-lost-cat-zz"
+        let app = TestApp.make(service: try await TestApp.liveService(ResolveFlowTests.transport(), signedIn: false))
+        guard case .record(let view, _) = await ResolveLoader.load(code, app: app) else {
+            Issue.record("expected the record")
+            return
+        }
+        #expect(view.creator == nil)
+        #expect(!app.isBlocked(creator: view.creator))
+    }
+
+    @Test func savedKeepsNewestFirstAcrossLaunchesWithNoServerCall() async throws {
+        let transport = ResolveFlowTests.transport()
+        let app = TestApp.make(service: try await TestApp.liveService(transport, signedIn: false))
+        app.save("zz-kathy-lost-cat-zz")
+        app.save("zz-copper-lantern-sky-zz")
+        app.save("zz-kathy-lost-cat-zz")
+        #expect(app.savedCodes == ["zz-kathy-lost-cat-zz", "zz-copper-lantern-sky-zz"])
+        #expect(app.savedStore.codes == app.savedCodes)
+        app.unsave("zz-copper-lantern-sky-zz")
+        #expect(app.savedCodes == ["zz-kathy-lost-cat-zz"])
+        app.clearSaved()
+        #expect(app.savedCodes.isEmpty && app.savedStore.codes.isEmpty)
+        #expect(transport.operations.isEmpty, "Saved calls no server")
+    }
+
+    @Test func theStoresOutliveTheApp() {
+        let defaults = TestApp.defaults()
+        HiddenStore(defaults: defaults).creators = [Self.creator]
+        SavedStore(defaults: defaults).codes = ["zz-kathy-lost-cat-zz"]
+        #expect(HiddenStore(defaults: defaults).creators == [Self.creator])
+        #expect(SavedStore(defaults: defaults).codes == ["zz-kathy-lost-cat-zz"])
+    }
+
+    @Test func unhideAllClearsBlockedCreatorsAndDeletionClearsEverything() async throws {
+        let app = try await OwnerFlowTests.signedInDemo()
+        app.block(creator: Self.creator)
+        app.hide("zz-kathy-lost-cat-zz")
+        app.unhideAll()
+        #expect(app.blockedCreators.isEmpty && app.hiddenStore.creators.isEmpty)
+        app.block(creator: Self.creator)
+        app.save("zz-kathy-lost-cat-zz")
+        try await app.deleteAccount().get()
+        #expect(app.blockedCreators.isEmpty && app.hiddenStore.creators.isEmpty)
+        #expect(app.savedCodes.isEmpty && app.savedStore.codes.isEmpty)
+    }
+}

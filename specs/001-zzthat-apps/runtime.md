@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build and runtime contract for the
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: implementation in progress. The trees below now exist; this document remains normative for implementation and verification. A path being present does not mean its task or acceptance evidence is complete. V1 capture is on-device only and never sends a photo, crop, or OCR transcript.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `649ea2e42d308f356202b4749c03088d494186e8`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 
@@ -80,7 +80,7 @@ Each feature calls core modules. Features do not call each other except through 
 | Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
-| Storage | Resolve cache, draft, last canonical, hidden codes | A second source of truth, or any `no-store` response |
+| Storage | Resolve cache (with the record's `creator`), draft, last canonical, hidden codes, blocked creators, Saved | A second source of truth, or any `no-store` response |
 | Core (`ZZCore`, `:core-grammar`) | zzThis Section 2.2a, the spec 003 check word, the spec 004 scanner and bands, the list loader | A second grammar |
 | Design (`ZZDesign`, `:core-design`) | The pinned token files and fonts | Values authored in this repo |
 
@@ -220,7 +220,8 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Last canonical text | App storage | Until the person clears it, so resolve can be retried |
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
 | Photo | The app's cache folder | Temporary for the active scan or write check; deleted when that operation ends (FR-004) |
-| Hidden codes | App storage, on this device only; never sent | Until Unhide, `account.unhide_all`, or account deletion (FR-035) |
+| Hidden codes and blocked creators | App storage, on this device only; never sent. A blocked creator is the Resolve `creator` reference (zzThis RM-112). | Until Unhide or Unblock, `account.unhide_all`, or account deletion (FR-035) |
+| Saved codes | App storage, on this device only; canonical codes only, no photo or thumbnail; never sent | Until removed, `account.clear_saved`, or account deletion (FR-050) |
 
 A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. The V1 client does not invoke a photo-read/upload route, even if discovery reports `photo_reads: true` (FR-045).
 

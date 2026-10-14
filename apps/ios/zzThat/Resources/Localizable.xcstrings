@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "account.clear_saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear saved codes on this device"
+          }
+        }
+      }
+    },
+    "account.clear_saved_done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved codes on this device are cleared."
+          }
+        }
+      }
+    },
     "account.delete" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -573,6 +595,28 @@
         }
       }
     },
+    "minted.keep" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep these words"
+          }
+        }
+      }
+    },
+    "minted.pick_help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These words were chosen for you. Keep them, or get different words."
+          }
+        }
+      }
+    },
     "minted.reroll" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -870,6 +914,17 @@
         }
       }
     },
+    "resolve.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
     "resolve.share" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -903,6 +958,17 @@
         }
       }
     },
+    "resolve.unsave" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from Saved"
+          }
+        }
+      }
+    },
     "revoke.action" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -932,6 +998,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revoke this code?"
+          }
+        }
+      }
+    },
+    "saved.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codes you save show here. They stay on this device."
+          }
+        }
+      }
+    },
+    "saved.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved"
           }
         }
       }

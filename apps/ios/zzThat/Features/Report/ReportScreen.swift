@@ -21,6 +21,10 @@ struct ReportState: Hashable {
     var demo = false
     /// The reported code is hidden on this device (FR-035).
     var hidden = false
+    /// Resolve named the code's creator (RM-112), so Block this creator shows.
+    var canBlock = false
+    /// That creator is blocked on this device.
+    var blocked = false
     /// After a 429, Send waits for `Retry-After` (FR-033).
     var waiting = false
 
@@ -32,6 +36,7 @@ struct ReportScreen: View {
     var onSend: () -> Void = {}
     var onDone: () -> Void = {}
     var onHide: () -> Void = {}
+    var onBlock: () -> Void = {}
 
     var body: some View {
         Screen(demo: state.demo, loading: state.phase == .sending) {
@@ -48,6 +53,15 @@ struct ReportScreen: View {
                     Button(action: onHide) { Text(.resolveHide) }
                         .buttonStyle(.zzSecondary)
                         .accessibilityIdentifier("report.hide")
+                }
+                if state.canBlock {
+                    if state.blocked {
+                        Message(key: .resolveBlocked)
+                    } else {
+                        Button(action: onBlock) { Text(.resolveBlockCreator) }
+                            .buttonStyle(.zzSecondary)
+                            .accessibilityIdentifier("report.block_creator")
+                    }
                 }
                 Button(action: onDone) { Text(.commonDone) }
                     .buttonStyle(.zzPrimary)
@@ -145,22 +159,28 @@ struct ReportRoute: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
     @State private var model: ReportModel
+    private let creator: String?
 
-    init(canonical: String) {
+    init(canonical: String, creator: String? = nil) {
         _model = State(initialValue: ReportModel(canonical: canonical))
+        self.creator = creator
     }
 
     var body: some View {
         @Bindable var model = model
         NavigationStack {
             ReportScreen(state: $model.state, onSend: { Task { await model.send(app: app) } }, onDone: { dismiss() },
-                         onHide: { app.hide(model.canonical) })
+                         onHide: { app.hide(model.canonical) },
+                         onBlock: { if let creator { app.block(creator: creator) } })
         }
         .onAppear {
             model.state.demo = app.isDemo
             model.state.offline = !app.isOnline
             model.state.hidden = app.isHidden(model.canonical)
+            model.state.canBlock = creator != nil
+            model.state.blocked = app.isBlocked(creator: creator)
         }
+        .onChange(of: app.isBlocked(creator: creator)) { _, blocked in model.state.blocked = blocked }
         .onChange(of: app.isHidden(model.canonical)) { _, hidden in model.state.hidden = hidden }
         .onChange(of: app.isOnline) { _, online in model.state.offline = !online }
     }

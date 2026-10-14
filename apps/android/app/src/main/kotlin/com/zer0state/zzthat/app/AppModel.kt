@@ -27,6 +27,7 @@ import com.zer0state.zzthat.storage.LastCanonicalStore
 import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
 import com.zer0state.zzthat.storage.ResolveCache
+import com.zer0state.zzthat.storage.SavedStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,8 +47,10 @@ class AppModel(
     val drafts: DraftStore,
     val lastCanonical: LastCanonicalStore,
     val providerStore: ProviderStore,
-    /** The codes hidden on this device (FR-035). Never sent anywhere. */
+    /** The codes hidden and the creators blocked on this device (FR-035). Never sent anywhere. */
     val hidden: HiddenStore,
+    /** The codes saved on this device (FR-050). Never sent anywhere. */
+    val saved: SavedStore,
     val photos: PhotoScratch,
     val connectivity: Connectivity,
     /** The wordlists bundled from contracts/wordlists (FR-044). */
@@ -67,8 +70,12 @@ class AppModel(
     var ownerRevision by mutableIntStateOf(0)
         private set
 
-    /** Bumped after a hide, an unhide, or the Account reset, so an open Resolve shows the new state. */
+    /** Bumped after a hide, an unhide, a block, an unblock, or the Account reset, so an open Resolve shows the new state. */
     var hiddenRevision by mutableIntStateOf(0)
+        private set
+
+    /** Bumped after a save, a removal, or a clear, so Saved and an open Resolve read the list again. */
+    var savedRevision by mutableIntStateOf(0)
         private set
 
     val isDemo: Boolean get() = config.isDemo
@@ -129,13 +136,18 @@ class AppModel(
         ownerRevision += 1
     }
 
-    /** `DELETE /v1/me`, then the tokens, the draft, the hidden codes, and every cache (Auth step 9, FR-035). */
+    /**
+     * `DELETE /v1/me`, then the tokens, the draft, the hidden codes and blocked
+     * creators, Saved, and every cache (Auth step 9, FR-035, FR-050).
+     */
     suspend fun deleteAccount(): ApiResult<Unit> {
         val result = service.deleteAccount()
         if (result !is ApiResult.Ok) return result
         drafts.discard()
         hidden.clear()
         hiddenRevision += 1
+        saved.clear()
+        savedRevision += 1
         withContext(Dispatchers.IO) {
             cache.removeAll()
             photos.purge()
@@ -166,10 +178,44 @@ class AppModel(
         hiddenRevision += 1
     }
 
-    /** The Account screen reset: every hidden code shows again (FR-035). No server call. */
+    /** The Account screen reset: every hidden code and every blocked creator shows again (FR-035). No server call. */
     suspend fun unhideAll() {
         hidden.clear()
         hiddenRevision += 1
+    }
+
+    // MARK: Blocked creators
+
+    /** Block this creator on this device (FR-035, zzThis RM-112). [creator] is the opaque Resolve reference. No server call. */
+    suspend fun block(creator: String) {
+        hidden.block(creator)
+        hiddenRevision += 1
+    }
+
+    /** Unblock this creator on this device (FR-035). No server call. */
+    suspend fun unblock(creator: String) {
+        hidden.unblock(creator)
+        hiddenRevision += 1
+    }
+
+    // MARK: Saved
+
+    /** Save this canonical code on this device (FR-050). No server call. */
+    suspend fun save(canonical: String) {
+        saved.save(canonical)
+        savedRevision += 1
+    }
+
+    /** Remove this code from Saved (FR-050). No server call. */
+    suspend fun unsave(canonical: String) {
+        saved.unsave(canonical)
+        savedRevision += 1
+    }
+
+    /** The Account screen's Clear saved codes (FR-050). No server call. */
+    suspend fun clearSaved() {
+        saved.clear()
+        savedRevision += 1
     }
 
     // MARK: Owner writes
@@ -211,6 +257,7 @@ class AppModel(
                 lastCanonical = LastCanonicalStore(local),
                 providerStore = ProviderStore(local),
                 hidden = HiddenStore(local),
+                saved = SavedStore(local),
                 photos = PhotoScratch(PhotoScratch.defaultDirectory(context.cacheDir)),
                 connectivity = connectivity,
                 bundledLists = loadBundledLists(context),

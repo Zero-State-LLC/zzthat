@@ -78,6 +78,50 @@ class LocalStoresTest {
         assertEquals("clearing the list keeps the other local values", "zz-kathy-lost-cat-zz", last.value())
     }
 
+    /** FR-035 and RM-112: blocked creators are a second list beside the hidden codes, and clear() empties both. */
+    @Test
+    fun blockedCreatorsAreKeptUntilUnblockedOrCleared() = runBlocking {
+        val store = dataStore()
+        val hidden = HiddenStore(store)
+        assertFalse(hidden.isBlocked("creator-a"))
+        hidden.block("creator-a")
+        hidden.block("creator-b")
+        hidden.hide("zz-kathy-lost-cat-zz")
+        assertTrue(HiddenStore(store).isBlocked("creator-a"))
+        assertFalse("a creator reference is not a hidden code", hidden.isHidden("creator-a"))
+        assertFalse("a hidden code is not a blocked creator", hidden.isBlocked("zz-kathy-lost-cat-zz"))
+        hidden.unblock("creator-a")
+        assertFalse(hidden.isBlocked("creator-a"))
+        assertTrue("unblocking one creator keeps the others", hidden.isBlocked("creator-b"))
+        hidden.clear()
+        assertFalse(hidden.isBlocked("creator-b"))
+        assertFalse(hidden.isHidden("zz-kathy-lost-cat-zz"))
+    }
+
+    /** FR-050 and RM-115: Saved keeps canonical codes, newest first, until removed or cleared. */
+    @Test
+    fun savedCodesAreKeptNewestFirstUntilRemovedOrCleared() = runBlocking {
+        val store = dataStore()
+        val saved = SavedStore(store)
+        val last = LastCanonicalStore(store)
+        last.set("zz-kathy-lost-cat-zz")
+        assertEquals(emptyList<String>(), saved.list())
+        saved.save("zz-kathy-lost-cat-zz")
+        saved.save("zz-copper-lantern-sky-zz")
+        saved.save("zz-b2-4-zz")
+        assertEquals(listOf("zz-b2-4-zz", "zz-copper-lantern-sky-zz", "zz-kathy-lost-cat-zz"), saved.list())
+        assertEquals("the list is on disk", saved.list(), SavedStore(store).list())
+        saved.save("zz-kathy-lost-cat-zz")
+        assertEquals("saving again moves the code to the top, once", listOf("zz-kathy-lost-cat-zz", "zz-b2-4-zz", "zz-copper-lantern-sky-zz"), saved.list())
+        assertTrue(saved.isSaved("zz-b2-4-zz"))
+        saved.unsave("zz-b2-4-zz")
+        assertFalse(saved.isSaved("zz-b2-4-zz"))
+        assertEquals(listOf("zz-kathy-lost-cat-zz", "zz-copper-lantern-sky-zz"), saved.list())
+        saved.clear()
+        assertEquals(emptyList<String>(), saved.list())
+        assertEquals("clearing Saved keeps the other local values", "zz-kathy-lost-cat-zz", last.value())
+    }
+
     /** FR-004 and T063: the photo lives only while the scan runs. */
     @Test
     fun thePhotoIsDeletedWhenTheScanEnds() {
