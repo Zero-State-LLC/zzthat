@@ -26,11 +26,17 @@ Done when: both apps launch in Demo with the three tabs, the pinned fonts, and t
 
 - [ ] T020 Grammar, classifier, matching key, scanner, and check word in `ZZCore` and `:core-grammar`. Every row of `contracts/vectors.json` passes on both. Do not edit a row to match a bug (FR-007, FR-039).
 - [ ] T021 The list loader for `contracts/wordlists/`. Local check word only when the versions match (FR-044).
-- [ ] T022 Band logic with the values in one constants file (FR-025). One test per band trigger in zzThis spec 004. The band function takes (token, line index, line confidence) rows, not recognizer objects. A word takes its line's confidence, and a candidate takes the lowest line among its words (runtime.md, Read pipeline step 5). Shared band rows run in `ZZCore` (`swift test`) and in the `:core-grammar` JVM tests, and both give the same band: all lines at 0.80 is accept, one line at 0.79 is clarify, and a code wrapped across lines at 0.90 and 0.45 is retry.
-- [ ] T023 The read pipeline per runtime.md and `recognition-adapter.md`: marker-first same-baseline detection/pairing, explicit selection before OCR for ambiguous candidates, safe interior ROI crop/rotation only, on-device engine behind a shared evidence boundary, then deterministic scanner/grammar/check-word handling. Cover flat two-line payloads; test perspective/curved wrapping and candidate overflow as fail-closed/no-OCR cases. Preserve pair IDs, permitted transform provenance, and recognizer hypothesis order.
+- [ ] T022 Band logic with the values in one constants file (FR-025). It consumes normalized recognition evidence plus grammar/check-word results, never Vision/ML Kit/PP-OCR objects. Where meaningful line confidence exists, a word takes its line's confidence and a candidate takes the lowest line among its words. Shared band rows run in `ZZCore` (`swift test`) and in the `:core-grammar` JVM tests, and both give the same band: all lines at 0.80 is accept, one line at 0.79 is clarify, and a code wrapped across lines at 0.90 and 0.45 is retry. Missing confidence stays missing and must have a qualification-backed adapter policy before promotion.
+- [ ] T023 The read pipeline per runtime.md and `recognition-adapter.md`, and the platform-neutral `RecognitionResult` boundary in both app stacks: marker-first same-baseline detection/pairing, explicit selection before OCR for ambiguous candidates, safe interior ROI crop/rotation only, no perspective or projective rectification, then deterministic scanner/grammar/check-word handling. `RecognitionResult` carries engine id/version, raw candidates, confidence when meaningful, and geometry/line provenance when available. No resolver or live-code query is permitted in the adapter. Cover flat two-line payloads; test perspective, curved wrapping, and candidate overflow as fail-closed/no-OCR cases. Preserve pair IDs, permitted transform provenance, and recognizer hypothesis order.
 - [ ] T023c Qualification integration: run the recognizer independently on every safe, supported complete predicted pair/ROI, keyed by `pair_id`, without ground-truth-driven selection; score and preserve hypotheses per the pinned ZZ-OCR-QUAL-001 protocol. Verify runtime ambiguity still waits for selection and does not OCR unselected pairs. Keep unsupported-geometry/overflow safety-probe results separate from supported-geometry OCR accuracy and verify no payload OCR or Accept for those probes.
+- [ ] T024 iOS Apple Vision adapter, on device, behind `RecognitionResult`.
+- [ ] T025 Android ML Kit Text Recognition adapter, on device, behind `RecognitionResult`.
+- [ ] T026 Android PP-OCR mobile/ONNX prototype adapter for qualification only. Do not make it a shipping dependency until dependency/license/security review and ZZ-OCR-QUAL-001 promotion.
+- [ ] T027 Add the ZZ-OCR-QUAL-001 fixture/result format and harness. The private image corpus is not committed. Every engine uses the same corpus manifest and expected canonical outputs.
+- [ ] T028 Run qualification and report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, Accept/Clarify/Retry/Abstain distribution, wrapped/multi-code behavior, latency, and package/runtime footprint. False-valid-decode behavior is the primary safety metric.
+- [ ] T029 Record the Android promotion decision (ML Kit or PP-OCR) with engine/version pin and evidence. Apple Vision must also pass the same product-level qualification; if it does not, stop rather than weaken the decoder or bands.
 
-Done when: every vector row passes on both platforms, and a rendered image of `zz-copper-lantern-sky-zz` yields that one candidate on both.
+Done when: every vector row passes on both platforms; a rendered `zz-copper-lantern-sky-zz` is a smoke test only; recognition.md lifecycle/privacy tests pass; and no Release configuration can enable an unqualified or cloud adapter. Product promotion still requires the upstream ZZ-OCR-QUAL-001 receipt.
 
 ## Phase 3: API client ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 
@@ -143,6 +149,10 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
 - Live video scanning and any server-side photo reading are outside V1. `photo_reads` alone never enables an app upload; a future capability requires explicit product/privacy/security promotion.
+
+## Recognition convergence gate
+
+Before T023/T040 are complete, advance the zzThis pin through the normal sync flow to a commit that contains merged zzThis #89. Reconcile recognition.md against that SHA, run both shared-vector suites, and attach the qualification receipt or record NO_PROMOTION. SDK presence and a rendered-image smoke test are not qualification evidence.
 
 ## Phase 13: v1.1 follow-up from the 2026-10-13 spec-depth audit
 

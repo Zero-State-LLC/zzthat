@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href=".github/workflows/ci.yml"><img alt="spec lint" src="https://github.com/Zero-State-LLC/zzthat/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="#status"><img alt="status: qualification in progress" src="https://img.shields.io/badge/status-qualification%20in%20progress-f85000"></a>
+  <a href="#status"><img alt="status: implementation in progress" src="https://img.shields.io/badge/status-implementation%20in%20progress-f85000"></a>
   <a href="#status"><img alt="platforms: iOS and Android" src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android-1c1b19"></a>
   <a href="specs/001-zzthat-apps/spec.md"><img alt="spec 001" src="https://img.shields.io/badge/spec-001--zzthat--apps-1c1b19"></a>
 </p>
@@ -27,7 +27,7 @@ zzThat is the free everyday-use iOS and Android apps for zz codes. A person writ
 
 zzThat is the apps portion of [zzThis](https://github.com/Zero-State-LLC/zzthis). The apps are thin clients. They call the zzThis central server to resolve, issue, and manage codes. They do not run a resolver [DANNY 2026-10-04]. The later web client is built in that same repo.
 
-This repository holds the iOS and Android app source, product specifications, and repo tooling.
+This repository holds the governing spec, repo tooling, and native iOS and Android application source. The implementation is in progress and is not a production release.
 
 ## Contents
 
@@ -41,12 +41,12 @@ This repository holds the iOS and Android app source, product specifications, an
 
 ## Status
 
-Native iOS and Android app source is present. On-device text recognition is implemented with Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: commit-bound platform CI, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The resolver and authoritative wordlist remain owned by zzThis [ZZTHIS SPEC].
+zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. On-device text recognition uses Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: recognition qualification, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The central resolver and authoritative wordlist remain zzThis [ZZTHIS SPEC].
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
 - Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
-- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks run in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. A passing CI run alone does not qualify a release.
+- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. End-to-end orchestration is in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A passing CI run, or a workflow's presence, does not by itself qualify a release.
 
 ## Design tokens
 

@@ -54,3 +54,7 @@ Defaults: `anti-slop-code`, `production-systems`, `google-developer-style`.
 ## Size
 
 Keep this file short (about 80 lines; hard ceiling 12 KB).
+
+## Upstream scope control
+
+zzThis is the product-scope authority. Before turning a new upstream idea into native-app work, verify its capability bundle and target release at the pinned zzThis commit. Only ACTIVE bundles create implementation work. QUEUED, SHADOW, and RESEARCH items may be documented or accommodated by a non-behavioral interface only when doing so does not expand the current release. Do not infer implementation authority from marketing copy, a future-looking spec paragraph, or a Michael note by itself. After an upstream bundle is promoted, advance the zzThis pin through the normal sync flow before implementing it here.
