@@ -25,7 +25,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | On-device storage | Session tokens, last canonical read, public resolves for 60 seconds online and 360 seconds offline (FR-041), drafts labeled "Not a code yet." | FR-041, ZQ16, ZQ26. zzThis spec 005 FR-018. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
 | Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
-| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`. ZQ19. |
+| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`. ZQ19. |
 | Design and strings | Pinned copy via `scripts/sync-zzthis.sh`, one sha in `contracts/ZZTHIS-API-PIN`, with fonts and `copy.json` | design.md. Not a submodule. |
 | Recognition engines | Engine-neutral recognition adapters. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; only the ZZ-OCR-QUAL-001 winner ships enabled by default. One still photo, on device. | runtime.md, Read pipeline; zzThis PR #89 / accepted 2026-10-06 recognition intent |
 | Builds | Demo, Local, and Release, with XcodeGen and Gradle flavors | runtime.md, Build configurations |

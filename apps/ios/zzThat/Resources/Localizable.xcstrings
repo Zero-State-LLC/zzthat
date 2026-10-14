@@ -1178,6 +1178,61 @@
         }
       }
     },
+    "scan.retry_angle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a better angle"
+          }
+        }
+      }
+    },
+    "scan.retry_blur" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The photo is blurred."
+          }
+        }
+      }
+    },
+    "scan.retry_closer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move closer"
+          }
+        }
+      }
+    },
+    "scan.retry_glare" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glare hides part of the code."
+          }
+        }
+      }
+    },
+    "scan.retry_marker_cut" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A marker is cut off."
+          }
+        }
+      }
+    },
     "scan.take_photo" : {
       "extractionState" : "manual",
       "localizations" : {
