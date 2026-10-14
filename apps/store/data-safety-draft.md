@@ -58,7 +58,26 @@ These match the privacy manifest, which declares no tracking and no tracking dom
 | User Content | Other User Content: report notes (S2, [DELEGATED 2026-10-05, zzThat #43]) | No. Reports are stored without the reporter. | No | App Functionality (abuse review) |
 | Other Data | Other Data Types: the IP-based rate-limit HMAC (B4b; the category is S3, [DELEGATED 2026-10-05, zzThat #43]) | No | No | App Functionality (Apple counts preventing fraud and keeping the service secure here) |
 
-Data Used to Track You: none. The iOS app contains no analytics, no advertising identifier, and no crash reporter that uploads (runtime.md, Privacy). It reads codes with Apple's Vision, which sends nothing, so the ML Kit rows apply to Google Play only (SC3).
+### Collected by Google's sign-in SDK (iOS)
+
+Michael's answer 1 (zzThis D-2026-10-11-08): declare what Google's sign-in SDK collects, per Xcode's privacy report. GoogleSignIn 10.0.0's privacy manifest, read from a Release archive on 2026-10-10 (zzThat #63), declares these, all linked to the user and none used for tracking:
+
+| Category | Data type | Purpose |
+|---|---|---|
+| Contact Info | Name | App Functionality |
+| Contact Info | Email Address | App Functionality |
+| Contact Info | Phone Number | App Functionality |
+| Location | Coarse Location | App Functionality |
+| Identifiers | User ID | App Functionality, Analytics |
+| Identifiers | Device ID | Analytics |
+| Usage Data | Other Usage Data | Analytics |
+| Other Data | Other Data Types | App Functionality, Analytics |
+
+App Store Connect takes one answer per data type, so the combined answers are: User ID linked, for App Functionality and Analytics; Other Data Types linked (the SDK's row), for App Functionality and Analytics. Re-read the manifest from Xcode's privacy report when the GoogleSignIn version changes.
+
+Google Play (answer 3, the same approach): the Android app signs in with Credential Manager and Google Identity Services. Enter what Google's data disclosure for those libraries lists at the pinned versions; Danny confirms the rows when he fills the form, because this draft has not read that disclosure yet.
+
+Data Used to Track You: none, including the Google sign-in rows above. The iOS app contains no analytics, no advertising identifier, and no crash reporter that uploads (runtime.md, Privacy). It reads codes with Apple's Vision, which sends nothing, so the ML Kit rows apply to Google Play only (SC3).
 
 App Store Connect takes one linked answer per data type. Pages are linked, so Other User Content is entered as linked; the report-note row records that the notes themselves are not linked.
 
