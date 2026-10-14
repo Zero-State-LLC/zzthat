@@ -41,12 +41,12 @@ This repository holds the governing spec, repo tooling, and native iOS and Andro
 
 ## Status
 
-zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. This does not establish production readiness, store readiness, or recognition accuracy. Recognition qualification remains open, and the central resolver/API authority remains zzThis.
+zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. On-device text recognition uses Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: recognition qualification, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The central resolver and authoritative wordlist remain zzThis [ZZTHIS SPEC].
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
 - Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
-- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml), with end-to-end orchestration in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A workflow's presence does not by itself establish that every platform gate has passed.
+- Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. End-to-end orchestration is in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A passing CI run, or a workflow's presence, does not by itself qualify a release.
 
 ## Design tokens
 
@@ -101,13 +101,13 @@ flowchart LR
   end
   subgraph Server["zzthis repo: central server"]
     API["Resolve, mint, revoke, record versions"]
-    Vision["Cloud vision, confirmed retry only"]
   end
   iOS --> Local
   Android --> Local
   Local -->|"canonical code only"| API
-  Local -.->|"photo only after the person confirms"| Vision
 ```
+
+V1 recognition is on-device only. Images, crops, and OCR transcripts are never sent to the server; ordinary resolution receives only the selected canonical code. The `photo_reads` capability does not opt the client into a photo endpoint. Any future server-side photo reading requires a separate product, privacy, and security decision.
 
 The apps do not cache a source of truth. Only an active reusable public unauthenticated resolve may be kept, and only for the server's `Cache-Control` (`public, max-age=60, stale-while-revalidate=300`). Every other `/v1` response is `no-store` [ZZTHIS SPEC] spec 005 FR-018 and FR-028. They cannot issue or revoke offline.
 
@@ -115,7 +115,7 @@ The apps do not cache a source of truth. Only an active reusable public unauthen
 
 Work is tracked as GitHub issues and on the [zzThat board](https://github.com/orgs/Zero-State-LLC/projects/25). ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
 
-### Phase 0: Spec
+### Phase 0: Spec and native implementation
 
 - [x] Constitution, spec 001, plan, tasks, and checklist
 - [x] Decide ZQ1 to ZQ21 ([#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21), [log](specs/001-zzthat-apps/decisions.md))
@@ -123,13 +123,14 @@ Work is tracked as GitHub issues and on the [zzThat board](https://github.com/or
 - [x] Runtime build contract and the design pin (`scripts/pin-design.sh`)
 - [ ] Danny accepts the spec
 
-### Phase 1: Scaffold and on-device grammar
+### Phase 1: Native capture and qualification
 
-- [ ] Platform scaffold, SwiftUI and Compose ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22))
-- [ ] Grammar vectors on both platforms ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
-- [ ] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [x] Native SwiftUI and Compose app source and platform OCR readers ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22), [#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
+- [x] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
+- [ ] Commit-bound iOS and Android CI, device qualification, parity and privacy gates ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26))
+- [ ] Staging end-to-end verification with canonical-code-only resolve; no production promotion until evidence is accepted
 
-### Phase 2: Everyday flows
+### Phase 2: Remaining everyday flows and release gates
 
 Live mint stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 

@@ -1,6 +1,6 @@
 # Plan: zzThat apps
 
-Feature: [spec.md](spec.md). Status: implementation in progress. The planned trees now exist; unchecked tasks remain requirements until verified by their named evidence.
+Feature: [spec.md](spec.md). Status: implementation in progress. The planned trees now exist; unchecked tasks remain requirements until verified by their named evidence. V1 capture stays on-device, and release gates remain open.
 Decisions: [decisions.md](decisions.md). Recognition integration: [recognition.md](recognition.md).
 
 ## Workflows (copied from the spec)
@@ -18,7 +18,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Minimum OS | iOS 17. Android 8.0 (API 26). | ZQ21 |
 | Grammar | Each app implements zzThis Section 2.2a and fails on any G9 miss. | [ZZTHIS SPEC] |
 | Check word and wordlist | Follow spec 003. Build it in T020 and T021. A local pass shows only when the bundled list version equals `wordlist_version` (FR-044). | [ZZTHIS SPEC] spec 003. Q30 to Q32 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): `(d1 + 2 * d2) mod N` with N prime, and the EFF long list. |
-| Recognition | Fiducial-first and on-device in v1: detect/pair terminal `zz`, localize/rectify ROI, then recognize payload behind `RecognitionResult`. No cloud fallback. | Upstream spec 004 refinement on zzThis #89; Q18 no-cloud lock preserved. |
+| Recognition | V1 is on-device and fiducial-first: detect and pair terminal `zz` on the same baseline, crop or rotate only, then recognize the payload behind `RecognitionResult`. Apple Vision on iOS. A qualified on-device Android engine (ML Kit or PP-OCR, selected by ZZ-OCR-QUAL-001). No perspective or projective rectification, no cloud fallback, and no photo, crop, or OCR transcript upload, regardless of `photo_reads`. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903); Q18 no-cloud lock preserved. |
 | API | zzThis spec 005 and the pinned `contracts/zzthis-v1.openapi.yaml`. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
 | Auth | Native Apple or Google sign-in, a server nonce, and the provider ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 [DANNY 2026-10-04] (Q66). ZQ23. |
 | Create | Shows the Unavailable state until `GET /v1` says `free_public` is true. It is never hidden. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |

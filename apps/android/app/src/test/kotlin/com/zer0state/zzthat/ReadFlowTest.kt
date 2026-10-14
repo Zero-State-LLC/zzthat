@@ -16,12 +16,14 @@ import com.zer0state.zzthat.scan.ClarifyInput
 import com.zer0state.zzthat.scan.ClarifyLogic
 import com.zer0state.zzthat.scan.ClarifyStep
 import com.zer0state.zzthat.scan.TypeModel
+import com.zer0state.zzthat.scan.readOrNull
 import com.zer0state.zzthat.ui.FieldLimits
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 /** Typed entry, the bands, and Clarify (US2a, spec 004). */
@@ -94,6 +96,25 @@ class ReadFlowTest {
             CandidateAction.Clarify(ClarifyInput(listOf("copper", "lantern", "sky"), com.zer0state.zzthat.grammar.CodeKind.PLAIN, ReadSource.CAMERA)),
             action("zz-copper-lantern-sky-zz", 0.79),
         )
+    }
+}
+
+/** Reader failures may abstain, but task cancellation must propagate to the capture flow. */
+class ReadCancellationTest {
+    @Test
+    fun cancellationIsPropagatedInsteadOfBecomingAnEmptyRead() = runBlocking {
+        val cancelled = kotlinx.coroutines.CancellationException("capture route ended")
+        try {
+            readOrNull<Int> { throw cancelled }
+            fail("expected cancellation")
+        } catch (actual: kotlinx.coroutines.CancellationException) {
+            assertTrue(actual === cancelled)
+        }
+    }
+
+    @Test
+    fun ordinaryReaderFailureBecomesAnEmptyRead() = runBlocking {
+        assertNull(readOrNull<Int> { throw IllegalStateException("OCR failed") })
     }
 }
 

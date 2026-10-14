@@ -56,6 +56,8 @@ import androidx.core.content.FileProvider
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.app.AppModel
 import com.zer0state.zzthat.scan.PhotoDecoder
+import com.zer0state.zzthat.storage.PhotoScratch
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import llc.zerostate.zzthis.design.ZZSpace
 import java.io.File
@@ -196,6 +198,13 @@ fun openLink(context: Context, uri: String) {
 /** The system camera and the system photo picker for one still photo (runtime.md, Read pipeline step 1). */
 class PhotoCapture(val takePhoto: () -> Unit, val pickPhoto: () -> Unit, val cameraAvailable: Boolean)
 
+/** A cancelled/failed camera result ends that capture and removes its scratch file. */
+internal fun savedCameraFile(saved: Boolean, file: File?, photos: PhotoScratch): File? {
+    if (saved && file != null) return file
+    photos.end()
+    return null
+}
+
 /**
  * `TakePicture` writes into a FileProvider file in the cache folder, which
  * needs no camera permission (FR-011). `PickVisualMedia` is the system photo
@@ -207,9 +216,25 @@ fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnr
     val scope = rememberCoroutineScope()
     var pending by remember { mutableStateOf<File?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val file = pending
-        if (saved && file != null) {
-            scope.launch { PhotoDecoder.decode(file)?.let { onPhoto(it) } ?: onUnreadable() }
+        val file = savedCameraFile(saved, pending, app.photos)
+        pending = null
+        if (file != null) {
+            scope.launch {
+                val bitmap = try {
+                    PhotoDecoder.decode(file)
+                } catch (error: CancellationException) {
+                    app.photos.end()
+                    throw error
+                } catch (error: Exception) {
+                    null
+                }
+                if (bitmap == null) {
+                    app.photos.end()
+                    onUnreadable()
+                } else {
+                    onPhoto(bitmap)
+                }
+            }
         }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -227,6 +252,12 @@ fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnr
                 pending = file
                 camera.launch(FileProvider.getUriForFile(context, context.packageName + ".photos", file))
             } catch (error: ActivityNotFoundException) {
+                app.photos.end()
+                pending = null
+                onCameraOff()
+            } catch (error: Exception) {
+                app.photos.end()
+                pending = null
                 onCameraOff()
             }
         },

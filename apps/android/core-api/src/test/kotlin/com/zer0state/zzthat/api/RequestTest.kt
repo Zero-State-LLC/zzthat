@@ -62,6 +62,32 @@ class RequestTest {
         }
     }
 
+    /** FR-045: discovery must not turn on image/OCR upload, even if the server advertises it. */
+    @Test
+    fun photoReadsCapabilityNeverEnablesPhotoUpload() = runBlocking {
+        ApiStub { sent ->
+            if (sent.operation == "getDiscovery") {
+                ApiStub.Reply(
+                    200,
+                    """{"contract":"1","free_public":true,"auth_providers":["dev"],"scopes":["free_public"],"wordlist_version":"fixture-7","photo_reads":true}""",
+                )
+            } else {
+                Fixtures.ok(sent)
+            }
+        }.use { stub ->
+            val service = stub.service()
+            val discovery = (service.discovery() as ApiResult.Ok).value
+            assertTrue(discovery.photoReads)
+            assertTrue(service.resolve("zz-kathy-lost-cat-zz") is ApiResult.Ok)
+
+            assertEquals(listOf("getDiscovery", "resolveCode"), stub.operations)
+            val resolve = stub.sent.last()
+            assertEquals("GET", resolve.request.method)
+            assertEquals("/v1/resolve/zz-kathy-lost-cat-zz", resolve.path)
+            assertEquals(0L, resolve.request.bodySize)
+        }
+    }
+
     @Test
     fun aNoStoreResolveIsNotCacheable() = runBlocking {
         ApiStub { ApiStub.Reply(200, Fixtures.RESOLVE) }.use { stub ->
