@@ -154,7 +154,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 
 ## Recognition convergence gate
 
-Before T023/T040 are complete, advance the zzThis pin through the normal sync flow to a commit that contains merged zzThis #89. Reconcile recognition.md against that SHA, run both shared-vector suites, and attach the qualification receipt or record NO_PROMOTION. SDK presence and a rendered-image smoke test are not qualification evidence.
+zzThat #76 already advanced the pin to `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, which contains merged zzThis #89. T023 and T040 still wait on zzThat #77 before implementation starts. Before they are complete, reconcile recognition.md against that pin, run both shared-vector suites, and attach the qualification receipt or record NO_PROMOTION. SDK presence and a rendered-image smoke test are not qualification evidence.
 
 ## Phase 13: v1.1 follow-up from the 2026-10-13 spec-depth audit
 
