@@ -34,7 +34,7 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 - The apps ask for the camera only when you start a scan. On Android, the system camera app takes the photo, so the app has no camera permission.
 - You can also pick a photo with the system photo picker. The apps have no access to your photo library beyond the photo you pick.
 - The code is read on your phone. The photo stays on your phone, in the app's temporary storage, and is deleted when the scan ends.
-- The apps do not upload photos. If a later version offers to send a hard-to-read photo for a server read, it will ask first with this sentence: "Send this photo so we can read the code? It leaves your phone only for this retry, and it may be kept for review of this read. It is not used to train a model." A photo sent that way is deleted 30 days after upload.
+- The apps do not upload photos, crops, or OCR transcripts. Any future server-reading capability would require a separate product decision and updated privacy/security review before it could ship.
 
 ## What the apps never collect
 
@@ -67,7 +67,7 @@ The zzThat apps use our server, which runs on Cloudflare.
 ## How long we keep data
 
 - **Your pages** stay until you change them or delete your account. Each change is kept as a new version.
-- **Photos sent for a server read** (not offered today) are deleted 30 days after upload.
+- Server-side photo reading and photo upload are not offered by the V1 apps. A future version would require a new product decision and updated privacy/security review before any change to this statement.
 - **Sign-in data:** the one-time values used to sign in are deleted after use or when they expire. Refresh tokens last 30 days, and expired ones are deleted 30 days after they expire.
 - **Reports**, including any note you add, are deleted one year after the operator closes them (B3, [DANNY 2026-10-05 #43]). A report is not linked to you.
 - **A record of account actions** (for example, that a code was created or revoked) is kept after an account is deleted. It holds no page text.

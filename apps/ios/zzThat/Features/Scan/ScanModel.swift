@@ -53,6 +53,17 @@ final class ScanModel {
     /// camera being off, a 429, or the offline wait.
     var message: CopyKey?
     private(set) var hasRead = false
+    private let recognize: @Sendable (Data) async throws -> [RecognizedLine]
+    private var recognitionTask: Task<[RecognizedLine], Error>?
+    private var readGeneration = 0
+
+    init(recognize: @escaping @Sendable (Data) async throws -> [RecognizedLine] = { data in
+        try await Task.detached(priority: .userInitiated) {
+            try VisionReader.recognize(imageData: data)
+        }.value
+    }) {
+        self.recognize = recognize
+    }
 
     var isEmpty: Bool { photo == nil && !reading }
 
@@ -64,16 +75,27 @@ final class ScanModel {
             return nil
         }
         end(app: app)
+        let generation = readGeneration
         _ = try? app.photos.begin(data)
         photo = image
         reading = true
         message = nil
         candidates = []
-        let lines = await Task.detached(priority: .userInitiated) {
-            (try? VisionReader.recognize(imageData: data)) ?? []
-        }.value
+        let recognize = self.recognize
+        let task = Task.detached(priority: .userInitiated) { try await recognize(data) }
+        recognitionTask = task
+        defer {
+            if generation == readGeneration {
+                reading = false
+                recognitionTask = nil
+            }
+        }
+        let lines = (try? await task.value) ?? []
+        guard generation == readGeneration, !Task.isCancelled else {
+            if generation == readGeneration { end(app: app) }
+            return nil
+        }
         let result = app.pipeline.read(lines: lines)
-        reading = false
         hasRead = true
         candidates = result.candidates
         if result.candidates.isEmpty { message = .scanNoCode }
@@ -91,11 +113,15 @@ final class ScanModel {
 
     /// The scan ends: the photo is deleted (FR-004, T063).
     func end(app: AppModel) {
+        readGeneration += 1
+        recognitionTask?.cancel()
+        recognitionTask = nil
         app.photos.end()
         photo = nil
         candidates = []
         message = nil
         hasRead = false
+        reading = false
     }
 }
 

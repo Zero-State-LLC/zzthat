@@ -1,0 +1,35 @@
+# Camera recognition adapter contract
+
+Status: proposed app contract. Aligns with zzThis spec 004 FR-018 to FR-021 and ZZ-OCR-QUAL-001 in [draft PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89); implementation waits for this spec and the upstream contract to be accepted and pinned.
+
+This contract keeps the camera pipeline engine-neutral. The visual `zz` marks are the code's index markers; there is no separate control glyph or fiducial. They remain literal grammar markers, but are not payload text. Recognition runs on device. Images, crops, and OCR transcripts stay local and are deleted when the capture flow ends.
+
+## Runtime sequence
+
+1. Normalize the captured still image to upright orientation once. All boxes and polygons use normalized coordinates in `[0,1]` over that upright source image, with origin at the top-left.
+2. Detect terminal `zz` marker observations and generate plausible opening/closing pair hypotheses from geometry and reading order only. Preserve complete pairs, partial codes, and bare marks as separate, visible candidates. Do not infer a missing endpoint. Do not consult recognized payload text, grammar validity, wordlist proximity, or resolver state to rank/select pairs.
+3. Show candidate boxes before payload OCR. If more than one selectable visual candidate exists (including a complete pair alongside a partial/bare candidate), the person selects which candidate to process. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate. Selecting a partial/bare candidate does not invoke payload OCR. Overflow, missing endpoints, or unresolved geometry must not be silently truncated or guessed; use the specified retry/clarify/abstain outcome.
+4. Pair opening/closing markers only when they share the same detected baseline and plausible reading order. Freeze the baseline tolerance and hard limits for marker and pair candidates in versioned adapter configuration before final qualification. If either limit is exceeded, fail closed for the whole frame; do not truncate or rank away candidates, and do not invoke payload OCR. For the sole/selected complete pair, derive a validated interior ROI that excludes both marker patches. V1 may crop and rotate this ROI when safe; it does not apply perspective/projective rectification. Perspective-dependent, curved/wrapped-surface, unsafe, unsupported, or unrectifiable geometry fails closed. Flat two-line payloads remain supported when the markers form a valid same-baseline pair and the ROI is safe. Never run payload OCR outside the validated interior ROI.
+5. Invoke the platform reader only on that ROI. Return raw ordered text hypotheses, confidence only when the engine supplies meaningful confidence, and line/token geometry when available. Keep the pair ID and geometry provenance attached. Missing confidence remains missing.
+6. Reconstruct literal opening and closing `zz` markers around payload text and pass that representation to the shared scanner, grammar, wordlist classifier, and check-word verifier. These shared deterministic components, not the reader, own canonicalization and acceptance. Marker detection confidence is not payload-word confidence.
+7. If the selected ROI yields multiple text hypotheses, preserve the engine's order and require Clarify. Never reorder or select a hypothesis using confidence, grammar validity, wordlist distance, or live-code existence.
+
+## Identity and geometry
+
+- A capture result has a stable image-scoped identifier. Marker observations, pair hypotheses, ROI, and recognition hypotheses retain their parent IDs.
+- Every complete pair hypothesis has a non-null `pair_id`; an ROI and its recognition output link to exactly one pair. Partial/bare candidates have no payload ROI and cannot invoke payload OCR.
+- The adapter reports the source ROI and any crop/rotation normalization provenance. Perspective/projective transforms and homographies are prohibited in v1; no consumer may apply an unreported transform.
+- Pair and candidate bounds are finite and configured from qualification evidence. Exceeding a bound is an explicit fail-closed result, never truncation that could hide a competing candidate.
+- Persist no raw image, crop, transcript, or candidate code in telemetry, logs, API requests, or long-lived storage. Only a person-selected canonical code may enter ordinary resolver lookup.
+
+## Product behavior versus qualification behavior
+
+Product behavior is selection-first for ambiguity: identify and show every selectable visual candidate, then OCR only the selected complete pair. A sole unambiguous complete pair can be read without a tap only when it is the only selectable candidate. The qualification harness has a different measurement obligation: it runs the same reader independently for every complete predicted pair/ROI, associates each observation by `pair_id`, and scores against ground truth only after results are produced. Ground truth must never drive pairing, selection, or recognizer ordering. Thus, per-pair qualification does not authorize runtime OCR of every ambiguous candidate.
+
+The harness preserves engine hypothesis order. Runtime disposition is Clarify when a selected ROI returns more than one hypothesis; deterministic qualification metrics use the protocol-defined top-1 only. Missing hypotheses and pair linkage remain explicit outcomes, not dropped rows.
+
+## Scope decisions and open gates
+
+- V1 geometry is same-baseline-only pairing, with crop/rotation normalization but no perspective/projective rectification. Perspective-dependent, curved/wrapped-surface, and candidate-overflow cases are negative fail-closed probes, not supported OCR accuracy inputs. This adopts the explicit v1 geometry decision recorded in zzThis spec 004; it supersedes the earlier proposal to support arbitrary qualified perspective/rectified geometry.
+- Numeric detector limits, baseline tolerance, interior ROI inset, reason-code mapping, and platform-specific confidence mapping remain to be measured against the governed corpus and frozen in versioned qualification configuration before final evaluation. Missing limits or an over-limit frame fail closed; no values are inferred or changed after final results are seen.
+- The upstream proposal is in draft PR #89 and is not yet the merged pin. Before application code lands, reconcile pair linkage, coordinate semantics, geometry status, and fail-closed evidence with the accepted upstream adapter/schema contract, then update the pin and this document together.

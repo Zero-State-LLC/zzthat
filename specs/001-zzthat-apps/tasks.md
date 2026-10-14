@@ -26,8 +26,9 @@ Done when: both apps launch in Demo with the three tabs, the pinned fonts, and t
 
 - [ ] T020 Grammar, classifier, matching key, scanner, and check word in `ZZCore` and `:core-grammar`. Every row of `contracts/vectors.json` passes on both. Do not edit a row to match a bug (FR-007, FR-039).
 - [ ] T021 The list loader for `contracts/wordlists/`. Local check word only when the versions match (FR-044).
-- [ ] T022 Band logic with the values in one constants file (FR-025). It consumes normalized recognition evidence plus grammar/check-word results, never Vision/ML Kit/PP-OCR objects. Where meaningful line confidence exists, preserve the existing lowest-relevant-line rule. Missing confidence stays missing and must have a qualification-backed adapter policy before promotion.
-- [ ] T023 Define the platform-neutral `RecognitionResult` boundary in both app stacks: engine id/version, raw candidates, confidence when meaningful, and geometry/line provenance when available. No resolver/live-code query is permitted in the adapter.
+- [ ] T022 Band logic with the values in one constants file (FR-025). It consumes normalized recognition evidence plus grammar/check-word results, never Vision/ML Kit/PP-OCR objects. Where meaningful line confidence exists, a word takes its line's confidence and a candidate takes the lowest line among its words. Shared band rows run in `ZZCore` (`swift test`) and in the `:core-grammar` JVM tests, and both give the same band: all lines at 0.80 is accept, one line at 0.79 is clarify, and a code wrapped across lines at 0.90 and 0.45 is retry. Missing confidence stays missing and must have a qualification-backed adapter policy before promotion.
+- [ ] T023 The read pipeline per runtime.md and `recognition-adapter.md`, and the platform-neutral `RecognitionResult` boundary in both app stacks: marker-first same-baseline detection/pairing, explicit selection before OCR for ambiguous candidates, safe interior ROI crop/rotation only, no perspective or projective rectification, then deterministic scanner/grammar/check-word handling. `RecognitionResult` carries engine id/version, raw candidates, confidence when meaningful, and geometry/line provenance when available. No resolver or live-code query is permitted in the adapter. Cover flat two-line payloads; test perspective, curved wrapping, and candidate overflow as fail-closed/no-OCR cases. Preserve pair IDs, permitted transform provenance, and recognizer hypothesis order.
+- [ ] T023c Qualification integration: run the recognizer independently on every safe, supported complete predicted pair/ROI, keyed by `pair_id`, without ground-truth-driven selection; score and preserve hypotheses per the pinned ZZ-OCR-QUAL-001 protocol. Verify runtime ambiguity still waits for selection and does not OCR unselected pairs. Keep unsupported-geometry/overflow safety-probe results separate from supported-geometry OCR accuracy and verify no payload OCR or Accept for those probes.
 - [ ] T024 iOS Apple Vision adapter, on device, behind `RecognitionResult`.
 - [ ] T025 Android ML Kit Text Recognition adapter, on device, behind `RecognitionResult`.
 - [ ] T026 Android PP-OCR mobile/ONNX prototype adapter for qualification only. Do not make it a shipping dependency until dependency/license/security review and ZZ-OCR-QUAL-001 promotion.
@@ -64,7 +65,7 @@ Done when: in a Local build against `npm run dev:api`, developer sign-in, sign-o
 - [ ] T041 More than one candidate: list them, draw their boxes, and wait for a tap (FR-026).
 - [ ] T042 Resolve shows `record.title` and `record.body` as plain text, or one not-found state (FR-010, FR-036, FR-046). Signed-out resolve works (FR-016).
 - [ ] T043 Typed entry uses the same library and the same resolve call (US2a).
-- [ ] T044 No photo upload offer while `photo_reads` is false (FR-045).
+- [ ] T044 Never offer or call a photo-read/upload endpoint in V1, even if `photo_reads` is true. Add request-level tests proving no captured image, crop, or OCR transcript leaves the app; only a selected canonical code may be sent for resolution (FR-004, FR-045).
 
 Done when: the Scan, Pick, Clarify, Type, and Resolve snapshots exist for each state, and the fixture flow resolves a typed code.
 
@@ -149,7 +150,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - A web client. It is built in zzThis, not in this repo (ZQ1, FR-001).
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
-- Live video scanning, and the photo upload, when zzThis turns `photo_reads` on (v2).
+- Live video scanning and any server-side photo reading are outside V1. `photo_reads` alone never enables an app upload; a future capability requires explicit product/privacy/security promotion.
 
 ## Recognition convergence gate
 

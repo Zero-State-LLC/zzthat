@@ -1,10 +1,11 @@
 # Feature spec: zzThat apps
 
 Feature ID: 001-zzthat-apps
-Status: implementation in progress. Native iOS/Android source and tests exist; this specification remains the product authority. Production/store readiness and OCR qualification are not established.
+Status: implementation in progress. Native iOS and Android source and tests exist; this specification remains the product authority. Camera capture is not release-qualified. Production readiness, store readiness, and OCR qualification are not established.
 Phase: specify (what and why). The how is in [plan.md](plan.md).
 Constitution: [.specify/memory/constitution.md](../../.specify/memory/constitution.md) v1.3.0.
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
+Camera boundary: [recognition-adapter.md](recognition-adapter.md). Camera Accept remains blocked on the upstream contract and qualification gates.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
 zzThis pin: `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
 Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/docs/ONE-SHOT-BRIEF.md).
@@ -46,7 +47,7 @@ As a person with a marked thing, I point the camera at a handwritten code and ge
 
 Acceptance:
 
-1. The person takes one still photo with the system camera. Recognition runs on the device behind an engine-neutral recognition adapter. Only the canonical code goes to the API. The raw photo stays on the device in v1; there is no retry upload (FR-045).
+1. The person takes one still photo with the system camera. Recognition runs on the device behind an engine-neutral recognition adapter. Only the canonical code goes to the API after the person selects it. The photo, any crop, and any OCR transcript never leave the device in V1, and the photo is deleted when the scan ends (FR-004, FR-045).
 2. The reading passes the v1 grammar (zzThis Section 2.2a) before it is sent [ZZTHIS SPEC] spec 004 FR-008.
 3. If the view holds more than one code, the person picks. The app never picks for them [ZZTHIS SPEC] spec 004 FR-013 and FR-014.
 4. If the person denies the camera, typed entry still works (US2a).
@@ -111,9 +112,8 @@ Acceptance:
 | FR-001 | The products in this repo are an iOS app and an Android app, shipped together. The later web client is built in the zzthis repo, which is also the central server. The site that repo publishes today is the marketing page for zzThis. | [DANNY 2026-10-04]. ZQ1. The both-platforms default is the one stated on zzThis issue #57. |
 | FR-002 | The apps are thin clients. They contain no resolver, no database of record, and no second HTTP API. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.1 |
 | FR-003 | Resolve, issue, revoke, and record updates are HTTP calls to the zzThis central server. | [DANNY 2026-10-04] [ZZTHIS SPEC] Section 10.6 |
-| FR-050 | In camera capture, the terminal `zz` marks act as structural fiducial/index marks. The app detects and pairs them before payload OCR, uses them to localize/orient/rectify the ROI, and never fabricates a missing endpoint. They remain literal grammar markers and are not payload fields. | [ZZTHIS SPEC] spec 004 FR-018 to FR-022 |
-| FR-004 | Recognition runs on device in v1 behind an engine-neutral evidence adapter. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; the promoted Android engine is selected by ZZ-OCR-QUAL-001. Raw photos stay on device. | [ZZTHIS SPEC] spec 004 as refined 2026-10-06; accepted recognizer-qualification intent |
-| FR-005 | v1 does not upload a raw scan photo for recognition. Hard cases rescan, clarify, abstain, or use typed entry. A future cloud/VLM retry is v2 and requires a new product/privacy decision. | [ZZTHIS SPEC] spec 004 refined 2026-10-06 |
+| FR-004 | Recognition runs on the device behind an engine-neutral evidence adapter. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; the promoted Android engine is selected by ZZ-OCR-QUAL-001. The capture image stays in temporary app storage only while the scan or write check runs, then is deleted. No image, crop, or OCR transcript is sent to a server in V1. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903); zzThis Q18; [ZZTHIS SPEC] spec 004 as refined 2026-10-06 |
+| FR-005 | The V1 app never uploads a photo, crop, or OCR transcript, including after a user confirms a retry. Only a user-selected canonical code may be sent for ordinary resolution. Hard cases rescan, clarify, abstain, or use typed entry. A future server-reading capability requires a separately accepted scope, security/privacy review, and release criteria; `photo_reads` alone does not authorize it. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903) |
 | FR-006 | Every reading is parsed with the v1 text grammar, and the client sends only the canonical form. | [ZZTHIS SPEC] Section 2.2a and spec 004 FR-008 |
 | FR-007 | The apps do not publish a second grammar. iOS and Android both pass every G9 vector in zzThis Section 2.2a. | [ZZTHIS SPEC] |
 | FR-008 | Snapping to the wordlist and local check-word verification follow zzThis specs 003 and 004. Until that library and list exist, the app must not show a local check word as passed. | [ZZTHIS SPEC]. The algorithm, list size, and word source were decided in zzThis on 2026-10-04 (Q30 to Q32, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). A local pass still needs the library and a matching list version (FR-044). |
@@ -154,11 +154,13 @@ Acceptance:
 | FR-042 | Every sentence a person reads comes from zzThis `design/copy.json` at the pin, through generated string catalogs. The app writes no other user-facing sentence. The one exception is verbatim third-party license text: the Licenses screen shows the bundled `NOTICE` and `OFL.txt` exactly as pinned, and the copy rules (FR-030) do not apply to it. | [ZZTHIS SPEC] design/UX.md. The license text exception is [INFERRED], because a license must be shown as written. |
 | FR-043 | Fonts are the IBM Plex files from zzThis `design/fonts/` at the pin. Colors and type come from the pinned token files. | [ZZTHIS SPEC] design/README.md |
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
-| FR-045 | v1 never uploads a scan photo for recognition and never offers the dormant `POST /v1/reads` path because discovery reports `photo_reads: false`. Any future photo-read activation is outside this v1 app contract and requires a new accepted privacy/product decision. | [ZZTHIS SPEC] spec 005 US5 and Q18 no-cloud decision |
+| FR-045 | The V1 app never offers or calls a photo-read or upload endpoint, including `POST /v1/reads`, regardless of the `photo_reads` value returned by `GET /v1`. It sends only the selected canonical code to ordinary resolution. Enabling a future photo-read API requires a separately accepted product and privacy/security change; this capability flag alone is insufficient authorization. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903); [ZZTHIS SPEC] spec 005 US5 and Q18 no-cloud decision |
 | FR-046 | The record body is shown as plain text. Links in it are not tappable. | [ZZTHIS SPEC] spec 005 FR-007 |
 | FR-047 | The Account screen shows the support contact (`zzsupport@zer0state.com`, zzThis D-2026-10-11-04, after the mailbox exists, RM-122) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
 | FR-049 | The app turns off the HTTP library's own cache for `/v1` calls. FR-041 is the only resolve cache. | [INFERRED], so one rule owns caching |
+| FR-050 | Camera capture detects and geometrically pairs the literal terminal `zz` index markers before payload OCR. Only same-baseline markers in plausible reading order can form a pair. It shows all plausible complete, partial, and bare-marker boxes, never infers a missing marker, and never uses payload/grammar/wordlist/resolver evidence to choose a pair. Versioned marker/pair limits are frozen before final qualification; overflow rejects the whole frame without truncation or payload OCR. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate; otherwise, the person selects before payload OCR. | zzThis spec 004 FR-018 to FR-020, app behavior detail in `recognition-adapter.md` |
+| FR-051 | Payload OCR runs on device only inside the selected pair's validated interior ROI. V1 may crop/rotate but does not apply perspective/projective rectification. Flat two-line payloads are supported when markers form a valid same-baseline pair and the ROI is safe; perspective-dependent or curved/wrapped-surface geometry fails closed. Qualification evaluates every safe, supported complete predicted pair independently by `pair_id`, without ground-truth-driven selection; this does not change runtime selection-first behavior. | zzThis spec 004 FR-009 and FR-021, qualification scoring; app behavior detail in `recognition-adapter.md` |
 
 ## API contract
 
@@ -166,7 +168,7 @@ The contract is zzThis spec 005 and its OpenAPI file, pinned at `ed5b0bd5dba2a6e
 
 | Call | When the app calls it | App rule |
 |---|---|---|
-| `GET /v1` | Launch, return to foreground, and before Create | Show the Unavailable state on Create unless `free_public` is true (FR-018). Create is never hidden. Use `wordlist_version` (FR-044) and `photo_reads` (FR-045). `auth_providers` decides the sign-in buttons. |
+| `GET /v1` | Launch, return to foreground, and before Create | Show the Unavailable state on Create unless `free_public` is true (FR-018). Create is never hidden. Use `wordlist_version` (FR-044); ignore `photo_reads` for client behavior (FR-045). `auth_providers` decides the sign-in buttons. |
 | `POST /v1/auth/nonce`, `POST /v1/auth/token` | Sign in | FR-040 |
 | `POST /v1/auth/refresh` | After a 401, at most one at a time (runtime.md, API client step 8) | A request that gets a 401 during a refresh waits for it, then retries once. The person is signed out only when the refresh itself returns 401. |
 | `POST /v1/auth/revoke` | Sign out | Then delete the local tokens |
@@ -178,7 +180,7 @@ The contract is zzThis spec 005 and its OpenAPI file, pinned at `ed5b0bd5dba2a6e
 | `GET /v1/records/{id}` | Code detail, Edit record | Owner only. `{id}` is the `record_id` from the code's `GET /v1/me/codes` row (FR-021). |
 | `POST /v1/records/{id}/versions` | Save in Edit record | `{id}` is that `record_id` |
 | `POST /v1/codes/{id}/revoke` | Revoke confirm | `{id}` is the code id |
-| `POST /v1/reads` | Not in v1 | Only after FR-005, and only when `photo_reads` is true (FR-045). JPEG only, at most 8 MiB |
+| `POST /v1/reads` | Not used by the V1 app | No photo, crop, or OCR transcript is sent. Future use needs explicit scope promotion and new privacy/security acceptance; `photo_reads` does not opt the app in. |
 | `POST /v1/reports` | Report | Allowed signed out. The answer never says whether the code exists. |
 
 The apps never call `GET /v1/audit`. There is no person-written claim call and no uniqueness-check call.
@@ -189,13 +191,13 @@ The DEP ids were zzThat proposals. zzThis spec 005 adopted them on 2026-10-04.
 
 | ID | What | zzThis spec 005 |
 |---|---|---|
-| DEP-001 | `free_public` in discovery, and 403 `scope-unavailable` until it is on | FR-005 |
+| DEP-001 | `free_public` in discovery, and 403 `scope-unavailable` until it is on | FR-018 |
 | DEP-002 | `GET /v1/me/codes` | US3, FR-030 |
 | DEP-003 | `POST /v1/auth/nonce`, then `POST /v1/auth/token` with the provider ID token, plus refresh, revoke, and `GET /v1/me` | FR-020, FR-021. ZQ18 [DANNY 2026-10-04] (zzThis Q66). |
 | DEP-004 | Signed-out resolve of a public record | FR-008 |
 | DEP-005 | `title` 1 to 120 and `body` 0 to 4000 Unicode code points, counted after trimming | FR-007 |
 | DEP-006 | Server-chosen mint that returns `check_word` | US2, FR-004 |
-| DEP-007 | `POST /v1/reads` | US5, FR-013 |
+| DEP-007 | No V1 dependency on `POST /v1/reads`; the V1 client does not invoke it | FR-045 |
 | DEP-008 | Re-roll, cap 3 | FR-006 |
 | DEP-009 | `/v1`, `X-ZZ-Contract: 1`, `GET /v1/openapi.json` | FR-001, FR-002 |
 | DEP-010 | Rate limits and `Retry-After` | FR-011 |
@@ -223,7 +225,7 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 | 403 `scope-unavailable`, or 503 `not-ready` on mint | `create.unavailable` (FR-018) |
 | 401 on a write | Sign in (FR-015) |
 | 403 otherwise | `error.forbidden` |
-| 413 `payload-too-large` | The photo is over 8 MiB. Nothing was stored (FR-045) |
+| 413 `payload-too-large` | Not reachable in the V1 app: it never invokes a photo-read endpoint (FR-045) |
 | 429 | `resolve.rate_limited`, then wait for `Retry-After` (FR-033). The JSON is exactly `{ "error": "rate-limited" }`, with no other field, and `Cache-Control: no-store` |
 | 500 on a write | `error.nothing_saved` [ZZTHIS SPEC] spec 002 FR-018 |
 | 503 otherwise | `error.unavailable` |
@@ -243,12 +245,12 @@ The wordlist, the check word, and the capture values are zzThis specs 003 and 00
 
 The edge purge clears only the data center that handled the write. Other data centers can serve a revoked record for up to 60 seconds after the revoke [ZZTHIS SPEC] spec 005 FR-019(c). On the owner's device the change shows at once only because of both halves: rule 9 drops the app's own copy, and FR-019(c) purges the data center that handled the owner's write, which is the one the owner's next resolve normally reaches. Other devices online may see the old record for about 2 minutes (rule 2). Offline, they may show it for at most about 7 minutes (rule 3).
 
-## On-device and cloud recognition
+## On-device recognition
 
-- v1 camera capture is on-device only. Terminal `zz` marks are detected/paired as fiducials before payload OCR (FR-050). There is no cloud recognition fallback.
-- `GET /v1` continues to report `photo_reads: false` and the apps do not offer `POST /v1/reads` in v1 (FR-045). The dormant server route is not part of the scan flow.
-- The recognizer is not semantic authority. Apple Vision is the iOS payload baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar/check-word path remains authoritative (runtime.md, Read pipeline).
-- A custom recognizer or VLM remains a later zzThis qualification track, not a v1 dependency.
+- V1 recognition is on-device only. Terminal `zz` marks are detected and paired as same-baseline fiducials before payload OCR (FR-050). There is no cloud vision, image upload, or server-side photo analysis.
+- zzThis Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): on-device reading only in v1, with no cloud reader. The V1 client never offers or calls `POST /v1/reads`, regardless of the `photo_reads` discovery value (FR-045).
+- The recognizer is not semantic authority. Apple Vision is the iOS payload baseline. Android ML Kit and PP-OCR are qualification candidates behind the same `RecognitionResult` boundary; ZZ-OCR-QUAL-001 selects the promoted Android engine. The shared grammar and check-word path remains authoritative (runtime.md, Read pipeline).
+- Option B, a custom recognizer, and a VLM stay a later zzThis track, not a zzThat v1 deliverable [ZZTHIS SPEC].
 - The app does not train a model [INFERRED].
 - No accuracy figure is a release criterion (FR-029).
 - Voice is out of the first release (FR-014).
@@ -259,7 +261,7 @@ The edge purge clears only the data center that handled the write. Other data ce
 |---|---|---|
 | Camera | iOS asks when a scan starts, with a purpose string. Android uses the system camera app and declares no camera permission. | FR-011 [INFERRED] |
 | Photos | System picker only, and only to choose an existing photo. | FR-012 [INFERRED] |
-| Photo upload | None for recognition in v1. | FR-004, FR-045 |
+| Photo transmission | None in V1. Images, crops, and OCR transcripts remain local and are deleted when capture ends. | FR-004, FR-005, FR-045 |
 | Microphone | Not requested. | FR-014 |
 | Location | Not requested. | FR-013 |
 | Canonical code | Sent on resolve. Mint does not send one. | FR-006, FR-017 |
@@ -312,7 +314,7 @@ No recognition accuracy number is a criterion [ZZTHIS SPEC] Q24.
 | SC-1 | iOS and Android each pass every row of the pinned `contracts/vectors.json`: grammar (G9), classifier, matching key, scanner, and check word (FR-007, FR-039). |
 | SC-2 | Resolve sends the canonical code and does not send a photo. Mint sends no canonical code and no photo (FR-004, FR-006, FR-017). |
 | SC-3 | Unknown, expired, used, and revoked codes show one not-found state (FR-010). |
-| SC-4 | No v1 scan/write-check path uploads the raw photo or reaches a cloud recognition endpoint (FR-004, FR-045, FR-050). |
+| SC-4 | In every V1 build and for every `photo_reads` value, no captured image, crop, or OCR transcript is transmitted, and no scan path reaches a cloud recognition endpoint. Outbound resolution requests contain only the user-selected canonical code. The temporary photo is deleted when the scan ends (FR-004, FR-005, FR-045, FR-050). |
 | SC-5 | The repo contains no resolver and no database of record (FR-002). |
 | SC-6 | A cached public resolve follows FR-041 under a fake clock (60 seconds online, 360 seconds offline). `no-store` responses are not kept. Issue and revoke are refused offline (FR-022). |
 | SC-7 | User-facing strings follow FR-030. |

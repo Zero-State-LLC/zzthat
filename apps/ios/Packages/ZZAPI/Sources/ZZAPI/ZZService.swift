@@ -29,7 +29,9 @@ public struct ResolveResponse: Sendable, Hashable {
 /// `APIProtocol`. A live build passes the generated `Client`; a Demo build
 /// passes `DemoAPI`. Each call returns the decoded body or one `APIFailure`.
 public struct ZZService: Sendable {
-    public let api: any APIProtocol
+    // Keep the generated client private: app features may call only the V1 methods
+    // wrapped below, so server-only endpoints such as photo upload are not exposed.
+    private let api: any APIProtocol
     public let tokens: TokenStore
 
     public init(api: any APIProtocol, tokens: TokenStore) {
