@@ -17,6 +17,7 @@ final class AppModel {
     let lastCanonical: LastCanonicalStore
     let providerStore: ProviderStore
     let hiddenStore: HiddenStore
+    let savedStore: SavedStore
     let photos: PhotoScratch
     let connectivity: Connectivity
     /// The wordlists bundled from contracts/wordlists (FR-044). The pin has
@@ -31,10 +32,14 @@ final class AppModel {
     /// The codes hidden on this device (FR-035), mirrored from `hiddenStore`
     /// so every screen that shows one updates at once.
     private(set) var hiddenCodes: Set<String>
+    /// Creators blocked on this device (FR-035, RM-112).
+    private(set) var blockedCreators: Set<String>
+    /// Codes saved on this device, newest first (FR-050).
+    private(set) var savedCodes: [String]
 
     init(config: BuildConfig, service: ZZService, cache: ResolveCache, drafts: DraftStore,
          lastCanonical: LastCanonicalStore, providerStore: ProviderStore, hiddenStore: HiddenStore,
-         photos: PhotoScratch, connectivity: Connectivity, bundledLists: [WordList]) {
+         savedStore: SavedStore, photos: PhotoScratch, connectivity: Connectivity, bundledLists: [WordList]) {
         self.config = config
         self.service = service
         self.cache = cache
@@ -42,11 +47,14 @@ final class AppModel {
         self.lastCanonical = lastCanonical
         self.providerStore = providerStore
         self.hiddenStore = hiddenStore
+        self.savedStore = savedStore
         self.photos = photos
         self.connectivity = connectivity
         self.bundledLists = bundledLists
         provider = providerStore.value
         hiddenCodes = hiddenStore.codes
+        blockedCreators = hiddenStore.creators
+        savedCodes = savedStore.codes
     }
 
     /// The app as the build configures it.
@@ -67,7 +75,7 @@ final class AppModel {
         if !config.isDemo { connectivity.watch() }
         return AppModel(config: config, service: service, cache: ResolveCache(), drafts: DraftStore(),
                         lastCanonical: LastCanonicalStore(), providerStore: ProviderStore(), hiddenStore: HiddenStore(),
-                        photos: PhotoScratch(), connectivity: connectivity, bundledLists: Self.loadBundledLists())
+                        savedStore: SavedStore(), photos: PhotoScratch(), connectivity: connectivity, bundledLists: Self.loadBundledLists())
     }
 
     nonisolated static func loadBundledLists(bundle: Bundle = .main) -> [WordList] {
@@ -141,8 +149,8 @@ final class AppModel {
         ownerRevision += 1
     }
 
-    /// `DELETE /v1/me`, then the tokens, the draft, every cache, and the hidden
-    /// codes (Auth step 9, FR-035).
+    /// `DELETE /v1/me`, then the tokens, the draft, every cache, the hidden
+    /// codes and blocked creators, and Saved (Auth step 9, FR-035, FR-050).
     func deleteAccount() async -> Result<Void, APIFailure> {
         let result = await service.deleteAccount()
         guard case .success = result else { return result }
@@ -150,6 +158,7 @@ final class AppModel {
         cache.removeAll()
         lastCanonical.value = nil
         unhideAll()
+        clearSaved()
         photos.purge()
         sessionEnded()
         ownerRevision += 1
@@ -170,10 +179,46 @@ final class AppModel {
         hiddenStore.codes = hiddenCodes
     }
 
-    /// `account.unhide_all`, and account deletion.
+    func isBlocked(creator: String?) -> Bool { creator.map(blockedCreators.contains) ?? false }
+
+    func block(creator: String) {
+        blockedCreators.insert(creator)
+        hiddenStore.creators = blockedCreators
+    }
+
+    func unblock(creator: String) {
+        blockedCreators.remove(creator)
+        hiddenStore.creators = blockedCreators
+    }
+
+    /// `account.unhide_all`, and account deletion: hidden codes and blocked
+    /// creators.
     func unhideAll() {
         hiddenCodes = []
+        blockedCreators = []
         hiddenStore.codes = []
+        hiddenStore.creators = []
+    }
+
+    // MARK: Saved (FR-050). Device only: none of these calls a server.
+
+    func isSaved(_ canonical: String) -> Bool { savedCodes.contains(canonical) }
+
+    func save(_ canonical: String) {
+        savedCodes.removeAll { $0 == canonical }
+        savedCodes.insert(canonical, at: 0)
+        savedStore.codes = savedCodes
+    }
+
+    func unsave(_ canonical: String) {
+        savedCodes.removeAll { $0 == canonical }
+        savedStore.codes = savedCodes
+    }
+
+    /// `account.clear_saved`, and account deletion.
+    func clearSaved() {
+        savedCodes = []
+        savedStore.codes = []
     }
 
     /// A 401 the refresh could not fix: the person signs in again.

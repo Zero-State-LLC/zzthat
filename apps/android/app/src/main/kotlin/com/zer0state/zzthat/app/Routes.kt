@@ -31,10 +31,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class EditDestination(val codeId: String)
 
+/** Saved (FR-050): the codes saved on this device, opened from My codes. */
+@Serializable object SavedDestination
+
+/** A saved code's Resolve, inside My codes, so the tab does not change. */
+@Serializable data class SavedResolveDestination(val canonical: String)
+
 @Serializable object AccountDestination
 
 @Serializable object LicensesDestination
 
 @Serializable object SignInDestination
 
-@Serializable data class ReportDestination(val canonical: String)
+/** Report for [canonical]. [creator] is the Resolve `creator` reference, so the sent state can offer Block this creator (FR-035). */
+@Serializable data class ReportDestination(val canonical: String, val creator: String? = null)

@@ -57,9 +57,10 @@ final class AppStubTransport: ClientTransport, @unchecked Sendable {
 enum Fixtures {
     static let publicCacheControl = "public, max-age=60, stale-while-revalidate=300"
 
-    static func resolveJSON(_ canonical: String, title: String = "Lost cat", body: String = "Answers on this page.")
-        -> String {
-        #"{"view":"public","canonical":"\#(canonical)","record":{"title":"\#(title)","body":"\#(body)","updated_at":"2026-10-04T00:00:00.123Z"},"share":{"text":"\#(canonical)","url":null}}"#
+    static func resolveJSON(_ canonical: String, title: String = "Lost cat", body: String = "Answers on this page.",
+                            creator: String? = nil) -> String {
+        let creatorField = creator.map { #","creator":"\#($0)""# } ?? ""
+        return #"{"view":"public","canonical":"\#(canonical)","record":{"title":"\#(title)","body":"\#(body)","updated_at":"2026-10-04T00:00:00.123Z"},"share":{"text":"\#(canonical)","url":null}\#(creatorField)}"#
     }
 
     static let notFound = #"{"error":"not-found"}"#
@@ -92,6 +93,7 @@ enum TestApp {
                         service: service, cache: ResolveCache(fileURL: cacheURL, clock: clock),
                         drafts: DraftStore(defaults: defaults), lastCanonical: LastCanonicalStore(defaults: defaults),
                         providerStore: ProviderStore(defaults: defaults), hiddenStore: HiddenStore(defaults: defaults),
+                        savedStore: SavedStore(defaults: defaults),
                         photos: PhotoScratch(directory: temporaryURL("photos")),
                         connectivity: Connectivity(isOnline: online), bundledLists: bundledLists)
     }

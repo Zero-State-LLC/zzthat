@@ -53,6 +53,8 @@ import com.zer0state.zzthat.report.ReportState
 import com.zer0state.zzthat.resolve.ResolvePhase
 import com.zer0state.zzthat.resolve.ResolveScreen
 import com.zer0state.zzthat.resolve.ResolvedView
+import com.zer0state.zzthat.saved.SavedScreen
+import com.zer0state.zzthat.saved.SavedScreenState
 import com.zer0state.zzthat.scan.ClarifyScreen
 import com.zer0state.zzthat.scan.ClarifyScreenState
 import com.zer0state.zzthat.scan.ClarifyStep
@@ -133,6 +135,7 @@ class SnapshotTest {
     private val codesRoot = Chrome(R.string.nav_my_codes, Tab.CODES, action = account)
     private val detail = Chrome(R.string.nav_my_codes, Tab.CODES, back = true)
     private val edit = Chrome(R.string.detail_edit, Tab.CODES, back = true)
+    private val saved = Chrome(R.string.saved_title, Tab.CODES, back = true)
     private val signIn = Chrome(null, null, action = R.string.common_cancel to "signin.cancel")
     private val accountSheet = Chrome(R.string.account_title, null, action = R.string.common_done to "account.done")
     private val licenses = Chrome(R.string.account_licenses, null, back = true)
@@ -152,7 +155,8 @@ class SnapshotTest {
     }
 
     private val demoRecord = DemoApi.RECORDS.getValue("zz-kathy-lost-cat-zz")
-    private val demoView = ResolvedView("zz-kathy-lost-cat-zz", demoRecord.title, demoRecord.body, "zz-kathy-lost-cat-zz")
+    private val demoView = ResolvedView("zz-kathy-lost-cat-zz", demoRecord.title, demoRecord.body, "zz-kathy-lost-cat-zz", DemoApi.DEMO_CREATOR)
+    private val savedCodes = listOf("zz-river-falcon-sky-zz", "zz-b2-4-zz", "zz-kathy-lost-cat-zz")
     private val demoMint = DemoApi.MINT_SEQUENCE[0]
     private val demoRows = listOf(
         row("demo-code-1", "zz-copper-lantern-sky-zz", "sky", OwnedCode.Status.active, "demo-record-1"),
@@ -378,6 +382,60 @@ class SnapshotTest {
                     SignInContent(SignInScreenState(listOf(TokenRequest.Provider.google)))
                 }
             },
+        ),
+    )
+
+    /**
+     * Block this creator (FR-035, RM-112): the blocked state without the title
+     * or body, Resolve with Save and Block this creator, Remove from Saved,
+     * and the Report sheet's sent state with Block and after it.
+     */
+    @Test
+    fun block() = snap(
+        listOf(
+            Case("resolve-blocked", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Blocked, demo = false) },
+            Case("resolve-blocked-demo", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Blocked, demo = true) },
+            Case("resolve-block-save", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = false), demo = false) },
+            Case("resolve-saved", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = false), demo = false, saved = true) },
+            Case("report-sent-block", report) {
+                ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sent, creator = DemoApi.DEMO_CREATOR))
+            },
+            Case("report-sent-blocked", report) {
+                ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sent, creator = DemoApi.DEMO_CREATOR, blocked = true))
+            },
+        ),
+    )
+
+    /**
+     * Saved (FR-050, RM-115): the list newest first, empty, Demo, and a code
+     * that cannot open offline; the Saved entry on My codes signed in and
+     * out; and the Account screen's Clear saved codes signed in and out.
+     */
+    @Test
+    fun saved() = snap(
+        listOf(
+            Case("saved-list", saved) { SavedScreen(SavedScreenState(savedCodes)) },
+            Case("saved-empty", saved) { SavedScreen(SavedScreenState()) },
+            Case("saved-offline", saved) { SavedScreen(SavedScreenState(savedCodes, message = R.string.resolve_not_on_device)) },
+            Case("saved-demo", saved) { SavedScreen(SavedScreenState(savedCodes, demo = true)) },
+            Case("codes-saved-signed-in", codesRoot) { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loaded)) },
+            Case("codes-saved-signed-out", codesRoot) { CodesScreen(CodesScreenState(false)) },
+            Case("account-clear-saved", accountSheet) { AccountScreen(signedInAccount) },
+            Case("account-clear-saved-done", accountSheet) { AccountScreen(signedInAccount.copy(clearSavedDone = true)) },
+            Case("account-clear-saved-signed-out", accountSheet) {
+                AccountScreen(signedInAccount.copy(signedIn = false, clearSavedDone = true)) {
+                    SignInContent(SignInScreenState(listOf(TokenRequest.Provider.google)))
+                }
+            },
+        ),
+    )
+
+    /** The suggested-word picker (RM-113): pick help, Get different words, and Keep these words; then kept. */
+    @Test
+    fun picker() = snap(
+        listOf(
+            Case("minted-picker", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false)) },
+            Case("minted-kept", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, kept = true)) },
         ),
     )
 

@@ -104,7 +104,11 @@ class CreateModel {
     }
 }
 
-/** Minted code (design/UX.md, Minted code): the canonical form, the check word, and up to 3 re-rolls (FR-017). */
+/**
+ * Minted code (design/UX.md, Minted code): the canonical form, the check
+ * word, and up to 3 re-rolls (FR-017). The suggested-word picker (zzThis
+ * RM-113) offers the server's words with Keep these words beside re-roll.
+ */
 class MintedModel(code: Code) {
     sealed interface Phase {
         data object Idle : Phase
@@ -121,8 +125,22 @@ class MintedModel(code: Code) {
     var phase by mutableStateOf<Phase>(Phase.Idle)
         private set
 
+    /** The person kept these words, so the picker closes and re-roll is gone. */
+    var kept by mutableStateOf(false)
+        private set
+
+    /**
+     * Keep these words (RM-113). Local only: no call, and nothing about the
+     * code is sent. The words stay, as they do at the re-roll cap.
+     */
+    fun keep() {
+        kept = true
+    }
+
     /** `POST /v1/codes/{id}/reroll`. Each tap replaces the current code; at the cap, or once the code was resolved, the words stay. */
     suspend fun reroll(app: AppModel) {
+        // Kept words stay, as at the cap.
+        if (kept) return
         if (!app.isOnline) {
             phase = Phase.Failure(R.string.error_no_connection)
             return

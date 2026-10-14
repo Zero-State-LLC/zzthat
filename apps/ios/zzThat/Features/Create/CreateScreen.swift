@@ -103,6 +103,8 @@ struct MintedScreenState {
     var canonical: String
     var checkWord: String?
     var capReached: Bool
+    /// The person kept these words (RM-113): the picker closes, locally.
+    var kept = false
     var phase: MintedModel.Phase = .idle
     var offline = false
     var demo = false
@@ -114,6 +116,7 @@ struct MintedScreenState {
 struct MintedScreen: View {
     let state: MintedScreenState
     var onReroll: () -> Void = {}
+    var onKeep: () -> Void = {}
     var onWriteCheck: () -> Void = {}
 
     var body: some View {
@@ -127,13 +130,20 @@ struct MintedScreen: View {
                 Text(.mintedCheckWordHelp).textRole(.secondary)
             }
             if case .failure(let key) = state.phase { Message(key: key) }
-            if state.capReached {
+            if state.capReached || state.kept {
                 if state.phase != .failure(.mintedRerollCap) { Message(key: .mintedRerollCap) }
             } else if !state.offline {
+                // The suggested-word picker (RM-113): the server chose these
+                // words; keep them, or get different ones. No code string is sent.
+                Text(.mintedPickHelp).textRole(.secondary)
                 Button(action: onReroll) { Text(.mintedReroll) }
                     .buttonStyle(.zzSecondary)
                     .disabled(state.phase == .rerolling)
                     .accessibilityIdentifier("minted.reroll")
+                Button(action: onKeep) { Text(.mintedKeep) }
+                    .buttonStyle(.zzSecondary)
+                    .disabled(state.phase == .rerolling)
+                    .accessibilityIdentifier("minted.keep")
             }
             Button(action: onWriteCheck) { Text(.mintedWriteCheck) }
                 .buttonStyle(.zzPrimary)

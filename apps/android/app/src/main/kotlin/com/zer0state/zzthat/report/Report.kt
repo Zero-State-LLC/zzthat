@@ -52,7 +52,8 @@ import llc.zerostate.zzthis.design.ZZSpace
  * Report (FR-035, design/UX.md Report): the four reasons, an optional note
  * of up to 500 characters, and one send. The answer never says whether the
  * code exists. The sent state says reports are reviewed within one day and
- * offers Hide this code, kept on this device only.
+ * offers Hide this code and, when Resolve named the creator, Block this
+ * creator, both kept on this device only.
  */
 data class ReportState(
     val reason: ReportRequest.Reason? = null,
@@ -64,6 +65,10 @@ data class ReportState(
     val waiting: Boolean = false,
     /** The reported code is hidden on this device (FR-035). */
     val hidden: Boolean = false,
+    /** The reported record's creator reference from Resolve (zzThis RM-112). Null offers no Block. */
+    val creator: String? = null,
+    /** That creator is blocked on this device (FR-035). */
+    val blocked: Boolean = false,
 ) {
     sealed interface Phase {
         data object Editing : Phase
@@ -94,6 +99,7 @@ fun ReportScreen(
     onSend: () -> Unit = {},
     onDone: () -> Unit = {},
     onHide: () -> Unit = {},
+    onBlock: () -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.phase == ReportState.Phase.Sending) {
         RoleText(stringResource(R.string.report_title), TextRole.HEADING, Modifier.semantics { heading() })
@@ -104,6 +110,13 @@ fun ReportScreen(
                 Message(R.string.resolve_hidden)
             } else {
                 ZZButton(stringResource(R.string.resolve_hide), "report.hide", ButtonKind.SECONDARY, onClick = onHide)
+            }
+            if (state.creator != null) {
+                if (state.blocked) {
+                    Message(R.string.resolve_blocked)
+                } else {
+                    ZZButton(stringResource(R.string.resolve_block_creator), "report.block_creator", ButtonKind.SECONDARY, onClick = onBlock)
+                }
             }
             ZZButton(stringResource(R.string.common_done), "report.done", onClick = onDone)
         } else {
@@ -164,18 +177,25 @@ fun ReasonPicker(selection: ReportRequest.Reason?, onSelect: (ReportRequest.Reas
  * Signed out, the report carries no bearer (FR-016). After a 429, Send waits
  * for `Retry-After` (FR-033).
  */
-class ReportModel(val canonical: String) {
-    var state by mutableStateOf(ReportState())
+class ReportModel(val canonical: String, creator: String? = null) {
+    var state by mutableStateOf(ReportState(creator = creator))
 
-    /** Whether the reported code is already hidden on this device. No server call. */
+    /** Whether the reported code is already hidden, and its creator already blocked, on this device. No server call. */
     suspend fun loadHidden(app: AppModel) {
-        state = state.copy(hidden = app.hidden.isHidden(canonical))
+        val creator = state.creator
+        state = state.copy(hidden = app.hidden.isHidden(canonical), blocked = creator != null && app.hidden.isBlocked(creator))
     }
 
     /** Hide the reported code on this device (FR-035). No server call. */
     suspend fun hide(app: AppModel) {
         app.hide(canonical)
         state = state.copy(hidden = true)
+    }
+
+    /** Block the reported record's creator on this device (FR-035, RM-112). No server call. */
+    suspend fun block(app: AppModel) {
+        app.block(state.creator ?: return)
+        state = state.copy(blocked = true)
     }
 
     suspend fun send(app: AppModel) {

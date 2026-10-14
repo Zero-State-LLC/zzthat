@@ -19,9 +19,12 @@ struct CodesScreen: View {
     var onSelect: (OwnedCode) -> Void = { _ in }
     var onLastRow: () -> Void = {}
     var onRetry: () -> Void = {}
+    var onSaved: () -> Void = {}
 
     var body: some View {
         Screen(demo: state.demo, loading: state.phase == .loading) {
+            // Saved is on the device, so it shows signed in or out (FR-050).
+            SavedEntry(onOpen: onSaved)
             if !state.signedIn {
                 Message(key: .codesSignedOut)
                 Button(action: onSignIn) { Text(.signinTitle) }
