@@ -113,7 +113,7 @@ Done when: both end-to-end runs pass against the local zzThis Worker at the pin,
 ## Phase 11: Store readiness ([#30](https://github.com/Zero-State-LLC/zzthat/issues/30))
 
 - [ ] T080 Draft the privacy policy at `apps/store/privacy-policy-draft.md` from the spec privacy table and zzThis spec 005 FR-026 at the pin. It is a draft for Danny. Do not add it to the zzThis site, and do not publish it (ZQ25, FR-031).
-- [ ] T081 Put the FR-031 listing text and the 13+ and Teen rating, with the questionnaire answers, into `apps/store/listing-draft.md`. Do not submit.
+- [ ] T081 Put the FR-031 listing text and the questionnaire ratings with an 18+ audience (SC9), and the questionnaire answers, into `apps/store/listing-draft.md`. Do not submit.
 - [ ] T083 Stop for Danny's yes before any store submission, developer-account purchase, bundle id registration, or production credential.
 - [ ] T084 The release pipeline from runtime.md: `apps/VERSION`, app CI that tests and does not upload, and drafts of the privacy manifest and Data safety form (`apps/store/data-safety-draft.md`). No production URL in the tree.
 - [ ] T087 Third-party notices, on both platforms [DANNY 2026-10-05 #43]. At build time, generate a notices file of the packages that ship in the app, from the platform's pinned dependency list (iOS: the closure of the app target's package products, through their library targets, in the app's `Package.resolved`, with each package's license and NOTICE files; Android: its resolved runtime dependencies). Test-only packages and build tools are not listed (S4). The file lists each package's name, version, and full license text, with Apache 2.0 NOTICE files where they exist. Bundle it and show it as given on the existing Licenses screen, after `NOTICE` and `OFL.txt`. No new copy key and no new runtime dependency. The build fails when the app links a package the notices miss, or when a listed package has no license file it can find.
@@ -129,7 +129,8 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [x] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
 - [ ] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112), which waits on T095.
-- [ ] T097 [RM-101] Terms acceptance before the first create, after Danny approves the terms of use and content policy (zzThis RM-103).
+- [ ] T097 [RM-101] Terms acceptance before the first create, after Michael approves the Terms of Use and content policy (zzThis RM-103, RM-124; drafted in `apps/store/terms-draft.md`), with the 18+ statement (D-2026-10-11-05).
+- [ ] T100 [RM-121] "Early release" in the listing and the app, and no zzThis name or host on any zzThat surface (D-2026-10-11-06, -07). The store drafts are done; the Local and Demo privacy link still points at a zzThis host until the policy host is decided (D-2026-10-11-09).
 
 ## Later, not in the first release
 
