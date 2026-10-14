@@ -78,6 +78,28 @@
         }
       }
     },
+    "account.unhide_all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unhide everything on this device"
+          }
+        }
+      }
+    },
+    "account.unhide_all_done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything you hid on this device shows again."
+          }
+        }
+      }
+    },
     "codes.empty" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -716,6 +738,17 @@
         }
       }
     },
+    "report.review" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We review every report within one day, and a creator who breaks the rules can be suspended."
+          }
+        }
+      }
+    },
     "report.send" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -745,6 +778,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Report this code"
+          }
+        }
+      }
+    },
+    "resolve.block_creator" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Block this creator"
+          }
+        }
+      }
+    },
+    "resolve.blocked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You blocked the creator of this code on this device. Their pages are not shown."
+          }
+        }
+      }
+    },
+    "resolve.hidden" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You hid this code on this device. Its page is not shown."
+          }
+        }
+      }
+    },
+    "resolve.hide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide this code"
           }
         }
       }
@@ -800,6 +877,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Share"
+          }
+        }
+      }
+    },
+    "resolve.unblock" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unblock"
+          }
+        }
+      }
+    },
+    "resolve.unhide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unhide"
           }
         }
       }

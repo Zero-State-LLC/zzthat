@@ -10,6 +10,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -54,6 +55,27 @@ class LocalStoresTest {
         provider.set(null)
         assertNull(last.value())
         assertNull(provider.value())
+    }
+
+    /** FR-035: hidden codes stay on the device until unhidden or cleared, beside the other local values. */
+    @Test
+    fun hiddenCodesAreKeptUntilUnhiddenOrCleared() = runBlocking {
+        val store = dataStore()
+        val hidden = HiddenStore(store)
+        val last = LastCanonicalStore(store)
+        last.set("zz-kathy-lost-cat-zz")
+        assertFalse(hidden.isHidden("zz-kathy-lost-cat-zz"))
+        hidden.hide("zz-kathy-lost-cat-zz")
+        hidden.hide("zz-copper-lantern-sky-zz")
+        hidden.hide("zz-kathy-lost-cat-zz")
+        assertTrue(hidden.isHidden("zz-kathy-lost-cat-zz"))
+        assertTrue(HiddenStore(store).isHidden("zz-copper-lantern-sky-zz"))
+        hidden.unhide("zz-kathy-lost-cat-zz")
+        assertFalse(hidden.isHidden("zz-kathy-lost-cat-zz"))
+        assertTrue("unhiding one code keeps the others", hidden.isHidden("zz-copper-lantern-sky-zz"))
+        hidden.clear()
+        assertFalse(hidden.isHidden("zz-copper-lantern-sky-zz"))
+        assertEquals("clearing the list keeps the other local values", "zz-kathy-lost-cat-zz", last.value())
     }
 
     /** FR-004 and T063: the photo lives only while the scan runs. */

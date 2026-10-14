@@ -91,7 +91,7 @@ enum TestApp {
                                             googleClientID: nil),
                         service: service, cache: ResolveCache(fileURL: cacheURL, clock: clock),
                         drafts: DraftStore(defaults: defaults), lastCanonical: LastCanonicalStore(defaults: defaults),
-                        providerStore: ProviderStore(defaults: defaults),
+                        providerStore: ProviderStore(defaults: defaults), hiddenStore: HiddenStore(defaults: defaults),
                         photos: PhotoScratch(directory: temporaryURL("photos")),
                         connectivity: Connectivity(isOnline: online), bundledLists: bundledLists)
     }

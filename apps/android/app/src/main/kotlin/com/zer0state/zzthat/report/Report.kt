@@ -51,7 +51,8 @@ import llc.zerostate.zzthis.design.ZZSpace
 /**
  * Report (FR-035, design/UX.md Report): the four reasons, an optional note
  * of up to 500 characters, and one send. The answer never says whether the
- * code exists. No block list is kept.
+ * code exists. The sent state says reports are reviewed within one day and
+ * offers Hide this code, kept on this device only.
  */
 data class ReportState(
     val reason: ReportRequest.Reason? = null,
@@ -61,6 +62,8 @@ data class ReportState(
     val demo: Boolean = false,
     /** After a 429, Send waits for `Retry-After` (FR-033). */
     val waiting: Boolean = false,
+    /** The reported code is hidden on this device (FR-035). */
+    val hidden: Boolean = false,
 ) {
     sealed interface Phase {
         data object Editing : Phase
@@ -90,11 +93,18 @@ fun ReportScreen(
     onNote: (String) -> Unit = {},
     onSend: () -> Unit = {},
     onDone: () -> Unit = {},
+    onHide: () -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.phase == ReportState.Phase.Sending) {
         RoleText(stringResource(R.string.report_title), TextRole.HEADING, Modifier.semantics { heading() })
         if (state.phase == ReportState.Phase.Sent) {
             Message(R.string.report_sent)
+            Message(R.string.report_review)
+            if (state.hidden) {
+                Message(R.string.resolve_hidden)
+            } else {
+                ZZButton(stringResource(R.string.resolve_hide), "report.hide", ButtonKind.SECONDARY, onClick = onHide)
+            }
             ZZButton(stringResource(R.string.common_done), "report.done", onClick = onDone)
         } else {
             ReasonPicker(state.reason, onReason)
@@ -156,6 +166,17 @@ fun ReasonPicker(selection: ReportRequest.Reason?, onSelect: (ReportRequest.Reas
  */
 class ReportModel(val canonical: String) {
     var state by mutableStateOf(ReportState())
+
+    /** Whether the reported code is already hidden on this device. No server call. */
+    suspend fun loadHidden(app: AppModel) {
+        state = state.copy(hidden = app.hidden.isHidden(canonical))
+    }
+
+    /** Hide the reported code on this device (FR-035). No server call. */
+    suspend fun hide(app: AppModel) {
+        app.hide(canonical)
+        state = state.copy(hidden = true)
+    }
 
     suspend fun send(app: AppModel) {
         val reason = state.reason ?: return
