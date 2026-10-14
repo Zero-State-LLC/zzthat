@@ -1,6 +1,6 @@
 # Specs
 
-zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.2.0, ratification pending Danny's approval).
+zzThat uses [Spec Kit](https://github.com/github/spec-kit) order: constitution, specify, clarify, plan, checklist, tasks, analyze, implement, converge. The rules for every spec are in [`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (v1.3.1; see constitution for ratification state).
 
 Product behavior that is already specified lives in [zzThis](https://github.com/Zero-State-LLC/zzthis) at commit `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`. This repo references those specs. It does not copy them.
 
@@ -17,7 +17,7 @@ Product behavior that is already specified lives in [zzThis](https://github.com/
 
 | ID | Feature | Built? | specify | clarify | plan | checklist | tasks | analyze |
 |---|---|---|---|---|---|---|---|---|
-| [001](001-zzthat-apps/spec.md) | iOS and Android apps | No | Done, deepened 2026-10-04 | ZQ1 to ZQ28 decided ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/specs/analysis-2026-10-04.md) (in zzThis) |
+| [001](001-zzthat-apps/spec.md) | iOS and Android apps | In progress | Done, deepened 2026-10-04 | ZQ1 to ZQ28 decided ([log](001-zzthat-apps/decisions.md)) | Done | [Done](001-zzthat-apps/checklists/requirements.md) | [Build order](001-zzthat-apps/tasks.md) | [Done 2026-10-04](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/specs/analysis-2026-10-04.md) (in zzThis) |
 
 Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature of this repo [ZZTHIS SPEC].
 
@@ -30,7 +30,7 @@ Web is not a feature of this repo [DANNY 2026-10-04]. zzThing is not a feature o
 | Plan (how and stack) | `specs/NNN-name/plan.md` |
 | Requirement checklist | `specs/NNN-name/checklists/requirements.md` |
 | Tasks | `specs/NNN-name/tasks.md` |
-| Decision log | [spec 001 decisions](001-zzthat-apps/decisions.md) (ZQ1 to ZQ21) and the zzThis Section 9 table (Q ids) |
+| Decision log | [spec 001 decisions](001-zzthat-apps/decisions.md) (ZQ series) and the zzThis Section 9 table (Q ids) |
 | Runtime build contract | [spec 001 runtime](001-zzthat-apps/runtime.md) |
 | Design consumption | [spec 001 design](001-zzthat-apps/design.md) |
 
