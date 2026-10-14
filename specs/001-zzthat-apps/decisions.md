@@ -98,3 +98,17 @@ Danny accepted Michael's MVP dispositions in zzThis [D-2026-10-11-01](https://gi
 | SC6 | Create keeps server-chosen words (ZQ11). RM-113 adds a suggested-word picker UI over server candidates only; the app still does not send a person-written code. | [ZZTHIS D-2026-10-11-01] option C |
 | SC7 | RM-115 adds a device-only Saved list of scanned codes; no cloud sync and no photo upload in v1.1. | [ZZTHIS D-2026-10-11-01] row 17 |
 | SC8 | Person-made claim is zzThis RM-116 (v2.0 contract 2), not an in-app typed mint on contract 1. | [ZZTHIS D-2026-10-11-01] option A |
+
+## Michael's store and privacy answers (zzThis D-2026-10-11)
+
+Michael answered the store and privacy questions on 2026-10-11. zzThis records them as D-2026-10-11-02 to D-2026-10-11-15 on zzThis #164, which Danny merges. These rows are the parts that change zzThat.
+
+| ID | Decision | Source |
+|---|---|---|
+| SC6 | The app is for people 18 and older, stated in the Terms; store age ratings follow the questionnaires. Supersedes SC2's 13+. | [ZZTHIS D-2026-10-11-05, D-2026-10-11-08 answer 15] |
+| SC7 | The release is called "early release", never alpha, beta, or test. | [ZZTHIS D-2026-10-11-06] |
+| SC8 | No zzThis name or host on any zzThat surface a person sees: app copy, listings, the privacy policy, and the Terms. | [ZZTHIS D-2026-10-11-07] |
+| SC9 | The public contact is zzsupport@zer0state.com, once the mailbox exists. | [ZZTHIS D-2026-10-11-04] |
+| SC10 | The store privacy answers declare what Google's sign-in SDK collects, per Xcode's privacy report, and the same approach on Google Play. | [ZZTHIS D-2026-10-11-08 answers 1 and 3] |
+| SC11 | The Terms of Use and content policy are drafted in `apps/store/terms-draft.md` for Michael's review. | [ZZTHIS D-2026-10-11-10, RM-124] |
+

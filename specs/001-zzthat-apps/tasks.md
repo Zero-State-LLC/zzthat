@@ -129,7 +129,8 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [ ] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
 - [ ] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112), which waits on T095.
-- [ ] T097 [RM-101] Terms acceptance before the first create, after Danny approves the terms of use and content policy (zzThis RM-103).
+- [ ] T097 [RM-101] Terms acceptance before the first create, after Michael approves the Terms of Use and content policy (zzThis RM-103, RM-124; drafted in `apps/store/terms-draft.md`), with the 18+ statement (D-2026-10-11-05).
+- [ ] T100 [RM-121] "Early release" in the listing and the app, and no zzThis name or host on any zzThat surface (D-2026-10-11-06, -07). The store drafts are done; the Local and Demo privacy link still points at a zzThis host until the policy host is decided (D-2026-10-11-09).
 
 ## Later, not in the first release
 
