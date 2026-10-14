@@ -170,7 +170,7 @@ The Licenses screen also shows the third-party notices that the build generates 
 | Bundle and application id | `com.zer0state.zzthat.demo` | `com.zer0state.zzthat.local` | `com.zer0state.zzthat` (ZQ24) |
 | Display name | zzThat Demo | zzThat Local | zzThat |
 
-Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `support@zer0state.com`, and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
+Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `zzsupport@zer0state.com` once the mailbox exists (zzThis D-2026-10-11-04, RM-122; until then builds keep `support@zer0state.com`), and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
 
 iOS Google setup [INFERRED]: the Local and Release xcconfigs define `ZZ_GOOGLE_IOS_CLIENT_ID` and `ZZ_GOOGLE_REVERSED_CLIENT_ID`. In `project.yml`, Info.plist sets `GIDClientID` to `$(ZZ_GOOGLE_IOS_CLIENT_ID)` and registers a URL type whose scheme is `$(ZZ_GOOGLE_REVERSED_CLIENT_ID)`. The app forwards `.onOpenURL` to `GIDSignIn.sharedInstance.handle(_:)`. GoogleSignIn raises an exception when `GIDClientID` or the URL scheme is missing, so while the value is still a placeholder the Google button is hidden. Demo builds have neither key and never call GoogleSignIn.
 
