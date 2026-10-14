@@ -1,6 +1,6 @@
 # Camera recognition adapter contract
 
-Status: proposed app contract. Aligns with zzThis spec 004 FR-018 to FR-021 and ZZ-OCR-QUAL-001 in [draft PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89); implementation waits for this spec and the upstream contract to be accepted and pinned.
+Status: proposed app contract. Aligns with zzThis spec 004 FR-018 to FR-021 and ZZ-OCR-QUAL-001, merged in [zzThis #89](https://github.com/Zero-State-LLC/zzthis/pull/89) and pinned by zzThat #76. Implementation of T023 to T025 waits on zzThat #77. The app requirement for this geometry is FR-052.
 
 This contract keeps the camera pipeline engine-neutral. The visual `zz` marks are the code's index markers; there is no separate control glyph or fiducial. They remain literal grammar markers, but are not payload text. Recognition runs on device. Images, crops, and OCR transcripts stay local and are deleted when the capture flow ends.
 
@@ -32,4 +32,4 @@ The harness preserves engine hypothesis order. Runtime disposition is Clarify wh
 
 - V1 geometry is same-baseline-only pairing, with crop/rotation normalization but no perspective/projective rectification. Perspective-dependent, curved/wrapped-surface, and candidate-overflow cases are negative fail-closed probes, not supported OCR accuracy inputs. This adopts the explicit v1 geometry decision recorded in zzThis spec 004; it supersedes the earlier proposal to support arbitrary qualified perspective/rectified geometry.
 - Numeric detector limits, baseline tolerance, interior ROI inset, reason-code mapping, and platform-specific confidence mapping remain to be measured against the governed corpus and frozen in versioned qualification configuration before final evaluation. Missing limits or an over-limit frame fail closed; no values are inferred or changed after final results are seen.
-- The upstream proposal is in draft PR #89 and is not yet the merged pin. Before application code lands, reconcile pair linkage, coordinate semantics, geometry status, and fail-closed evidence with the accepted upstream adapter/schema contract, then update the pin and this document together.
+- The upstream contract merged in zzThis #89, and this repo pins it (`contracts/ZZTHIS-API-PIN`, zzThat #76). Application code for the RecognitionResult adapter (T023 to T025) waits on zzThat #77. Before that code lands, reconcile pair linkage, coordinate semantics, geometry status, and fail-closed evidence with the pinned upstream contract, then update the pin and this document together.

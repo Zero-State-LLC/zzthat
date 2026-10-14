@@ -137,7 +137,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
 - [x] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112, merged in zzThis #161). The unknown-key half of T095 (#58) is what this field needs; the unknown-enum half (#54) stays open under T095.
 - [ ] T097 [RM-101] Terms acceptance before the first create, after Michael approves the Terms of Use and content policy (zzThis RM-103, RM-124; drafted in `apps/store/terms-draft.md`), with the 18+ statement (D-2026-10-11-05).
-- [x] T098 [RM-115] Saved (FR-050): Save and Remove from Saved on Resolve, the Saved list from My codes signed in or out, and Clear saved codes on Account; device only, cleared by account deletion. zzThis D-2026-10-11-01 row 17.
+- [x] T098 [RM-115] Saved (FR-050): Save and Remove from Saved on Resolve, the Saved list from My codes signed in or out, and Clear saved codes on Account; device only, canonical codes only, no thumbnail. Cleared by account deletion and by `account.clear_saved`. `account.unhide_all` does not clear it. zzThis D-2026-10-11-01 row 17. #65.
 - [x] T099 [RM-113] The suggested-word picker on the minted code (FR-017): the pick help, Get different words up to the cap, and Keep these words, which closes the picker locally. No code string is sent. zzThis D-2026-10-11-01 option C.
 - [ ] T100 [RM-121] "Early release" in the listing and the app, and no zzThis name or host on any zzThat surface (D-2026-10-11-06, -07). The store drafts are done; the Local and Demo privacy link still points at a zzThis host until the policy host is decided (D-2026-10-11-09).
 
