@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build and runtime contract for the
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: implementation in progress. The trees below now exist; this document remains normative for implementation and verification. A path being present does not mean its task or acceptance evidence is complete. V1 capture is on-device only and never sends a photo, crop, or OCR transcript.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 

@@ -7,8 +7,8 @@ Constitution: [.specify/memory/constitution.md](../../.specify/memory/constituti
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Camera boundary: [recognition-adapter.md](recognition-adapter.md). Camera Accept remains blocked on the upstream contract and qualification gates.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
-zzThis pin: `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/fd99d276e4546d2ebf9d23b5f6de85b08bad56c4/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/fd99d276e4546d2ebf9d23b5f6de85b08bad56c4/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -164,7 +164,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `ed5b0bd5dba2a6e8a1c583c443207dbb3c692a40` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
