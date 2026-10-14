@@ -1,11 +1,11 @@
 # Plan: zzThat apps
 
-Feature: [spec.md](spec.md). Status: proposal, not built. No application source in this change.
-Decisions: [decisions.md](decisions.md).
+Feature: [spec.md](spec.md). Status: implementation in progress. The planned trees now exist; unchecked tasks remain requirements until verified by their named evidence.
+Decisions: [decisions.md](decisions.md). Recognition integration: [recognition.md](recognition.md).
 
 ## Workflows (copied from the spec)
 
-anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. An implementation change may add `.github/workflows/apps-ci.yml` for app tests and must name that addition in this plan before the file lands. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
+anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/workflows/ci.yml`. App tests: `.github/workflows/apps-ci.yml`. End-to-end: `.github/workflows/apps-e2e.yml`. Store submission, spend, production credentials, and privacy-policy publication stay human-gated. Store submission, spend, production credentials, and privacy-policy publication stay human-gated.
 
 ## Technical context
 
@@ -18,7 +18,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Minimum OS | iOS 17. Android 8.0 (API 26). | ZQ21 |
 | Grammar | Each app implements zzThis Section 2.2a and fails on any G9 miss. | [ZZTHIS SPEC] |
 | Check word and wordlist | Follow spec 003. Build it in T020 and T021. A local pass shows only when the bundled list version equals `wordlist_version` (FR-044). | [ZZTHIS SPEC] spec 003. Q30 to Q32 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): `(d1 + 2 * d2) mod N` with N prime, and the EFF long list. |
-| Recognition | Option A. On device first. Cloud only after the FR-005 sentence. | [ZZTHIS SPEC] Section 10.3. Q18 was decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)): Option A on the device (Vision on iOS, ML Kit on Android), no cloud reader in v1. |
+| Recognition | Fiducial-first and on-device in v1: detect/pair terminal `zz`, localize/rectify ROI, then recognize payload behind `RecognitionResult`. No cloud fallback. | Upstream spec 004 refinement on zzThis #89; Q18 no-cloud lock preserved. |
 | API | zzThis spec 005 and the pinned `contracts/zzthis-v1.openapi.yaml`. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
 | Auth | Native Apple or Google sign-in, a server nonce, and the provider ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 [DANNY 2026-10-04] (Q66). ZQ23. |
 | Create | Shows the Unavailable state until `GET /v1` says `free_public` is true. It is never hidden. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |
@@ -27,7 +27,7 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
 | API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `649ea2e42d308f356202b4749c03088d494186e8`. ZQ19. |
 | Design and strings | Pinned copy via `scripts/sync-zzthis.sh`, one sha in `contracts/ZZTHIS-API-PIN`, with fonts and `copy.json` | design.md. Not a submodule. |
-| Recognition engines | Apple Vision on iOS, ML Kit text recognition on Android, one still photo | runtime.md, Read pipeline [INFERRED] |
+| Recognition engines | Engine-neutral recognition adapters. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; only the ZZ-OCR-QUAL-001 winner ships enabled by default. One still photo, on device. | runtime.md, Read pipeline; zzThis PR #89 / accepted 2026-10-06 recognition intent |
 | Builds | Demo, Local, and Release, with XcodeGen and Gradle flavors | runtime.md, Build configurations |
 | Privacy | Analytics-free. No crash upload of codes, photos, or tokens. | runtime.md |
 | CI | Spec lint and the pinned OpenAPI check in `.github/workflows/ci.yml` (`build`, the required check). The build adds `apps-ci.yml`: an `android` job and a `checks` job (pin, strings, manifests) on `ubuntu-latest` on every pull request, and an `ios` job on `macos-26` only on `workflow_dispatch` or the `ios-ci` label. It adds `apps-e2e.yml`: `workflow_dispatch`, and pull request runs gated on the `run-e2e` label, with no schedule. iOS evidence comes from the dev Mac. Neither file is a required check. | ZQ27, decided 2026-10-05 (runtime.md, Testing). Named here before they land. |
@@ -72,3 +72,7 @@ The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks
 - Handwriting recognition quality on each platform is unmeasured. No accuracy number is a release criterion (FR-029).
 - A purge clears only the data center that handled the write. Other data centers keep their copy until `max-age` ends, so 60 seconds at the edge is the normal worst case, not only when a purge fails [ZZTHIS SPEC] spec 005 FR-019(c). The app still drops its copy when `Cache-Control` says so, and at once after the owner's own write (FR-041).
 - The age rating is a filing default. It is not a legal opinion.
+
+## Recognition implementation rule
+
+`recognition.md` is the downstream adapter and lifecycle contract. It does not duplicate zz grammar or qualification authority. When upstream spec 004 changes, the committed zzThis pin moves through the normal sync workflow, then downstream behavior is reconciled against that exact SHA. Release camera Accept requires a qualification PASS for the pinned adapter/configuration. NO_PROMOTION keeps typed entry and does not weaken shared validation.

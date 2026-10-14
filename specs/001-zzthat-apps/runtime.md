@@ -1,8 +1,8 @@
 # Runtime: zzThat apps
 
-Feature: [spec.md](spec.md). This file is the build contract for the iOS and Android apps. It does not add application source.
+Feature: [spec.md](spec.md). This file is the build contract for the iOS and Android apps.
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
-Status: specification, deepened 2026-10-04 for a one-shot build. Danny accepts spec 001 before the trees below are created.
+Status: implementation in progress. The trees below now exist; this document remains normative for implementation and verification. A path being present does not mean its task or acceptance evidence is complete.
 
 Every named screen uses the pattern in zzThis `design/UX.md` at pin `649ea2e42d308f356202b4749c03088d494186e8`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
@@ -229,10 +229,15 @@ A `no-store` response is never written. Every `/v1` response except a cacheable 
 zzThis spec 004, Client read pipeline, on each platform.
 
 1. Camera. iOS: `UIImagePickerController` with the camera source. iOS shows `scan.camera_purpose` as `NSCameraUsageDescription` (design.md, Sync). Android: `ActivityResultContracts.TakePicture` into a `FileProvider` file in the cache folder, which needs no camera permission. Every build on both platforms also offers the system photo picker for an existing photo (FR-012): `PhotosPicker` on iOS and `PickVisualMedia` on Android. The iOS simulator has no camera, so Demo and Local runs there use the picker.
-2. Reader. iOS: Vision `VNRecognizeTextRequest`, recognition level accurate, language correction off, language `en-US`. Android: ML Kit text recognition, Latin, bundled model. Each recognized line keeps its confidence: on iOS the top candidate's `VNRecognizedText.confidence`, on Android `Text.Line.getConfidence()`. Never use ML Kit Element or Symbol confidence. A word takes its line's confidence. A candidate takes the lowest confidence among the lines its words came from, so a code that wraps onto two lines takes the lower one [INFERRED]. zzThis spec 004, Client read pipeline step 1, states the same rule before either platform codes it.
-3. Order the lines top to bottom, then left to right, and join them with spaces.
-4. `ZZCore` and `:core-grammar` run the scanner, classify, check the word when the list versions match (FR-044), and set the band with the values in one constants file (accept 0.80, retry below 0.50).
-5. The Scan screen draws a box on the photo for each candidate and lists them (design/UX.md, Scan with the camera).
+2. Fiducial stage. For camera input, detect terminal `zz` endpoint regions first. Pair plausible endpoints from geometry/reading order, localize the code ROI, and rectify it when useful. One/cut endpoint retries; ambiguous pairings remain multiple candidates. Do not use resolver/live-code state or payload wordlist proximity to choose a pair.
+3. Reader adapter. Recognize the interior payload of each paired ROI. Both platforms emit a normalized `RecognitionResult` before shared grammar code runs. It carries engine id/version, raw text candidates, confidence when the engine exposes a meaningful score, and geometry/line provenance when available. Missing confidence is explicit and is never synthesized. The adapter cannot query the resolver, live codes, or nearby valid codes.
+   - iOS baseline: Vision `VNRecognizeTextRequest`, recognition level accurate, language correction off, language `en-US`.
+   - Android qualification candidates: bundled ML Kit Latin text recognition and a PP-OCR mobile/ONNX prototype. Only the engine promoted by ZZ-OCR-QUAL-001 ships enabled by default. PP-OCR does not become a shipping dependency until dependency/license/security review passes.
+4. Reconstruct normalized evidence with literal opening/closing markers, then order the normalized payload evidence in reading order where geometry permits, then feed it to the shared scanner. Engine-specific objects never enter `ZZCore` or `:core-grammar`.
+5. `ZZCore` and `:core-grammar` run the scanner, classify, check the word when the list versions match (FR-044), and set the band. The existing prototype values remain parameters (accept 0.80, retry below 0.50). For adapters with meaningful line confidence, preserve the lowest-relevant-line rule. An adapter without comparable confidence needs a qualification-backed band mapping before promotion; it must not invent a 0-to-1 value.
+6. The Scan screen draws a box on the photo for each candidate and lists them (design/UX.md, Scan with the camera).
+7. v1 deletes/ends access to the scan photo when the scan flow ends and never uploads it for recognition. Hard cases rescan, clarify, abstain, or use typed entry. After two Retry results in one scan flow, typed entry is surfaced alongside rescan. A rescan is a new attempt; it does not reuse confidence from the previous image.
+8. A platform adapter is release-eligible only with a reproducible ZZ-OCR-QUAL-001 PASS receipt from the upstream spec 004 protocol. If no adapter qualifies, camera recognition does not reach Accept in the release build; typed entry remains available.
 
 ## Privacy
 
@@ -267,7 +272,8 @@ The apps are analytics-free.
 |---|---|
 | Spec lint and the pinned OpenAPI check | `.github/workflows/ci.yml` |
 | Every row of `contracts/vectors.json` (grammar, classifier, matching key, scanner, check word) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests |
-| The read pipeline on a rendered image of `zz-copper-lantern-sky-zz` | iOS: `ZZCore` tests on macOS (Vision). Android: an instrumented test (ML Kit) on the `apps-ci.yml` android job's emulator. |
+| Recognizer adapter smoke test on a rendered `zz-copper-lantern-sky-zz` | iOS: Vision adapter on macOS/device. Android: each qualification candidate on an emulator/device where supported. This is a smoke test, not promotion evidence. |
+| ZZ-OCR-QUAL-001 | Consume the normative upstream spec 004 qualification protocol. Same frozen private corpus/final split for candidates; writer-isolated splits; reproducible receipt; False Accept and false-valid disposition; license/security review; PASS/FAIL/INCOMPLETE. Private photos do not enter Git, PR attachments, logs, or CI artifacts. |
 | Band rows: line confidences in, one band out (T022) | `ZZCore` with `swift test`, and `:core-grammar` JVM tests, from one shared table |
 | API fixtures for every error row | iOS: a stub transport. Android: the OkHttp test server. |
 | FR-041 with a fake clock | Both |

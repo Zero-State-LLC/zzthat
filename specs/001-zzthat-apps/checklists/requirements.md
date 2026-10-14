@@ -15,7 +15,7 @@ Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decid
 - [x] The API section points at the pinned OpenAPI file instead of restating it, and maps DEP-001 to DEP-012 to zzThis spec 005.
 - [x] Create stays gated on free public codes (DEP-001, FR-018, SC-8). The local Worker turns the flag on for tests.
 - [x] Free public codes are called out as v2 in zzThis spec 002 (FR-018, DEP-001, ZQ3).
-- [x] On-device versus cloud recognition references zzThis Section 10.3 and Section 10.8 and does not add a third approach.
+- [x] v1 recognition is on-device only. The recognizer is an evidence adapter, not semantic authority. Apple Vision is the iOS baseline; Android ML Kit and PP-OCR are qualification candidates under ZZ-OCR-QUAL-001.
 - [x] Privacy and permissions cover camera and photos, and say location and microphone are off under the defaults.
 - [x] Accounts, abuse, and store obligations are present, with human gates.
 - [x] Platform is decided: SwiftUI and Jetpack Compose, iOS 17, Android API 26 (ZQ17, ZQ21). The tradeoff table remains.
@@ -41,6 +41,10 @@ Checked 2026-10-04 against this spec package, again after ZQ1 to ZQ21 were decid
 - [x] Exact match (FR-009) matches zzThis spec 002 FR-001. ZQ13 records Michael's open suggestion policy.
 - [x] Server-issued words (FR-017) match zzThis spec 002 US2, including free public codes. There is no person-written claim contract (ZQ11).
 - [x] Capture bands follow spec 004, and the marketing labels Manual, Rescan, Confirm, Resolve are not treated as the product contract.
+- [x] Raw scan photos never leave the device in v1.
+- [x] Engine-specific recognizer objects do not enter the shared grammar libraries.
+- [x] Missing recognizer confidence is explicit and cannot be fabricated by an adapter.
+- [x] Android engine promotion requires ZZ-OCR-QUAL-001 evidence; false-valid-decode behavior is the primary safety metric.
 
 ## Not verified, because nothing is built
 
