@@ -124,7 +124,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 
 - [x] T090 [RM-105] FR-031, the App store requirements section, runtime.md Release step 3, and the listing draft say Apple 13+ and Google Play Teen, with the questionnaire answers. No older Apple rating remains.
 - [x] T091 [RM-104] The Data safety and privacy policy drafts list what the bundled ML Kit text recognition SDK sends Google, and no unqualified "no analytics" sentence remains.
-- [ ] T092 [RM-107] The privacy manifest adds Other Data Types for the IP-based rate-limit HMAC (not linked, not tracking, App Functionality). A Release archive's privacy report shows a manifest for every linked SDK and no undeclared required-reason API.
+- [x] T092 [RM-107] The privacy manifest adds Other Data Types for the IP-based rate-limit HMAC (not linked, not tracking, App Functionality). A Release archive's privacy report shows a manifest for every linked SDK and no undeclared required-reason API.
 - [x] T093 [RM-106] A `release-android` job, run by hand only and behind a protected environment, builds `bundleProdRelease`, signs it with the upload key from Actions secrets, and uploads the `.aab` as a workflow artifact. No key, password, or keystore in the tree. Danny enrolls in Play App Signing at the first upload.
 - [x] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
@@ -142,3 +142,15 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - A person-written claim (ZQ11).
 - Sign in with Apple on Android (ZQ23).
 - Live video scanning, and the photo upload, when zzThis turns `photo_reads` on (v2).
+
+## Phase 13: v1.1 follow-up from the 2026-10-13 spec-depth audit
+
+From zzThis `specs/analysis-2026-10-13-spec-depth.md`. Each task names the zzThis change it waits on.
+
+- [ ] T101 [RM-066] After Danny's v1.0 GO, run `scripts/sync-zzthis.sh` at the v1.0 release commit, bundle the production wordlist, and pass the contract tests against production discovery. Decision A2 then falls back to that production list, not proto-v0.
+- [ ] T102 [RM-064, RM-065] Confirm-only capture per platform from one setting (FR-025), on by default until a PASS receipt exists; the zzThis spec 004 confirm-only band vectors pass on both platforms. Waits on zzThis D-2026-10-13-05 and its vectors.
+- [ ] T103 [D-2026-10-11-15] Idle-expired codes show `codes.status_expired` in My codes and turn back on after the owner signs in again. No new route and no new copy if zzThis accepts D-2026-10-13-01 as proposed; a public resolve of an expired code stays not-found (FR-010).
+- [ ] T104 [RM-120, RM-103, RM-124] One step before the first create on a device: the person confirms they are 18 or older and accepts the Terms. The current version is `terms.version` from zzThis `design/copy.json` at the pin; the accepted version is kept on the device only and cleared by account deletion. Scanning and typing need neither. Waits on zzThis D-2026-10-13-04, the copy keys, and Michael's approval of the Terms. Replaces T097 when built.
+- [ ] T105 [D-2026-10-10-23] The Retry state names one reason, chosen by signal: `scan.retry_marker_cut`, `scan.retry_blur`, `scan.retry_glare`, `scan.retry_closer` (small in the frame), or `scan.retry_angle` (skew or perspective), on both platforms, with one test per reason. Copy keys from zzThis #169.
+- [ ] T106 [RM-075] Unknown enum values decode to a fallback on both platforms (#54): Android `enumUnknownDefaultCase=true`, iOS a fallback case. Gate on the first store build (zzThis D-2026-10-13-09).
+
