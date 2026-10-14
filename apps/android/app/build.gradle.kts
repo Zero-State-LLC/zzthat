@@ -80,6 +80,24 @@ android {
         }
     }
 
+    // The Play upload key (D-2026-10-10-25 item 6, tasks.md T093). The
+    // release-android workflow writes the keystore from an Actions secret to
+    // the runner's temporary directory and passes it in these environment
+    // variables; nothing is committed. Without them, prod release builds are
+    // unsigned. Google holds the app signing key (Play App Signing).
+    val uploadStore = providers.environmentVariable("ZZ_UPLOAD_STORE_FILE").orNull
+    if (uploadStore != null) {
+        signingConfigs {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = providers.environmentVariable("ZZ_UPLOAD_STORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("ZZ_UPLOAD_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("ZZ_UPLOAD_KEY_PASSWORD").get()
+            }
+        }
+        productFlavors.getByName("prod").signingConfig = signingConfigs.getByName("upload")
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
