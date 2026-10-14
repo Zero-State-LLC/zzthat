@@ -338,6 +338,8 @@ private fun ResolveRoute(app: AppModel, canonical: String, nav: NavHostControlle
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(canonical) { model.loadOnce(app) }
+    // A hide from the Report sheet, or the Account reset, shows here on return.
+    LaunchedEffect(app.hiddenRevision) { model.sync(app) }
     Frame(stringResource(R.string.nav_scan), back(nav)) {
         ResolveScreen(
             canonical = canonical,
@@ -347,6 +349,8 @@ private fun ResolveRoute(app: AppModel, canonical: String, nav: NavHostControlle
             onRetry = { scope.launch { model.load(app) } },
             onShare = { share(context, it) },
             onReport = { nav.navigate(ReportDestination(canonical)) },
+            onHide = { scope.launch { model.hide(app) } },
+            onUnhide = { scope.launch { model.unhide(app) } },
         )
     }
 }
@@ -357,6 +361,7 @@ private fun ReportRoute(app: AppModel, canonical: String, nav: NavHostController
     val scope = rememberCoroutineScope()
     val offline = !app.isOnline
     LaunchedEffect(app.isDemo, offline) { model.state = model.state.copy(demo = app.isDemo, offline = offline) }
+    LaunchedEffect(canonical) { model.loadHidden(app) }
     Frame(null) {
         ReportScreen(
             state = model.state,
@@ -364,6 +369,7 @@ private fun ReportRoute(app: AppModel, canonical: String, nav: NavHostController
             onNote = { model.state = model.state.copy(note = it) },
             onSend = { scope.launch { model.send(app) } },
             onDone = { nav.popBackStack() },
+            onHide = { scope.launch { model.hide(app) } },
         )
     }
 }
@@ -562,6 +568,7 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
     var confirmingDelete by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var signInPhase by remember { mutableStateOf<SignInScreenState.Phase>(SignInScreenState.Phase.Idle) }
+    var unhideAllDone by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(app.isSignedIn) {
@@ -583,12 +590,19 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
                 loading = loading,
                 offline = !app.isOnline,
                 demo = app.isDemo,
+                unhideAllDone = unhideAllDone,
             ),
             onSignOut = { scope.launch { app.signOut() } },
             onDelete = { confirmingDelete = true },
             onLicenses = { nav.navigate(LicensesDestination) },
             onSupport = { openLink(context, "mailto:$it") },
             onPrivacy = { openLink(context, it) },
+            onUnhideAll = {
+                scope.launch {
+                    app.unhideAll()
+                    unhideAllDone = true
+                }
+            },
         ) {
             SignInContent(
                 SignInScreenState(SignInProviders.shown(app), signInPhase, offline = !app.isOnline, demo = app.isDemo),

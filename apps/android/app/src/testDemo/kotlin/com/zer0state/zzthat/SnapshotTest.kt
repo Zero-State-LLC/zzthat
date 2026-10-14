@@ -358,6 +358,30 @@ class SnapshotTest {
     )
 
     /**
+     * Hide this code (FR-035): Resolve with the Hide action, the hidden state
+     * without the title or body, the Report sheet's sent state with the
+     * one-day review sentence and Hide, and the Account reset signed in and
+     * signed out.
+     */
+    @Test
+    fun hide() = snap(
+        listOf(
+            Case("resolve-hide", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Record(demoView, offline = false), demo = false) },
+            Case("resolve-hidden", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Hidden, demo = false) },
+            Case("resolve-hidden-demo", resolve) { ResolveScreen(demoView.canonical, ResolvePhase.Hidden, demo = true) },
+            Case("report-sent", report) { ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sent)) },
+            Case("report-sent-hidden", report) { ReportScreen(ReportState(ReportRequest.Reason.spam, phase = ReportState.Phase.Sent, hidden = true)) },
+            Case("account-unhide-all", accountSheet) { AccountScreen(signedInAccount) },
+            Case("account-unhide-all-done", accountSheet) { AccountScreen(signedInAccount.copy(unhideAllDone = true)) },
+            Case("account-unhide-all-signed-out", accountSheet) {
+                AccountScreen(signedInAccount.copy(signedIn = false, unhideAllDone = true)) {
+                    SignInContent(SignInScreenState(listOf(TokenRequest.Provider.google)))
+                }
+            },
+        ),
+    )
+
+    /**
      * The Licenses screen shows exactly the bundled files (FR-042): `NOTICE`
      * and `OFL.txt` from the pin, then the third-party notices this build
      * generated (T087), each as given.

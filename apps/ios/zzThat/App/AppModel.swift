@@ -16,6 +16,7 @@ final class AppModel {
     let drafts: DraftStore
     let lastCanonical: LastCanonicalStore
     let providerStore: ProviderStore
+    let hiddenStore: HiddenStore
     let photos: PhotoScratch
     let connectivity: Connectivity
     /// The wordlists bundled from contracts/wordlists (FR-044). The pin has
@@ -27,20 +28,25 @@ final class AppModel {
     private(set) var provider: SignInProvider?
     /// Bumped after an owner write, so My codes and Code detail reload.
     private(set) var ownerRevision = 0
+    /// The codes hidden on this device (FR-035), mirrored from `hiddenStore`
+    /// so every screen that shows one updates at once.
+    private(set) var hiddenCodes: Set<String>
 
     init(config: BuildConfig, service: ZZService, cache: ResolveCache, drafts: DraftStore,
-         lastCanonical: LastCanonicalStore, providerStore: ProviderStore, photos: PhotoScratch,
-         connectivity: Connectivity, bundledLists: [WordList]) {
+         lastCanonical: LastCanonicalStore, providerStore: ProviderStore, hiddenStore: HiddenStore,
+         photos: PhotoScratch, connectivity: Connectivity, bundledLists: [WordList]) {
         self.config = config
         self.service = service
         self.cache = cache
         self.drafts = drafts
         self.lastCanonical = lastCanonical
         self.providerStore = providerStore
+        self.hiddenStore = hiddenStore
         self.photos = photos
         self.connectivity = connectivity
         self.bundledLists = bundledLists
         provider = providerStore.value
+        hiddenCodes = hiddenStore.codes
     }
 
     /// The app as the build configures it.
@@ -60,8 +66,8 @@ final class AppModel {
         let connectivity = Connectivity()
         if !config.isDemo { connectivity.watch() }
         return AppModel(config: config, service: service, cache: ResolveCache(), drafts: DraftStore(),
-                        lastCanonical: LastCanonicalStore(), providerStore: ProviderStore(), photos: PhotoScratch(),
-                        connectivity: connectivity, bundledLists: Self.loadBundledLists())
+                        lastCanonical: LastCanonicalStore(), providerStore: ProviderStore(), hiddenStore: HiddenStore(),
+                        photos: PhotoScratch(), connectivity: connectivity, bundledLists: Self.loadBundledLists())
     }
 
     nonisolated static func loadBundledLists(bundle: Bundle = .main) -> [WordList] {
@@ -135,17 +141,39 @@ final class AppModel {
         ownerRevision += 1
     }
 
-    /// `DELETE /v1/me`, then the tokens, the draft, and every cache (Auth step 9).
+    /// `DELETE /v1/me`, then the tokens, the draft, every cache, and the hidden
+    /// codes (Auth step 9, FR-035).
     func deleteAccount() async -> Result<Void, APIFailure> {
         let result = await service.deleteAccount()
         guard case .success = result else { return result }
         drafts.discard()
         cache.removeAll()
         lastCanonical.value = nil
+        unhideAll()
         photos.purge()
         sessionEnded()
         ownerRevision += 1
         return result
+    }
+
+    // MARK: Hidden codes (FR-035). Device only: none of these calls a server.
+
+    func isHidden(_ canonical: String) -> Bool { hiddenCodes.contains(canonical) }
+
+    func hide(_ canonical: String) {
+        hiddenCodes.insert(canonical)
+        hiddenStore.codes = hiddenCodes
+    }
+
+    func unhide(_ canonical: String) {
+        hiddenCodes.remove(canonical)
+        hiddenStore.codes = hiddenCodes
+    }
+
+    /// `account.unhide_all`, and account deletion.
+    func unhideAll() {
+        hiddenCodes = []
+        hiddenStore.codes = []
     }
 
     /// A 401 the refresh could not fix: the person signs in again.

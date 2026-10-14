@@ -4,24 +4,32 @@ import ZZDesign
 
 /// Resolve (US3, design/UX.md Resolve): the title and body as plain text, or
 /// the one not-found state. Share sends the canonical code as text, never a
-/// URL (FR-020). Report opens the FR-035 sheet.
+/// URL (FR-020). Report opens the FR-035 sheet. A code hidden on this device
+/// shows `resolve.hidden` and Unhide instead of its title and body (FR-035).
 struct ResolveScreen: View {
     let canonical: String
     let phase: ResolvePhase
     let demo: Bool
+    var hidden = false
     var waiting = false
     var onRetry: () -> Void = {}
     var onReport: () -> Void = {}
+    var onHide: () -> Void = {}
+    var onUnhide: () -> Void = {}
 
     var body: some View {
         Screen(demo: demo, loading: isLoading) {
             switch phase {
             case .loading(let previous):
-                if let previous { RecordBlock(view: previous) } else { CodeText(canonical: canonical) }
+                if let previous, !hidden { RecordBlock(view: previous) } else { CodeText(canonical: canonical) }
             case .record(let view, let offline):
                 if offline { OfflineBanner() }
-                RecordBlock(view: view)
-                ResolveActions(shareText: view.shareText, onReport: onReport)
+                if hidden {
+                    HiddenBlock(canonical: view.canonical, onUnhide: onUnhide)
+                } else {
+                    RecordBlock(view: view)
+                    ResolveActions(shareText: view.shareText, onReport: onReport, onHide: onHide)
+                }
             case .notFound:
                 CodeText(canonical: canonical)
                 Message(key: .resolveNotFound)
@@ -68,9 +76,31 @@ struct RecordBlock: View {
     }
 }
 
+/// A hidden code (FR-035): the code, `resolve.hidden`, and Unhide. The
+/// title and body are not drawn.
+struct HiddenBlock: View {
+    let canonical: String
+    let onUnhide: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZZSpace.spaceXs) {
+            CodeText(canonical: canonical)
+            Message(key: .resolveHidden)
+                .accessibilityIdentifier("resolve.hidden")
+        }
+        .panel()
+        Button(action: onUnhide) {
+            Text(.resolveUnhide)
+        }
+        .buttonStyle(.zzSecondary)
+        .accessibilityIdentifier("resolve.unhide")
+    }
+}
+
 struct ResolveActions: View {
     let shareText: String
     let onReport: () -> Void
+    let onHide: () -> Void
 
     var body: some View {
         VStack(spacing: ZZSpace.spaceXs) {
@@ -84,6 +114,11 @@ struct ResolveActions: View {
             }
             .buttonStyle(.zzSecondary)
             .accessibilityIdentifier("resolve.report")
+            Button(action: onHide) {
+                Text(.resolveHide)
+            }
+            .buttonStyle(.zzSecondary)
+            .accessibilityIdentifier("resolve.hide")
         }
     }
 }
@@ -113,9 +148,12 @@ struct ResolveRoute: View {
     }
 
     var body: some View {
-        ResolveScreen(canonical: model.canonical, phase: model.phase, demo: app.isDemo, waiting: model.waiting,
+        ResolveScreen(canonical: model.canonical, phase: model.phase, demo: app.isDemo,
+                      hidden: app.isHidden(model.canonical), waiting: model.waiting,
                       onRetry: { Task { await model.load(app: app) } },
-                      onReport: { reporting = true })
+                      onReport: { reporting = true },
+                      onHide: { app.hide(model.canonical) },
+                      onUnhide: { app.unhide(model.canonical) })
             .task { await model.loadOnce(app: app) }
             .sheet(isPresented: $reporting) {
                 ReportRoute(canonical: model.canonical)

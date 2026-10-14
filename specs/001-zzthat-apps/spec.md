@@ -7,8 +7,8 @@ Constitution: [.specify/memory/constitution.md](../../.specify/memory/constituti
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Camera boundary: [recognition-adapter.md](recognition-adapter.md). Camera Accept remains blocked on the upstream contract and qualification gates.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
-zzThis pin: `424395f665587de8a73dae2cbdff3dbd9593b6c3`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/424395f665587de8a73dae2cbdff3dbd9593b6c3/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/424395f665587de8a73dae2cbdff3dbd9593b6c3/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `649ea2e42d308f356202b4749c03088d494186e8`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/649ea2e42d308f356202b4749c03088d494186e8/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/649ea2e42d308f356202b4749c03088d494186e8/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -38,7 +38,7 @@ Acceptance:
 2. If the server has no free public scope, the app does not invent a code. It shows an unavailable state (FR-018, ZQ3).
 3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11. The free app does not mint field codes or handles.
 4. After the person writes the minted code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017, with the spec 004 Client read pipeline.
-5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006.
+5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006. The Create UI may present server-chosen candidates in a suggested-word picker so the person feels they chose a code; the app still never sends a person-written code string (zzThis D-2026-10-11-01 option C, RM-113).
 6. The pitch lines `zz-kathy-lost-cat-zz` and `zz-moving-box-kitchen-3-zz` are examples in the copy [MICHAEL 2026-10-02]. Create does not claim those strings. Writing a code with no device at all stays zzThis Q25 and is not this screen.
 
 ### US2. Scan a handwritten code with the camera (P1)
@@ -125,11 +125,12 @@ Acceptance:
 | FR-014 | The first release does not request microphone permission. If voice is added later, the audio stays on the device. | [ZZTHIS SPEC] spec 004 names voice. ZQ10 keeps it out of the first release. On-device audio is [INFERRED] from Section 10.3. |
 | FR-015 | Issue, revoke, and record update require a signed-in owner. Unauthenticated write calls are the server's 401. | [ZZTHIS SPEC] spec 002 error states |
 | FR-016 | A signed-out person can resolve a public code. The app must not require an account for that read. Writes still require sign-in. The app sends no `Authorization` header on resolve, so a signed-in read stays cacheable [ZZTHIS SPEC] spec 005 FR-008. | [MICHAEL 2026-10-02] "anyone can scan". [ZZTHIS SPEC] spec 002 FR-020. ZQ6. The Section 10.6 line that every call is authenticated is an inferred sketch and does not win for this read. |
-| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [ZZTHIS SPEC] spec 005 FR-006. |
+| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. A suggested-word picker may show server-chosen candidates; it does not accept arbitrary user-typed code words (zzThis RM-113, D-2026-10-11-01). | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [ZZTHIS SPEC] spec 005 FR-006. D-2026-10-11-01 option C. |
 | FR-018 | Until the server exposes a free public scope, create shows an honest unavailable state and does not issue. | [ZZTHIS SPEC] spec 002 FR-016 (free public is v2). ZQ3 is [#3](https://github.com/Zero-State-LLC/zzthat/issues/3). |
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
 | FR-021 | Revoke and new record versions use the server. My codes uses `GET /v1/me/codes`. Code detail and Edit record take a code id. They find that code's row in `GET /v1/me/codes` (`limit` 50, following `next_cursor`), then read `GET /v1/records/{record_id}`. Revoke uses the code id. Versions use `record_id`. No matching row shows the one not-found state. | [ZZTHIS SPEC] spec 005 US3 and FR-030. Contract 1 has no single-code read, so the lookup by code id is [INFERRED]. |
+| FR-050 | The app offers a device-only Saved list of codes the person scanned and chose to save (canonical form, and an optional local thumbnail). Saved does not sync to the server and does not upload photos. The list is cleared on account deletion and by a Settings reset. Cloud sync of Saved is out of this release (zzThis RM-117). | zzThis D-2026-10-11-01 row 17; RM-115. |
 | FR-022 | The app may show a briefly cached signed record without a connection. It cannot issue, revoke, or mark a code used offline. | [ZZTHIS SPEC] Section 10.5 |
 | FR-023 | The app does not cache single-use or short-expiry codes for a later resolve. | [INFERRED] from the edge rule in [ZZTHIS SPEC] Section 10.2 |
 | FR-024 | The app may keep a local draft of a title and body, labeled "Not a code yet." That draft has no code words, is not issued, is not resolved, and is not shared as a live code. | [ZZTHIS SPEC] Section 10.5 forbids offline issue. ZQ16 allows the labeled draft. ZQ11: words come from mint, not from the draft. |
@@ -139,11 +140,11 @@ Acceptance:
 | FR-028 | The app displays server results for a reserved handle and for a check-word mismatch. It does not rewrite the code into a different live code. | [ZZTHIS SPEC] spec 002 FR-019 and FR-021 |
 | FR-029 | No screen and no store text claims a measured accuracy, a pilot, a customer, an endorsement, or adoption. | [ZZTHIS SPEC] Section 2.1 |
 | FR-030 | User-facing copy says "demo", not "mock", and "check word", not "checksum", and it contains no em dash. | [MICHAEL 2026-10-03] [DANNY 2026-10-04] [DANNY 2026-10-03] |
-| FR-031 | Store submission, store spend, and a privacy-policy URL require Danny's yes. Listing text is the everyday-use sentences in ZQ15, without the web sentence. The age rating to file is Apple 12+ and Google Play Teen, and Danny may change it before submission. | [MICHAEL 2026-10-02] for the sentences. The rating is [INFERRED]. Constitution IX. |
+| FR-031 | Store submission, store spend, and a privacy-policy URL require Danny's yes. Listing text is the everyday-use sentences in ZQ15, without the web sentence, and the release is called "early release", never alpha, beta, or test. The app is for people 18 and older, stated in the Terms. The store age ratings are whatever Apple's and Google's questionnaires give, with user-generated content answered yes. No zzThis name or host appears on any zzThat surface a person sees. | [MICHAEL 2026-10-02] for the sentences. 18+, early release, the questionnaire ratings, and no zzThis mention are [MICHAEL 2026-10-11], zzThis D-2026-10-11-05, -06, -07, and D-2026-10-11-08 answer 15, superseding the 13+ of D-2026-10-10-25 item 5. Constitution IX. |
 | FR-032 | Every call uses the `/v1` prefix and sends `X-ZZ-Contract: 1`. Tests use fixtures and the local zzThis Worker (`npm run dev:api` at the pin), not a deployed server. | ZQ19. [ZZTHIS SPEC] spec 005 FR-001. |
 | FR-033 | On HTTP 429 the app waits for `Retry-After` and shows one wait message that does not say whether the code exists. | [ZZTHIS SPEC] spec 002 error states. Limits are zzThis spec 005 FR-011, which adopted the ZQ20 numbers. |
 | FR-034 | The app offers account deletion in the app before store submission. It calls `DELETE /v1/me`, which also revokes the Sign in with Apple token on the server. | [INFERRED] store practice. [ZZTHIS SPEC] spec 005 FR-023. |
-| FR-035 | The app offers a report with reason `spam`, `harassment`, `personal-data`, or `other`. It does not keep a block list. | [ZZTHIS SPEC] Section 2.3 for server-side abuse. The report action is ZQ8 [INFERRED]. |
+| FR-035 | The app offers a report with reason `spam`, `harassment`, `personal-data`, or `other`. The Report sheet's sent state says the creator is reviewed within one day and can be suspended. Resolve and the Report sheet offer "Hide this code", and, once zzThis adds the optional Resolve `creator` field (zzThis RM-112, after the RM-075 tolerant-reader check), "Block this creator". Hidden codes and blocked creator references are kept in a list on the device only, and hiding, blocking, unhiding, and unblocking make no server call. A hidden code, or a code whose `creator` is blocked, resolves to a hidden state without its title or body, with Unhide or Unblock. Account deletion (FR-034) and a reset on the Account screen clear both lists. Create asks the person to accept the current terms of use and content policy before the first create on that device, and again when the terms version changes (zzThis RM-103). New copy keys come from zzThis `design/copy.json` (FR-042). | [ZZTHIS SPEC] Section 2.3 for server-side abuse. The report action is ZQ8 [INFERRED]. Hide, block, the one-day review sentence, and terms acceptance are [ZZTHIS D-2026-10-10-25, DANNY 2026-10-09] item 1 and item 2, for App Review Guideline 1.2 and the Google Play user-generated content policy; they replace ZQ8's "no block list". The Account screen reset is the decision's "Settings reset", because the app has no Settings screen. |
 | FR-036 | The resolved view is a screen in the app: a title and a body. | [ZZTHIS SPEC] "useful page", tagged [BRIEF]. ZQ5 and ZQ12. |
 | FR-037 | The creation check (US1 acceptance 4) runs on the device. It compares the photo's parse to the minted canonical form. The app does not ask whether a person-written string is free. | [ZZTHIS SPEC] spec 004 FR-017. ZQ11. |
 | FR-038 | Macros, drawn-symbol codes, object codes, the AI photo-to-action flow, and zzThing are not features of these apps. | [ZZTHIS SPEC] Section 12.2 and Section 2.6 |
@@ -155,7 +156,7 @@ Acceptance:
 | FR-044 | The app checks a check word locally only when its bundled list version equals `wordlist_version` from `GET /v1`. Otherwise the server's answer decides. | [ZZTHIS SPEC] spec 004, Client read pipeline step 4 |
 | FR-045 | The V1 app never offers or calls a photo-read/upload endpoint, regardless of the `photo_reads` value returned by `GET /v1`. It sends only the selected canonical code to ordinary resolution. Enabling a future photo-read API requires a separately accepted product and privacy/security change; this capability flag alone is insufficient authorization. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903) |
 | FR-046 | The record body is shown as plain text. Links in it are not tappable. | [ZZTHIS SPEC] spec 005 FR-007 |
-| FR-047 | The Account screen shows the support contact (`support@zer0state.com`) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
+| FR-047 | The Account screen shows the support contact (`zzsupport@zer0state.com`, zzThis D-2026-10-11-04, after the mailbox exists, RM-122) and the privacy policy link from build settings (ZQ25). A store submission waits until the mailbox exists and the policy is published. | [INFERRED] store practice. App Store review guideline 1.2 asks for contact details. |
 | FR-048 | Local builds offer developer sign-in (zzThis spec 005 FR-022) and call the local Worker. Release builds compile developer sign-in out. | [INFERRED] |
 | FR-049 | The app turns off the HTTP library's own cache for `/v1` calls. FR-041 is the only resolve cache. | [INFERRED], so one rule owns caching |
 | FR-050 | Camera capture detects and geometrically pairs the literal terminal `zz` index markers before payload OCR. Only same-baseline markers in plausible reading order can form a pair. It shows all plausible complete, partial, and bare-marker boxes, never infers a missing marker, and never uses payload/grammar/wordlist/resolver evidence to choose a pair. Versioned marker/pair limits are frozen before final qualification; overflow rejects the whole frame without truncation or payload OCR. Proceed without a tap only when one unambiguous complete pair is the only selectable visual candidate; otherwise, the person selects before payload OCR. | zzThis spec 004 FR-018 to FR-020, app behavior detail in `recognition-adapter.md` |
@@ -163,7 +164,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `424395f665587de8a73dae2cbdff3dbd9593b6c3` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `649ea2e42d308f356202b4749c03088d494186e8` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
@@ -275,17 +276,17 @@ The code on paper is a public identifier. Authorization stays on the server [ZZT
 - Mint, re-roll, revoke, and record updates require a signed-in free account (FR-015, FR-040).
 - This app does not issue handles. The server still refuses a reserved handle if one is submitted [ZZTHIS SPEC] spec 002 FR-019.
 - A private record is not opened by a signed-out caller [ZZTHIS SPEC] spec 002 FR-020.
-- Copied marks, replay, enumeration, unauthorized updates, and malformed input stay server-side [ZZTHIS SPEC] Section 2.3. The app's part is FR-009, FR-010, FR-033, and the report in FR-035.
+- Copied marks, replay, enumeration, unauthorized updates, and malformed input stay server-side [ZZTHIS SPEC] Section 2.3. The app's part is FR-009, FR-010, FR-033, and the report, hide, block, and terms acceptance in FR-035.
 - The server refuses record text with blocklisted terms, and the operator can suspend an account [ZZTHIS SPEC] spec 005 FR-024 and FR-025. The app shows `create.content_refused` and `error.forbidden` for those.
 - No duplicate codes and no location (FR-013) [ZZTHIS SPEC] Section 12.2.
 
 ## App store requirements
 
 - Listing text: "Free for everyone. Write a code on a lost-pet flyer, a moving box, a garage-sale item, or a note, and anyone can scan it, like a QR code you can write by hand." [MICHAEL 2026-10-02]. The web sentence from that same paragraph is not in this listing, because this listing is the phone apps.
-- Age rating to file: Apple 12+ and Google Play Teen [INFERRED], because the page is user-written text. Danny may change it before he submits.
+- Age rating to file: whatever Apple's and Google's questionnaires give; the Terms say 18+ (zzThis D-2026-10-11-05, D-2026-10-11-08 answer 15). The questionnaire answers are in `apps/store/listing-draft.md`. Danny may change them before he submits.
 - Privacy disclosure matches the table above.
 - Account deletion is in the app before submission (FR-034), calling DEP-012. The server revokes the Sign in with Apple token, as Apple requires.
-- App Store review guideline 1.2 (user-written pages): the report action (FR-035), the server's content check and suspension, and a support contact in the app (FR-047).
+- App Store review guideline 1.2 (user-written pages) and the Google Play user-generated content policy: the report action, hide and block, terms acceptance before the first create (FR-035), the server's content check, report review within one day, and suspension (zzThis RM-102), and a support contact in the app (FR-047).
 - Before submission (ZQ25): Michael's square icon artwork, the `support@zer0state.com` mailbox, and the published privacy page. Builds use a placeholder icon.
 - No accuracy or adoption claims (FR-029).
 - Danny submits (constitution IX). This spec does not authorize a submission.
@@ -349,7 +350,8 @@ zzThis spec 003 says "check word". zzThis `docs/SPEC.md` also says "checksum wor
 ## Out of scope
 
 - A web client in this repo (FR-001). The later web client is a zzthis task (ZQ1). The "Try zzThat" link target is the zzThis marketing page, not a zzthat.com site (ZQ2). zzThis spec 001 FR-016 still names zzthat.com; this repo does not edit that file.
-- A person-written claim, and a client uniqueness check (ZQ11).
+- A person-written claim, and a client uniqueness check (ZQ11). Real person-made claim is zzThis v2.0 / RM-116 (D-2026-10-11-01 option A), not this release.
+- Cloud sync of the Saved list or upload of Saved thumbnails (zzThis RM-117 / v2.2).
 - zzThing [ZZTHIS SPEC].
 - A backend, resolver, wordlist pipeline, or check-word algorithm in this repo.
 - Logistics, postal, and enterprise product surfaces, except where the shared API requires the client to tolerate those code kinds.

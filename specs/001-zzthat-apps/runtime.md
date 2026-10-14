@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build and runtime contract for the
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: implementation in progress. App trees exist; camera capture remains release-gated. V1 capture is on-device only and never sends a photo, crop, or OCR transcript.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `424395f665587de8a73dae2cbdff3dbd9593b6c3`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `649ea2e42d308f356202b4749c03088d494186e8`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 
@@ -73,20 +73,20 @@ Each feature calls core modules. Features do not call each other except through 
 | App / `:app` | Process entry, tabs, dependency wiring, build configuration | HTTP, grammar rules, tokens |
 | Navigation | The route list below | Screen layout |
 | Scan | Camera handoff, candidate list, clarify, typed entry | Resolve rendering |
-| Create | Mint, re-roll, write check, unavailable state, draft | A person-typed code string |
+| Create | Mint, re-roll, suggested-word picker (RM-113), write check, unavailable state, draft | A person-typed code string (claim; not in v1.1) |
 | Resolve | Title and body, not-found, share, report entry | Issue |
-| Codes | My codes, Code detail, Edit record, revoke | Public resolve rules |
+| Codes | My codes, Saved (local, RM-115), Code detail, Edit record, revoke | Public resolve rules |
 | Account | Sign-in, sign-out, delete, support and privacy links, licenses | A profile form |
-| Report | The four reasons in FR-035 | A block list |
+| Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
-| Storage | Resolve cache, draft, last canonical | A second source of truth, or any `no-store` response |
+| Storage | Resolve cache, draft, last canonical, hidden codes | A second source of truth, or any `no-store` response |
 | Core (`ZZCore`, `:core-grammar`) | zzThis Section 2.2a, the spec 003 check word, the spec 004 scanner and bands, the list loader | A second grammar |
 | Design (`ZZDesign`, `:core-design`) | The pinned token files and fonts | Values authored in this repo |
 
 ## Navigation
 
-Three tabs: Scan, Create, My codes. Account opens from a toolbar item on every tab. Report opens from Resolve.
+Three tabs: Scan, Create, My codes. Saved is a device-only list under My codes or a sibling entry (RM-115); it does not call the server. Account opens from a toolbar item on every tab. Report opens from Resolve.
 
 ```
 Scan
@@ -137,10 +137,11 @@ Each screen implements five states. Strings come from `copy.json`.
 | Clarify | Confirm one uncertain word or a check-word mismatch | Not used | `scan.check_mismatch` | Same | Fixture word | Scan with the camera, step 4 |
 | Type | Same parser and resolve as Scan (US2a) | `type.empty` | `type.malformed`, 429 | Keep the typed text. Resolve waits. | A fixture string labeled Demo | Scan |
 | Resolve | Title and body, or one not-found (US3) | Not used. Not-found is the error row. | `resolve.not_found` | FR-041, then `resolve.not_on_device` | Fixture title and body labeled Demo | Resolve |
-| Create | Mint a wordlist code (US1, ZQ11) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
+| Create | Mint a wordlist code (US1, ZQ11); optional suggested-word picker over server candidates (RM-113) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
 | Minted code | The canonical form and the check word, and re-roll | Not used after a 201 | `minted.reroll_cap` keeps the words | Hide re-roll. The words stay. | Demo words. The button does not call. | Minted code |
 | Write check | The photo of the handwriting matches the minted code (FR-037) | No photo yet | `writecheck.mismatch`. No upload. | Runs on the device | A fixture photo labeled Demo | Write check |
 | My codes | Owner list with titles | `codes.empty`, or `codes.signed_out` | 401, 403, 500 | `error.no_connection`. No list is kept, because owner responses are `no-store`. | Fixture rows labeled Demo | My codes |
+| Saved | Device-only list of scanned codes the person saved (RM-115) | `saved.empty` | Not used (local only) | Local list still shown | Fixture rows labeled Demo | Saved |
 | Code detail | One owned code: share, edit, revoke. Revoke shows only when the row's `status` is `active`. | Not used | `resolve.not_found` when no row has the code id, or the record read returns 404 | `error.no_connection`. Nothing owned is kept offline. | Fixture row labeled Demo | Code detail |
 | Edit record | New title and body | `create.title_required` | `create.content_refused`. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the fields. | Refuse the save | Demo fields. Save does not call. | Edit record |
 | Revoke confirm | One confirm, then revoke | Not used | `error.nothing_saved`. The code stays active. | Refuse | Demo confirm does not call | Revoke confirm |
@@ -169,7 +170,7 @@ The Licenses screen also shows the third-party notices that the build generates 
 | Bundle and application id | `com.zer0state.zzthat.demo` | `com.zer0state.zzthat.local` | `com.zer0state.zzthat` (ZQ24) |
 | Display name | zzThat Demo | zzThat Local | zzThat |
 
-Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `support@zer0state.com`, and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
+Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `zzsupport@zer0state.com` once the mailbox exists (zzThis D-2026-10-11-04, RM-122; until then builds keep `support@zer0state.com`), and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
 
 iOS Google setup [INFERRED]: the Local and Release xcconfigs define `ZZ_GOOGLE_IOS_CLIENT_ID` and `ZZ_GOOGLE_REVERSED_CLIENT_ID`. In `project.yml`, Info.plist sets `GIDClientID` to `$(ZZ_GOOGLE_IOS_CLIENT_ID)` and registers a URL type whose scheme is `$(ZZ_GOOGLE_REVERSED_CLIENT_ID)`. The app forwards `.onOpenURL` to `GIDSignIn.sharedInstance.handle(_:)`. GoogleSignIn raises an exception when `GIDClientID` or the URL scheme is missing, so while the value is still a placeholder the Google button is hidden. Demo builds have neither key and never call GoogleSignIn.
 
@@ -219,6 +220,7 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Last canonical text | App storage | Until the person clears it, so resolve can be retried |
 | Draft title and body | App storage | Until mint or discard. Labeled "Not a code yet." No code words (FR-024). |
 | Photo | The app's cache folder | Temporary for the active scan or write check; deleted when that operation ends (FR-004) |
+| Hidden codes | App storage, on this device only; never sent | Until Unhide, `account.unhide_all`, or account deletion (FR-035) |
 
 A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. The V1 client does not invoke a photo-read/upload route, even if discovery reports `photo_reads: true` (FR-045).
 
@@ -303,6 +305,6 @@ zzThat is a private repo on GitHub Team, so hosted minutes come out of the organ
 
 1. `apps/VERSION` is the user-visible version. Build numbers come from the CI run number. This spec does not upload a build.
 2. The build adds `.github/workflows/apps-ci.yml` with the first test targets. It tests. It does not submit to App Store Connect or Play.
-3. The store listing text and the 12+ and Teen filing default stay in FR-031, drafted in `apps/store/listing-draft.md`. Danny may change the rating. Danny submits (constitution IX).
+3. The store listing text, the early-release wording, and the questionnaire ratings with an 18+ audience stay in FR-031, drafted in `apps/store/listing-draft.md` with the questionnaire answers. Danny may change the rating. Danny submits (constitution IX).
 4. The privacy manifest and the Data safety answers (`apps/store/data-safety-draft.md`) are filled from the privacy table before he submits. They are drafts until his yes.
 5. The production API origin, the client ids, and signing credentials are not committed. A Demo build needs none of them.
