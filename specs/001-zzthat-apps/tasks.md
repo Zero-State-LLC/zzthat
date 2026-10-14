@@ -128,7 +128,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [ ] T093 [RM-106] A `release-android` job, run by hand only and behind a protected environment, builds `bundleProdRelease`, signs it with the upload key from Actions secrets, and uploads the `.aab` as a workflow artifact. No key, password, or keystore in the tree. Danny enrolls in Play App Signing at the first upload.
 - [x] T094 [RM-101] Hide this code, the one-day review sentence in the Report sheet, and the Account screen reset, on both platforms (FR-035). Needs the new copy keys in zzThis `design/copy.json` first.
 - [ ] T095 [RM-075] A contract test shows that both generated clients ignore an unknown response key and tolerate an unknown enum value.
-- [x] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112), which waits on T095.
+- [x] T096 [RM-101] Block this creator, after zzThis ships the Resolve `creator` field (RM-112, merged in zzThis #161). The unknown-key half of T095 (#58) is what this field needs; the unknown-enum half (#54) stays open under T095.
 - [ ] T097 [RM-101] Terms acceptance before the first create, after Danny approves the terms of use and content policy (zzThis RM-103).
 - [x] T098 [RM-115] Saved (FR-050): Save and Remove from Saved on Resolve, the Saved list from My codes signed in or out, and Clear saved codes on Account; device only, cleared by account deletion. zzThis D-2026-10-11-01 row 17.
 - [x] T099 [RM-113] The suggested-word picker on the minted code (FR-017): the pick help, Get different words up to the cap, and Keep these words, which closes the picker locally. No code string is sent. zzThis D-2026-10-11-01 option C.
