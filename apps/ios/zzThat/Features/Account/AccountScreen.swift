@@ -14,6 +14,8 @@ struct AccountScreenState {
     var supportEmail: String?
     var privacyURL: URL?
     var deletePhase: DeletePhase = .idle
+    /// `account.unhide_all` ran: `account.unhide_all_done` shows (FR-035).
+    var unhideAllDone = false
     var loading = false
     var offline = false
     var demo = false
@@ -21,12 +23,14 @@ struct AccountScreenState {
 
 /// Account (design/UX.md): the provider, Sign out, Delete account, the
 /// support contact and privacy link from build settings (FR-047), and
-/// `account.licenses`. No profile form (ZQ7).
+/// `account.licenses`. No profile form (ZQ7). `account.unhide_all` shows
+/// signed in or out, because hiding a code needs no account (FR-035).
 struct AccountScreen<SignedOut: View>: View {
     let state: AccountScreenState
     var onSignOut: () -> Void = {}
     var onDelete: () -> Void = {}
     var onLicenses: () -> Void = {}
+    var onUnhideAll: () -> Void = {}
     @ViewBuilder var signedOut: SignedOut
 
     var body: some View {
@@ -48,6 +52,14 @@ struct AccountScreen<SignedOut: View>: View {
                 if state.offline { Text(.errorNoConnection).textRole(.caption) }
             } else {
                 signedOut
+            }
+            if state.unhideAllDone {
+                Message(key: .accountUnhideAllDone)
+                    .accessibilityIdentifier("account.unhide_all_done")
+            } else {
+                Button(action: onUnhideAll) { Text(.accountUnhideAll) }
+                    .buttonStyle(.zzSecondary)
+                    .accessibilityIdentifier("account.unhide_all")
             }
             AccountLinks(supportEmail: state.supportEmail, privacyURL: state.privacyURL, onLicenses: onLicenses)
         }
@@ -179,6 +191,7 @@ struct AccountSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var path: [AccountRoute] = []
     @State private var deletePhase: AccountScreenState.DeletePhase = .idle
+    @State private var unhideAllDone = false
     @State private var confirmingDelete = false
     @State private var loading = false
     @State private var signInPhase: SignInScreenState.Phase = .idle
@@ -188,10 +201,14 @@ struct AccountSheet: View {
             AccountScreen(state: AccountScreenState(signedIn: app.isSignedIn, provider: app.provider,
                                                     supportEmail: app.config.supportEmail,
                                                     privacyURL: app.config.privacyURL, deletePhase: deletePhase,
-                                                    loading: loading, offline: !app.isOnline, demo: app.isDemo),
+                                                    unhideAllDone: unhideAllDone, loading: loading, offline: !app.isOnline, demo: app.isDemo),
                           onSignOut: { Task { await app.signOut() } },
                           onDelete: { confirmingDelete = true },
-                          onLicenses: { path.append(.licenses) }) {
+                          onLicenses: { path.append(.licenses) },
+                          onUnhideAll: {
+                              app.unhideAll()
+                              unhideAllDone = true
+                          }) {
                 SignInBody(phase: $signInPhase, embedded: true)
             }
             .navigationTitle(Text(.accountTitle))
