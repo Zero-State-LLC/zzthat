@@ -234,18 +234,24 @@ class ZZService(
             }
             return try {
                 when (status) {
+                    // An error code the contract does not list decodes to the
+                    // generator's unknown case (T106). An error body is not a
+                    // record, so it stays what it was before T106: a body that
+                    // does not match its schema, which is unavailable.
                     404 -> {
-                        ZZJson.strict.decodeFromString(NotFoundError.serializer(), text)
-                        ApiFailure.NotFound
+                        val error = ZZJson.strict.decodeFromString(NotFoundError.serializer(), text)
+                        if (error.error == NotFoundError.Error.unknown_default_open_api) ApiFailure.Unavailable else ApiFailure.NotFound
                     }
                     429 -> {
-                        ZZJson.strict.decodeFromString(RateLimitedError.serializer(), text)
+                        val error = ZZJson.strict.decodeFromString(RateLimitedError.serializer(), text)
+                        if (error.error == RateLimitedError.Error.unknown_default_open_api) return ApiFailure.Unavailable
                         val retryAfter = response.headers()["Retry-After"]?.trim()?.toIntOrNull()?.takeIf { it >= 1 }
                         if (retryAfter == null) ApiFailure.Unavailable else ApiFailure.RateLimited(retryAfter)
                     }
                     else -> {
                         val error = ZZJson.strict.decodeFromString(Error.serializer(), text)
                         when {
+                            error.error == Error.Error.unknown_default_open_api -> ApiFailure.Unavailable
                             status == 401 -> ApiFailure.Unauthorized
                             error.error == Error.Error.contractMinusVersion -> ApiFailure.ContractVersion
                             error.error == Error.Error.notMinusFound -> ApiFailure.NotFound

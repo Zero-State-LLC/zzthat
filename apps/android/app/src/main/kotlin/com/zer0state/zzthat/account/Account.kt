@@ -331,8 +331,9 @@ fun SignInContent(state: SignInScreenState, onSignIn: (TokenRequest.Provider) ->
                         ButtonKind.SECONDARY,
                         enabled = enabled,
                     ) { onSignIn(TokenRequest.Provider.dev) }
-                    // Android does not offer Apple (ZQ23).
-                    TokenRequest.Provider.apple -> Unit
+                    // Android does not offer Apple (ZQ23). SignInProviders.shown
+                    // never lists the generator's unknown case (T106).
+                    TokenRequest.Provider.apple, TokenRequest.Provider.unknown_default_open_api -> Unit
                 }
             }
         }
@@ -396,7 +397,8 @@ suspend fun signIn(
         when (provider) {
             TokenRequest.Provider.google -> if (GoogleIdTokens.isConfigured(app.config.googleWebClientId)) google(nonce) else ProviderToken.Failed
             TokenRequest.Provider.dev -> FlavorFeatures.developerIdToken?.let(ProviderToken::Token) ?: ProviderToken.Failed
-            TokenRequest.Provider.apple -> ProviderToken.Failed
+            // The app never signs in with the generator's unknown case (T106).
+            TokenRequest.Provider.apple, TokenRequest.Provider.unknown_default_open_api -> ProviderToken.Failed
         }
     }
     if (outcome == SignInFlow.Outcome.SignedIn) app.completeSignIn(provider)

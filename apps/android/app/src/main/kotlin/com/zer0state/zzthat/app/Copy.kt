@@ -50,6 +50,11 @@ val OwnedCode.Status.res: Int
         OwnedCode.Status.used -> R.string.codes_status_used
         OwnedCode.Status.expired -> R.string.codes_status_expired
         OwnedCode.Status.revoked -> R.string.codes_status_revoked
+        // A status the contract does not list yet (T106). It is not active, so
+        // the screens offer no Revoke. There is no copy for it, and copy comes
+        // only from zzThis, so it shows as expired, the nearest not-active
+        // state. iOS decodes the same value to expired, so both apps agree.
+        OwnedCode.Status.unknown_default_open_api -> R.string.codes_status_expired
     }
 
 @get:StringRes
@@ -59,4 +64,7 @@ val ReportRequest.Reason.res: Int
         ReportRequest.Reason.harassment -> R.string.report_reason_harassment
         ReportRequest.Reason.personalMinusData -> R.string.report_reason_personal_data
         ReportRequest.Reason.other -> R.string.report_reason_other
+        // A request enum: the app picks the reason from REASONS and never
+        // sends this generated case (T106). Labelled as other if it ever did.
+        ReportRequest.Reason.unknown_default_open_api -> R.string.report_reason_other
     }

@@ -196,7 +196,7 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
         )
 
         val DISCOVERY = Discovery(
-            contract = Discovery.Contract._1,
+            contractVersion = Discovery.ContractVersion._1,
             freePublic = true,
             authProviders = listOf(Discovery.AuthProviders.apple, Discovery.AuthProviders.google),
             scopes = listOf(Discovery.Scopes.free_public),
