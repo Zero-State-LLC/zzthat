@@ -198,8 +198,11 @@ final class MintedModel {
     }
 }
 
-/// Write check (FR-037): the read pipeline on the person's photo, compared
-/// with the minted code on the device. Nothing is uploaded.
+/// Write check (FR-037): the person's photo goes through the same
+/// RecognitionResult boundary as Scan (recognition-adapter.md, T023): marks
+/// first, a pick before any payload is read, and payload OCR only in the
+/// picked pair's ROI. The reading is compared with the minted code on the
+/// device. Nothing is uploaded.
 @MainActor
 @Observable
 final class WriteCheckModel {
@@ -209,32 +212,51 @@ final class WriteCheckModel {
     }
 
     let canonical: String
-    private(set) var photo: UIImage?
-    private(set) var candidates: [ReadCandidate] = []
-    private(set) var reading = false
+    private let scan: ScanModel
     private(set) var verdict: Verdict?
     private(set) var message: CopyKey?
 
-    init(canonical: String) {
+    var photo: UIImage? { scan.photo }
+    /// Every box the person can pick before any payload is read (FR-052).
+    var visual: [VisualCandidate] { scan.visual }
+    /// The read pair's readings, in the engine's order.
+    var candidates: [ReadCandidate] { scan.candidates }
+    var reading: Bool { scan.reading }
+
+    init(canonical: String, adapter: any RecognitionAdapter = VisionRecognitionAdapter(),
+         configuration: CaptureConfiguration = .current) {
         self.canonical = canonical
+        scan = ScanModel(adapter: adapter, configuration: configuration)
     }
 
     func read(_ image: UIImage, app: AppModel) async {
-        guard let data = image.jpegData(compressionQuality: 0.9) else { return }
-        end(app: app)
-        _ = try? app.photos.begin(data)
-        photo = image
-        reading = true
-        let lines = await Task.detached(priority: .userInitiated) {
-            (try? VisionReader.recognize(imageData: data)) ?? []
-        }.value
-        candidates = app.pipeline.read(lines: lines).candidates
-        reading = false
-        let codes = candidates.filter { $0.canonical != nil }
-        if candidates.isEmpty {
-            message = .scanNoCode
-        } else if codes.count == 1, candidates.count == 1, let only = codes.first {
-            pick(only)
+        verdict = nil
+        message = nil
+        _ = await scan.read(image, app: app)
+        settle()
+    }
+
+    /// The person picked a box (FR-026, FR-052): only a complete pair is
+    /// read. A partial code or a bare mark is not the minted code.
+    func pick(_ box: VisualCandidate, app: AppModel) async {
+        guard verdict == nil else { return }
+        _ = await scan.select(box, app: app)
+        if case .complete = box.kind {
+            settle(picked: true)
+        } else {
+            verdict = .mismatch
+            message = nil
+        }
+    }
+
+    /// One reading decides; several wait for a tap; none is a message,
+    /// unless the boxes still wait for a pick.
+    private func settle(picked: Bool = false) {
+        guard !scan.reading else { return }
+        switch scan.candidates.count {
+        case 0: if picked || scan.visual.isEmpty || scan.message != nil { message = scan.message ?? .scanNoCode }
+        case 1: pick(scan.candidates[0])
+        default: break
         }
     }
 
@@ -248,12 +270,13 @@ final class WriteCheckModel {
         message = nil
     }
 
-    /// The check ends: its photo is deleted (FR-004).
+    /// The check ends: its photo is deleted (FR-004) and the evidence dropped.
     func end(app: AppModel) {
-        app.photos.end()
-        photo = nil
-        candidates = []
+        scan.end(app: app)
         verdict = nil
         message = nil
     }
+
+    /// Whether any evidence of the attempt is still held.
+    var holdsEvidence: Bool { scan.holdsEvidence }
 }

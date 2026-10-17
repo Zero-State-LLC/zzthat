@@ -112,10 +112,13 @@ struct WriteCheckRoute: View {
 
     var body: some View {
         WriteCheckScreen(state: WriteCheckScreenState(canonical: model.canonical, photo: model.photo,
-                                                      candidates: model.candidates, reading: model.reading,
-                                                      verdict: model.verdict, message: model.message,
-                                                      demo: app.isDemo, cameraAvailable: CameraPicker.isAvailable),
-                         pickerItem: $pickerItem, onTakePhoto: takePhoto, onSelect: { model.pick($0) })
+                                                      visual: model.visual, candidates: model.candidates,
+                                                      reading: model.reading, verdict: model.verdict,
+                                                      message: model.message, demo: app.isDemo,
+                                                      cameraAvailable: CameraPicker.isAvailable),
+                         pickerItem: $pickerItem, onTakePhoto: takePhoto,
+                         onSelectBox: { box in Task { await model.pick(box, app: app) } },
+                         onSelect: { model.pick($0) })
             .navigationTitle(Text(.mintedWriteCheck))
             .navigationBarTitleDisplayMode(.inline)
             .fullScreenCover(isPresented: $showingCamera) {
