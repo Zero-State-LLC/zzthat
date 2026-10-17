@@ -20,7 +20,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: apps-ci-${{ github.event.pull_request.number || github.ref }}
+  # A label other than ios-ci runs nothing (see RELEVANT below), so it gets
+  # its own group and never cancels a real run of the same pull request.
+  group: apps-ci-${{ github.event.pull_request.number || github.ref }}-${{ (github.event.action == 'labeled' && github.event.label.name != 'ios-ci') && 'skip' || 'run' }}
   cancel-in-progress: true
 
 env:
@@ -33,6 +35,8 @@ env:
 
 jobs:
   checks:
+    # RELEVANT: adding a label other than ios-ci reruns nothing.
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'ios-ci' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -66,6 +70,7 @@ jobs:
         run: python3 -m unittest discover -s scripts -p "test_verify_ipa.py" -v
 
   android:
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'ios-ci' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -138,7 +143,7 @@ jobs:
           script: ./gradlew :app:connectedDemoDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=${{ env.ZZ_ANDROID_READ_TEST }}
 
   ios:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'ios-ci') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'ios-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'ios-ci') }}
     runs-on: macos-26
     timeout-minutes: 60
     steps:
@@ -162,6 +167,8 @@ jobs:
         run: swift test --package-path apps/ios/Packages/ZZCore
       - name: ZZAPI tests (stub transport fixtures)
         run: swift test --package-path apps/ios/Packages/ZZAPI
+      - name: ZZDesign tests (tokens and fonts)
+        run: swift test --package-path apps/ios/Packages/ZZDesign
       - name: App tests and snapshots (Demo)
         run: >-
           xcodebuild test
