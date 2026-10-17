@@ -44,7 +44,7 @@ This repository holds the governing spec, repo tooling, and native iOS and Andro
 zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. On-device text recognition uses Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: recognition qualification, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The central resolver and authoritative wordlist remain zzThis [ZZTHIS SPEC].
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
-- Everyday codes are free public codes. The zzThis resolver spec lists that scope as v2 [ZZTHIS SPEC]. Create stays unavailable until the server adds it ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
+- Everyday codes are free public codes. zzThis adopted that scope for v1.1 (D-2026-10-10-21), and Create in the apps mints them ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
 - Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. End-to-end orchestration is in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A passing CI run, or a workflow's presence, does not by itself qualify a release.
 
@@ -63,7 +63,10 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md) | How the apps consume zzthis `design/` |
 | [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ28: ZQ1 to ZQ26 decided 2026-10-04, ZQ27 (CI spend) and ZQ28 (toolchain pins) decided 2026-10-05 by established practice. |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
-| [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9 |
+| [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9, then Phases 10 to 13 (whole-system check, store readiness, v1.1) |
+| [`apps/ios`](apps/ios) | SwiftUI app, and the `ZZCore`, `ZZAPI`, and `ZZDesign` packages |
+| [`apps/android`](apps/android) | Jetpack Compose app, and the `core-*` modules |
+| [`apps/store`](apps/store) | Store listing, privacy, and review drafts (Danny submits) |
 | [`contracts/zzthis-v1.openapi.yaml`](contracts/zzthis-v1.openapi.yaml) | Pinned copy of zzthis `specs/005-v1-api/openapi.yaml` |
 | [`scripts/lint-specs.py`](scripts/lint-specs.py) | Spec lint, over the files `git ls-files` lists |
 | [`.gitignore`](.gitignore) | Generated and local paths, never committed or linted |
@@ -88,7 +91,7 @@ zzThis, not this repo, holds the central server, the later web client, the marke
 
 ## Architecture
 
-The apps are thin clients [DANNY 2026-10-04]. One zzThis server owns codes, records, grants, and the audit log. Revocation, single use, expiry, and rate limits are enforced there [ZZTHIS SPEC]. Nothing in that server is built. The diagram is the client view of contract 1, the pinned zzThis spec 005 OpenAPI, limited to what zzThat calls.
+The apps are thin clients [DANNY 2026-10-04]. One zzThis server owns codes, records, grants, and the audit log. Revocation, single use, expiry, and rate limits are enforced there [ZZTHIS SPEC]. The server is built in zzThis; its production launch is Danny's call. The diagram is the client view of contract 1, the pinned zzThis spec 005 OpenAPI, limited to what zzThat calls.
 
 ```mermaid
 flowchart LR

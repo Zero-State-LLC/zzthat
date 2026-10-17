@@ -8,7 +8,7 @@ Harness adapters only point here.
 
 Specs live in [`specs/`](specs/). The build contract is [`specs/001-zzthat-apps/runtime.md`](specs/001-zzthat-apps/runtime.md).
 Read [`specs/001-zzthat-apps/design.md`](specs/001-zzthat-apps/design.md) before any visual work.
-Do not skip to app source. Danny accepts spec 001 before application code lands.
+Spec before code: change the spec (and get Danny's accept for anything non-trivial), then the app source to match.
 
 ## Commands
 
@@ -16,7 +16,7 @@ Do not skip to app source. Danny accepts spec 001 before application code lands.
 |---|---|
 | Spec lint | `python3 scripts/lint-specs.py` |
 
-Do not invent further commands. App build commands are named in runtime.md and are not run from this spec-only tree.
+Do not invent further commands. App build and test commands are in runtime.md (Testing) and `.github/workflows/apps-ci.yml`.
 
 ## Invariants
 
