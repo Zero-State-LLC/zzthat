@@ -1,8 +1,7 @@
 name: Apps CI
 
 # App tests for the zzThat iOS and Android apps (runtime.md, Testing; tasks.md
-# T004). Triggers and runners follow the ZQ27 no-spend default until Danny
-# answers ZQ27:
+# T004). Triggers and runners follow ZQ27 (decided 2026-10-05, decisions.md):
 #   checks   ubuntu-latest, every pull request: pin, strings, manifests.
 #   android  ubuntu-latest, every pull request: client generation, JVM unit
 #            tests, Paparazzi, then the ML Kit test on an emulator.
