@@ -8,21 +8,32 @@ import android.graphics.Typeface
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.zer0state.zzthat.grammar.Band
 import com.zer0state.zzthat.grammar.CheckResult
 import com.zer0state.zzthat.grammar.CodeClass
+import com.zer0state.zzthat.grammar.MarkerRole
 import com.zer0state.zzthat.grammar.ReadPipeline
+import com.zer0state.zzthat.grammar.Upright
+import com.zer0state.zzthat.grammar.VisualCandidate
 import com.zer0state.zzthat.grammar.WordListLoader
-import com.zer0state.zzthat.scan.MlKitReader
+import com.zer0state.zzthat.scan.BitmapImage
+import com.zer0state.zzthat.scan.CameraPipeline
+import com.zer0state.zzthat.scan.CameraSession
+import com.zer0state.zzthat.scan.MlKitRecognizer
+import com.zer0state.zzthat.scan.ScanRow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
  * runtime.md, Testing: the read pipeline on a rendered image of
- * zz-copper-lantern-sky-zz yields that one candidate (tasks.md T023, Phase 2),
- * with ML Kit's bundled Latin model on the device.
+ * zz-copper-lantern-sky-zz yields that one candidate (tasks.md T023 and T025),
+ * with ML Kit's bundled Latin model on the device: the marker pass, pairing,
+ * and the reader on the selected ROI only. A smoke test, not qualification
+ * evidence.
  */
 @RunWith(AndroidJUnit4::class)
 class ReadPipelineInstrumentedTest {
@@ -43,28 +54,55 @@ class ReadPipelineInstrumentedTest {
     private fun fixture7() = InstrumentationRegistry.getInstrumentation().targetContext.assets
         .open("wordlists/fixture-7.txt").bufferedReader().use { WordListLoader.parse("fixture-7", it.readText()) }
 
-    @Test
-    fun renderedCodeYieldsThatOneCandidate(): Unit = runBlocking {
-        val lines = MlKitReader().read(render(listOf("zz-copper-lantern-sky-zz")))
-        lines.forEach { Log.i(TAG, "line \"${it.text}\" confidence ${it.confidence} pieces ${it.pieces.size}") }
-        val list = fixture7()
-        val result = ReadPipeline(list, list).read(lines)
-        assertEquals("read: ${result.text}", listOf("zz-copper-lantern-sky-zz"), result.candidates.map { it.canonical })
-        val candidate = result.candidates.single()
-        assertEquals(CodeClass.Word, candidate.codeClass)
-        assertEquals(CheckResult.Ok, candidate.check)
-        assertTrue(candidate.boxes.isNotEmpty())
-        assertTrue(candidate.boxes.toString(), candidate.boxes.all { it.minX >= 0 && it.minY >= 0 && it.maxX <= 1 && it.maxY <= 1 })
-        Log.i(TAG, "band ${candidate.band} rows ${candidate.rows}")
+    private suspend fun scan(lines: List<String>, pipeline: ReadPipeline = ReadPipeline(fixture7(), fixture7())): Pair<CameraSession, CameraSession.Outcome> {
+        val session = CameraSession()
+        val outcome = session.begin(BitmapImage(render(lines), Upright.NONE), CameraPipeline(MlKitRecognizer()), pipeline)
+        session.result?.let { result ->
+            Log.i(TAG, "markers ${result.fiducials.map { it.role to it.box }} pairs ${result.pairs.size} reasons ${result.reasonCodes}")
+        }
+        return session to outcome
     }
 
+    /** The marker pass boxes both markers from ML Kit's Symbols, then only the ROI is read; confirm-only asks for a confirm. */
     @Test
-    fun aCodeAcrossTwoLinesIsOneCode(): Unit = runBlocking {
-        val lines = MlKitReader().read(render(listOf("zz-copper-lantern", "sky-zz")))
-        lines.forEach { Log.i(TAG, "line \"${it.text}\" confidence ${it.confidence}") }
-        val result = ReadPipeline(null, null).read(lines)
-        assertEquals("read: ${result.text}", listOf("zz-copper-lantern-sky-zz"), result.candidates.map { it.canonical })
-        assertEquals(listOf(0, 0, 1), result.candidates.single().rows.map { it.lineIndex })
+    fun renderedCodeYieldsThatOneCandidate(): Unit = runBlocking {
+        val (session, outcome) = scan(listOf("zz-copper-lantern-sky-zz"))
+        val result = requireNotNull(session.result)
+        assertEquals("reasons ${result.reasonCodes}", false, result.failedClosed)
+        assertEquals(listOf(MarkerRole.OPENING, MarkerRole.CLOSING), result.fiducials.map { it.role })
+        val read = requireNotNull((outcome as CameraSession.Outcome.Rows).read)
+        Log.i(TAG, "hypotheses ${session.result?.candidates?.map { it.rawText to it.confidence }}")
+        assertEquals(listOf("zz-copper-lantern-sky-zz"), read.candidates.map { it.canonical })
+        val candidate = read.candidates.single()
+        assertEquals(CodeClass.Word, candidate.codeClass)
+        assertEquals(CheckResult.Ok, candidate.check)
+        // Never Accept while confirm-only is on: a reading at or above 0.80 is turned into Clarify, and a lower one is Clarify already.
+        assertEquals(Band.CLARIFY, candidate.band)
+        val confidence = session.result!!.candidates.single().confidence.valueOrNull
+        if (confidence != null && confidence >= 0.80) assertTrue("confirm-only turned the Accept into Clarify", candidate.confirmOnly)
+        val roi = session.result!!.rois.single()
+        assertTrue(roi.polygon.toString(), roi.polygon.all { it.x in 0.0..1.0 && it.y in 0.0..1.0 })
+        Log.i(TAG, "rows ${candidate.rows}")
+    }
+
+    /** v1 pairs same-baseline markers only (FR-009 as narrowed by FR-052): a code wrapped onto a second line fails closed, with no payload read. */
+    @Test
+    fun aCodeAcrossTwoBaselinesIsNotPaired(): Unit = runBlocking {
+        val (session, outcome) = scan(listOf("zz-copper-lantern", "sky-zz"))
+        assertTrue(outcome is CameraSession.Outcome.Rows)
+        assertNull((outcome as CameraSession.Outcome.Rows).read)
+        assertTrue(session.result!!.pairs.isEmpty())
+        assertEquals(2, session.rows.count { (it as ScanRow.Unread).candidate is VisualCandidate.Partial })
+        assertTrue(session.result!!.candidates.isEmpty())
+    }
+
+    /** Two codes wait for a pick before any payload is read. */
+    @Test
+    fun twoCodesWaitForSelection(): Unit = runBlocking {
+        val (session, outcome) = scan(listOf("zz-river-falcon-sky-zz", "zz-copper-lantern-sky-zz"))
+        assertNull((outcome as CameraSession.Outcome.Rows).read)
+        assertEquals(2, session.result!!.pairs.size)
+        assertTrue(session.result!!.candidates.isEmpty())
     }
 
     private companion object {

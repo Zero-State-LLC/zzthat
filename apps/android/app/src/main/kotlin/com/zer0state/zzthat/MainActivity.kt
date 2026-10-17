@@ -13,13 +13,14 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zer0state.zzthat.app.Root
 import com.zer0state.zzthat.app.TabModels
-import com.zer0state.zzthat.scan.MlKitReader
+import com.zer0state.zzthat.scan.CameraPipeline
+import com.zer0state.zzthat.scan.MlKitRecognizer
 import com.zer0state.zzthat.ui.ZZTheme
 
-/** The tab models and the reader live across configuration changes. */
+/** The tab models and the camera reader live across configuration changes. */
 class RootViewModel : ViewModel() {
     val models = TabModels()
-    val reader = MlKitReader()
+    val camera = CameraPipeline(MlKitRecognizer())
 }
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 if (resumes[0]++ > 0) (application as ZZThatApplication).refreshDiscovery()
             }
             ZZTheme {
-                Root(app, root.models, root.reader, reducedMotion)
+                Root(app, root.models, root.camera, reducedMotion)
             }
         }
     }

@@ -22,20 +22,27 @@ data class NormRect(val x: Double, val y: Double, val width: Double, val height:
 }
 
 /**
- * One recognized line (runtime.md, Read pipeline step 2). The reader keeps the
- * line's own confidence: on Android `Text.Line.getConfidence()`, never an
- * Element or Symbol confidence.
+ * One recognized line (runtime.md, Read pipeline step 5), mapped from the
+ * engine by its adapter. The reader keeps the line's own confidence: on
+ * Android `Text.Line.getConfidence()`, never an Element or Symbol confidence.
+ * Boxes are normalized over the image the reader was given.
  */
 data class RecognizedLine(
     val text: String,
-    /** The line confidence, from 0 to 1. */
-    val confidence: Double,
+    /** The line confidence, from 0 to 1, or null when the engine gives no meaningful score. Never synthesized. */
+    val confidence: Double?,
     val box: NormRect,
     /** Boxes for the line's words, when the reader can give them. */
     val pieces: List<Piece> = emptyList(),
+    /** The reader's text angle in degrees, or null when it gives none. */
+    val angleDegrees: Double? = null,
 ) {
-    /** A run of non-space text: its code point offsets in [text], and its box. */
-    data class Piece(val range: IntRange, val box: NormRect)
+    /**
+     * A run of non-space text: its code point offsets in [text], and its box.
+     * [glyphs] has one box per code point of the run when the reader gives
+     * them, and is empty otherwise.
+     */
+    data class Piece(val range: IntRange, val box: NormRect, val glyphs: List<NormRect> = emptyList())
 }
 
 /**
@@ -50,6 +57,8 @@ data class ReadCandidate(
     val band: Band,
     val rows: List<BandRow>,
     val boxes: List<NormRect>,
+    /** Confirm-only turned this camera Accept into Clarify (spec 004 FR-023). */
+    val confirmOnly: Boolean = false,
 ) {
     val canonical: String? get() = (kind as? ScanKind.Code)?.code?.canonical
 }
@@ -75,9 +84,16 @@ class ReadPipeline(
     val classifyList: WordList?,
     /** The list for a local check word: only the bundled list whose version equals the server's `wordlist_version` (FR-044). */
     val checkList: WordList?,
+    /** The capture bands, limits, and confirm-only setting. */
+    val capture: CaptureConfig = CaptureConfig.DEFAULT,
 ) {
-    /** Steps 3 to 5 on recognized lines. */
-    fun read(lines: List<RecognizedLine>): ReadResult {
+    /**
+     * The shared scanner rules, classifier, check word, and bands over
+     * recognized running text that holds literal markers. The camera does
+     * not read a whole photo this way: it decodes one selected pair's ROI
+     * with CameraRead.decode.
+     */
+    fun read(lines: List<RecognizedLine>, evidence: CaptureEvidence = CaptureEvidence.NONE): ReadResult {
         val ordered = readingOrder(lines)
         val text = StringBuilder()
         val lineRanges = mutableListOf<IntRange>()
@@ -100,10 +116,10 @@ class ReadPipeline(
                 BandRow(
                     token = String(points, range.first, range.last - range.first + 1),
                     lineIndex = line,
-                    lineConfidence = if (ordered.isEmpty()) 0.0 else ordered[line].confidence,
+                    lineConfidence = ordered.getOrNull(line)?.confidence,
                 )
             }
-            evaluate(candidate.kind, offset, rows, boxes(candidate.range, ordered, lineRanges), ReadSource.CAMERA)
+            evaluate(candidate.kind, offset, rows, boxes(candidate.range, ordered, lineRanges), ReadSource.CAMERA, evidence)
         }
         return ReadResult(joined, candidates)
     }
@@ -120,7 +136,14 @@ class ReadPipeline(
         }
     }
 
-    fun evaluate(kind: ScanKind, id: Int, rows: List<BandRow>, boxes: List<NormRect>, source: ReadSource): ReadCandidate {
+    fun evaluate(
+        kind: ScanKind,
+        id: Int,
+        rows: List<BandRow>,
+        boxes: List<NormRect>,
+        source: ReadSource,
+        evidence: CaptureEvidence = CaptureEvidence.NONE,
+    ): ReadCandidate {
         var codeClass: CodeClass? = null
         var check: CheckResult? = null
         if (kind is ScanKind.Code) {
@@ -131,8 +154,8 @@ class ReadPipeline(
                 check = CheckWord.verify(code, list)
             }
         }
-        val band = Bands.band(kind, codeClass, check, rows, source)
-        return ReadCandidate(id, kind, codeClass, check, band, rows, boxes)
+        val decision = Bands.decide(kind, codeClass, check, rows, source, evidence, capture)
+        return ReadCandidate(id, kind, codeClass, check, decision.band, rows, boxes, decision.confirmOnly)
     }
 
     companion object {
@@ -149,30 +172,33 @@ class ReadPipeline(
          * the bundled list whose version matches; with no match there is no
          * local check word, and the classifier uses [DEFAULT_CLASSIFY_VERSION].
          */
-        fun of(bundled: List<WordList>, serverVersion: String?): ReadPipeline {
+        fun of(bundled: List<WordList>, serverVersion: String?, capture: CaptureConfig = CaptureConfig.DEFAULT): ReadPipeline {
             val check = WordListLoader.matching(bundled, serverVersion)
             val classify = check ?: bundled.firstOrNull { it.version == DEFAULT_CLASSIFY_VERSION }
-            return ReadPipeline(classifyList = classify, checkList = check)
+            return ReadPipeline(classifyList = classify, checkList = check, capture = capture)
         }
 
         /**
-         * Step 3: top to bottom, then left to right. Lines whose vertical
+         * Step 2: top to bottom, then left to right. Lines whose vertical
          * centers fall inside one another's height share a row.
          */
-        fun readingOrder(lines: List<RecognizedLine>): List<RecognizedLine> {
-            val byTop = lines.sortedWith(compareBy({ it.box.minY }, { it.box.minX }))
-            val rows = mutableListOf<MutableList<RecognizedLine>>()
-            for (line in byTop) {
+        fun readingOrder(lines: List<RecognizedLine>): List<RecognizedLine> = readingOrder(lines) { it.box }
+
+        /** Reading order for anything with a box. */
+        fun <T> readingOrder(items: List<T>, box: (T) -> NormRect): List<T> {
+            val byTop = items.sortedWith(compareBy({ box(it).minY }, { box(it).minX }))
+            val rows = mutableListOf<MutableList<T>>()
+            for (item in byTop) {
                 val last = rows.lastOrNull()?.first()
                 if (last != null &&
-                    abs(line.box.midY - last.box.midY) < maxOf(minOf(line.box.height, last.box.height) / 2, 0.0001)
+                    abs(box(item).midY - box(last).midY) < maxOf(minOf(box(item).height, box(last).height) / 2, 0.0001)
                 ) {
-                    rows.last() += line
+                    rows.last() += item
                 } else {
-                    rows += mutableListOf(line)
+                    rows += mutableListOf(item)
                 }
             }
-            return rows.flatMap { row -> row.sortedBy { it.box.minX } }
+            return rows.flatMap { row -> row.sortedBy { box(it).minX } }
         }
 
         internal fun boxes(range: IntRange, lines: List<RecognizedLine>, lineRanges: List<IntRange>): List<NormRect> {

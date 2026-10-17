@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.grammar.NormRect
-import com.zer0state.zzthat.grammar.ReadCandidate
 import llc.zerostate.zzthis.design.ZZRadius
 import llc.zerostate.zzthis.design.ZZSpace
 import llc.zerostate.zzthis.design.ZZType
@@ -346,7 +345,7 @@ fun LimitedField(
  * with the camera, step 2). Boxes are normalized, origin at the top left.
  */
 @Composable
-fun PhotoBoxes(image: ImageBitmap, candidates: List<ReadCandidate>) {
+fun PhotoBoxes(image: ImageBitmap, boxes: List<NormRect>) {
     val palette = LocalPalette.current
     val measurer = rememberTextMeasurer()
     val numberStyle = TextStyle(fontFamily = ZZFonts.mono, fontSize = ZZType.TextXs, fontWeight = ZZType.WeightSemibold, color = palette.onAccent)
@@ -360,26 +359,22 @@ fun PhotoBoxes(image: ImageBitmap, candidates: List<ReadCandidate>) {
         Image(bitmap = image, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
         Canvas(modifier = Modifier.fillMaxSize()) {
             val pad = 3.dp.toPx()
-            candidates.forEachIndexed { offset, candidate ->
-                candidate.boxes.forEachIndexed { boxIndex, box: NormRect ->
-                    val left = (box.minX * size.width).toFloat()
-                    val top = (box.minY * size.height).toFloat()
-                    val width = (box.width * size.width).toFloat()
-                    val height = (box.height * size.height).toFloat()
-                    drawRect(
-                        color = palette.accent,
-                        topLeft = Offset(left - pad, top - pad),
-                        size = Size(width + 2 * pad, height + 2 * pad),
-                        style = Stroke(width = 2.dp.toPx()),
-                    )
-                    if (boxIndex == 0) {
-                        val number = measurer.measure(AnnotatedString("${offset + 1}"), numberStyle)
-                        val x = maxOf(left, 0f)
-                        val y = maxOf(top - pad - number.size.height, 0f)
-                        drawRect(palette.accent, Offset(x, y), Size(number.size.width + 8.dp.toPx(), number.size.height.toFloat()))
-                        drawText(number, topLeft = Offset(x + 4.dp.toPx(), y))
-                    }
-                }
+            boxes.forEachIndexed { offset, box ->
+                val left = (box.minX * size.width).toFloat()
+                val top = (box.minY * size.height).toFloat()
+                val width = (box.width * size.width).toFloat()
+                val height = (box.height * size.height).toFloat()
+                drawRect(
+                    color = palette.accent,
+                    topLeft = Offset(left - pad, top - pad),
+                    size = Size(width + 2 * pad, height + 2 * pad),
+                    style = Stroke(width = 2.dp.toPx()),
+                )
+                val number = measurer.measure(AnnotatedString("${offset + 1}"), numberStyle)
+                val x = maxOf(left, 0f)
+                val y = maxOf(top - pad - number.size.height, 0f)
+                drawRect(palette.accent, Offset(x, y), Size(number.size.width + 8.dp.toPx(), number.size.height.toFloat()))
+                drawText(number, topLeft = Offset(x + 4.dp.toPx(), y))
             }
         }
     }

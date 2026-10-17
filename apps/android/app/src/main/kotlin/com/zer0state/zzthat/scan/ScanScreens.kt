@@ -37,8 +37,9 @@ import com.zer0state.zzthat.R
 import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.grammar.Band
 import com.zer0state.zzthat.grammar.Grammar
-import com.zer0state.zzthat.grammar.ReadCandidate
+import com.zer0state.zzthat.grammar.MarkerRole
 import com.zer0state.zzthat.grammar.ScanKind
+import com.zer0state.zzthat.grammar.VisualCandidate
 import com.zer0state.zzthat.ui.ButtonKind
 import com.zer0state.zzthat.ui.ChipShape
 import com.zer0state.zzthat.ui.CodeText
@@ -58,7 +59,7 @@ import llc.zerostate.zzthis.design.ZZType
 /** What the Scan screen shows (runtime.md, Screens: Scan and Pick). */
 data class ScanScreenState(
     val photo: ImageBitmap? = null,
-    val candidates: List<ReadCandidate> = emptyList(),
+    val rows: List<ScanRow> = emptyList(),
     val reading: Boolean = false,
     @StringRes val message: Int? = null,
     val demo: Boolean = false,
@@ -68,8 +69,8 @@ data class ScanScreenState(
 /**
  * Scan (design/UX.md, Scan with the camera): one still photo, a box on it
  * for each candidate, and a list in reading order. Typing is always one tap
- * away. Several candidates wait for a tap (FR-026); nothing is picked for the
- * person.
+ * away. Several candidates wait for a tap (FR-026) before any payload is
+ * read (FR-052); nothing is picked for the person.
  */
 @Composable
 fun ScanScreen(
@@ -77,13 +78,13 @@ fun ScanScreen(
     onTakePhoto: () -> Unit = {},
     onPickPhoto: () -> Unit = {},
     onTypeInstead: () -> Unit = {},
-    onSelect: (ReadCandidate) -> Unit = {},
+    onSelect: (ScanRow) -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.reading) {
         val photo = state.photo
         if (photo != null) {
-            PhotoBoxes(photo, state.candidates)
-            if (state.candidates.isNotEmpty()) CandidateList(state.candidates, onSelect)
+            PhotoBoxes(photo, state.rows.map { it.box })
+            if (state.rows.isNotEmpty()) CandidateList(state.rows, onSelect)
             state.message?.let { Message(it) }
             if (!state.reading) CaptureButtons(retake = true, state.cameraAvailable, state.demo, onTakePhoto, onPickPhoto)
         } else {
@@ -132,12 +133,16 @@ fun CaptureButtons(retake: Boolean, cameraAvailable: Boolean, demo: Boolean, onT
     }
 }
 
-/** Pick (runtime.md, Screens): every candidate in reading order, numbered like its box. A row opens only when the person taps it. */
+/**
+ * Pick (runtime.md, Screens): every candidate in reading order, numbered like
+ * its box. A row opens only when the person taps it. A complete pair that has
+ * not been read yet shows its markers only: its payload is read after the tap.
+ */
 @Composable
-fun CandidateList(candidates: List<ReadCandidate>, onSelect: (ReadCandidate) -> Unit) {
+fun CandidateList(rows: List<ScanRow>, onSelect: (ScanRow) -> Unit) {
     val palette = LocalPalette.current
     Column(verticalArrangement = Arrangement.spacedBy(ZZSpace.SpaceXs)) {
-        if (candidates.size > 1 || candidates.firstOrNull()?.band != Band.ACCEPT) {
+        if (rows.size > 1 || (rows.firstOrNull() as? ScanRow.Read)?.candidate?.band != Band.ACCEPT) {
             RoleText(stringResource(R.string.scan_pick_one), TextRole.TITLE, Modifier.semantics { heading() })
         }
         Column(
@@ -146,16 +151,16 @@ fun CandidateList(candidates: List<ReadCandidate>, onSelect: (ReadCandidate) -> 
                 .background(palette.panel, ChipShape)
                 .border(ZZSpace.RuleHair, palette.rule, ChipShape),
         ) {
-            candidates.forEachIndexed { offset, candidate ->
-                CandidateRow(offset + 1, candidate, Modifier.testTag("scan.candidate.${offset + 1}").clickable(role = Role.Button) { onSelect(candidate) })
-                if (offset < candidates.size - 1) HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
+            rows.forEachIndexed { offset, row ->
+                CandidateRow(offset + 1, row, Modifier.testTag("scan.candidate.${offset + 1}").clickable(role = Role.Button) { onSelect(row) })
+                if (offset < rows.size - 1) HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
             }
         }
     }
 }
 
 @Composable
-fun CandidateRow(number: Int, candidate: ReadCandidate, modifier: Modifier = Modifier) {
+fun CandidateRow(number: Int, row: ScanRow, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -172,24 +177,40 @@ fun CandidateRow(number: Int, candidate: ReadCandidate, modifier: Modifier = Mod
             modifier = Modifier.background(palette.accent, ChipShape).padding(horizontal = ZZSpace.Space2xs),
         )
         Column(verticalArrangement = Arrangement.spacedBy(ZZSpace.Space3xs), modifier = Modifier.weight(1f)) {
-            when (val kind = candidate.kind) {
-                is ScanKind.Code -> CodeText(kind.code.canonical, size = ZZType.TextBase)
-                is ScanKind.Partial -> {
-                    MonoText(kind.text)
-                    RoleText(stringResource(R.string.scan_partial), TextRole.CAPTION)
+            when (row) {
+                is ScanRow.Read -> when (val kind = row.candidate.kind) {
+                    is ScanKind.Code -> CodeText(kind.code.canonical, size = ZZType.TextBase)
+                    is ScanKind.Partial -> {
+                        MonoText(kind.text)
+                        RoleText(stringResource(R.string.scan_partial), TextRole.CAPTION)
+                    }
+                    ScanKind.Bare -> {
+                        MonoText("zz")
+                        RoleText(stringResource(R.string.scan_bare), TextRole.CAPTION)
+                    }
+                    is ScanKind.Invalid -> {
+                        MonoText(kind.text)
+                        RoleText(stringResource(R.string.type_malformed), TextRole.CAPTION)
+                    }
                 }
-                ScanKind.Bare -> {
-                    MonoText("zz")
-                    RoleText(stringResource(R.string.scan_bare), TextRole.CAPTION)
-                }
-                is ScanKind.Invalid -> {
-                    MonoText(kind.text)
-                    RoleText(stringResource(R.string.type_malformed), TextRole.CAPTION)
+                is ScanRow.Unread -> when (val candidate = row.candidate) {
+                    is VisualCandidate.Complete -> MonoText(UNREAD_PAIR)
+                    is VisualCandidate.Partial -> {
+                        MonoText(if (candidate.marker.role == MarkerRole.CLOSING) "\u2026 " + candidate.marker.literal else candidate.marker.literal + " \u2026")
+                        RoleText(stringResource(R.string.scan_partial), TextRole.CAPTION)
+                    }
+                    is VisualCandidate.Bare -> {
+                        MonoText(candidate.marker.literal)
+                        RoleText(stringResource(R.string.scan_bare), TextRole.CAPTION)
+                    }
                 }
             }
         }
     }
 }
+
+/** The two markers of a pair whose payload is read only after the tap. Glyphs, not a sentence. */
+private const val UNREAD_PAIR = "zz \u2026 zz"
 
 // MARK: Type
 

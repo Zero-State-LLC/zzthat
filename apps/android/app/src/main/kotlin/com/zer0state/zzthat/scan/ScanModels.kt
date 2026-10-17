@@ -18,25 +18,10 @@ import com.zer0state.zzthat.grammar.ParseFailure
 import com.zer0state.zzthat.grammar.ReadCandidate
 import com.zer0state.zzthat.grammar.ReadPipeline
 import com.zer0state.zzthat.grammar.ReadSource
-import com.zer0state.zzthat.grammar.RecognizedLine
 import com.zer0state.zzthat.grammar.ScanKind
 import com.zer0state.zzthat.grammar.TypedRead
+import com.zer0state.zzthat.grammar.VisualCandidate
 import com.zer0state.zzthat.grammar.nearWords
-import kotlinx.coroutines.CancellationException
-
-/** Cancellation ends the read operation; only ordinary OCR errors become an empty result. */
-internal suspend fun <T> readOrNull(read: suspend () -> T): T? = try {
-    read()
-} catch (error: CancellationException) {
-    throw error
-} catch (error: Exception) {
-    null
-}
-
-/** The on-device reader (runtime.md, Read pipeline step 2): lines with their own confidence. */
-fun interface TextReader {
-    suspend fun read(bitmap: Bitmap): List<RecognizedLine>
-}
 
 /**
  * What tapping a candidate does (zzThis spec 004, Client read pipeline step
@@ -70,36 +55,62 @@ sealed interface CandidateAction {
 data class ClarifyInput(val parts: List<String>, val kind: CodeKind, val source: ReadSource)
 
 /**
- * One scan: the photo, the on-device read, and the candidates (runtime.md,
- * Read pipeline). The photo stays on the device, in the caches folder only
- * while the scan runs (FR-004).
+ * One scan: the photo, the on-device read, and the rows (runtime.md, Read
+ * pipeline). The photo stays on the device, in the caches folder only while
+ * the scan runs (FR-004); its recognition evidence stays in memory for the
+ * current attempt only.
  */
 class ScanModel {
-    var photo by mutableStateOf<Bitmap?>(null)
-        private set
-    var candidates by mutableStateOf<List<ReadCandidate>>(emptyList())
-        private set
-    var reading by mutableStateOf(false)
-        private set
+    val session = CameraSession()
+
+    val photo: Bitmap? get() = (session.image as? BitmapImage)?.bitmap
+    val rows: List<ScanRow> get() = session.rows
+    val reading: Boolean get() = session.reading
 
     /** The one sentence under the photo: an empty read, a band reason, the camera being off, a 429, or the offline wait. */
     @get:StringRes
     var message by mutableStateOf<Int?>(null)
 
-    /** Reads one still photo. Returns the canonical code to open at once when there is one candidate and it is in Accept. */
-    suspend fun read(bitmap: Bitmap, app: AppModel, reader: TextReader): String? {
-        photo = bitmap
-        reading = true
+    /**
+     * Reads one still photo. Returns the canonical code to open at once: only
+     * when one complete pair is the only candidate and its one reading is in
+     * Accept (never while confirm-only is on).
+     */
+    suspend fun read(image: CaptureImage, app: AppModel, camera: CameraPipeline): String? {
         message = null
-        candidates = emptyList()
-        return try {
-            val lines = readOrNull { reader.read(bitmap) }.orEmpty()
-            val result = app.pipeline.read(lines)
-            candidates = result.candidates
-            if (result.candidates.isEmpty()) message = R.string.scan_no_code
-            result.autoOpen?.canonical
-        } finally {
-            reading = false
+        return when (val outcome = session.begin(image, camera, app.pipeline)) {
+            is CameraSession.Outcome.Empty -> {
+                message = outcome.message
+                null
+            }
+            is CameraSession.Outcome.Rows -> {
+                val read = outcome.read
+                if (read != null && read.candidates.isEmpty()) message = CameraSession.emptyMessage(read)
+                read?.autoOpen?.canonical
+            }
+            is CameraSession.Outcome.PairDone -> null
+        }
+    }
+
+    /**
+     * A tap on a row. A complete pair not read yet is read now, and only it
+     * (selection before payload OCR); a partial code or a bare mark never
+     * runs payload OCR. Returns what to do, or null when the pair gave
+     * several readings that now wait for a tap.
+     */
+    suspend fun select(row: ScanRow, app: AppModel, camera: CameraPipeline): CandidateAction? = when (row) {
+        is ScanRow.Read -> CandidateAction.of(row.candidate, ReadSource.CAMERA)
+        is ScanRow.Unread -> when (row.candidate) {
+            is VisualCandidate.Partial -> CandidateAction.Message(R.string.scan_partial)
+            is VisualCandidate.Bare -> CandidateAction.Message(R.string.scan_bare)
+            is VisualCandidate.Complete -> {
+                val read = (session.open(row, camera, app.pipeline) as CameraSession.Outcome.PairDone).read
+                when {
+                    read.candidates.isEmpty() -> CandidateAction.Message(CameraSession.emptyMessage(read))
+                    read.candidates.size == 1 -> CandidateAction.of(read.candidates.single(), ReadSource.CAMERA)
+                    else -> null
+                }
+            }
         }
     }
 
@@ -107,13 +118,11 @@ class ScanModel {
         message = R.string.scan_camera_off
     }
 
-    /** The scan ends: the photo is deleted (FR-004, T063). */
+    /** The scan ends: the photo is deleted (FR-004, T063) and the evidence dropped. */
     fun end(app: AppModel) {
         app.photos.end()
-        photo = null
-        candidates = emptyList()
+        session.clear()
         message = null
-        reading = false
     }
 }
 

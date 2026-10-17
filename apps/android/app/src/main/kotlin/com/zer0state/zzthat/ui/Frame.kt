@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.app.AppModel
+import com.zer0state.zzthat.scan.CaptureImage
 import com.zer0state.zzthat.scan.PhotoDecoder
 import com.zer0state.zzthat.storage.PhotoScratch
 import kotlinx.coroutines.CancellationException
@@ -211,7 +211,7 @@ internal fun savedCameraFile(saved: Boolean, file: File?, photos: PhotoScratch):
  * picker, offered on every build (FR-012).
  */
 @Composable
-fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnreadable: () -> Unit, onCameraOff: () -> Unit): PhotoCapture {
+fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (CaptureImage) -> Unit, onUnreadable: () -> Unit, onCameraOff: () -> Unit): PhotoCapture {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var pending by remember { mutableStateOf<File?>(null) }
@@ -220,7 +220,7 @@ fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnr
         pending = null
         if (file != null) {
             scope.launch {
-                val bitmap = try {
+                val image = try {
                     PhotoDecoder.decode(file)
                 } catch (error: CancellationException) {
                     app.photos.end()
@@ -228,11 +228,11 @@ fun rememberPhotoCapture(app: AppModel, onPhoto: suspend (Bitmap) -> Unit, onUnr
                 } catch (error: Exception) {
                     null
                 }
-                if (bitmap == null) {
+                if (image == null) {
                     app.photos.end()
                     onUnreadable()
                 } else {
-                    onPhoto(bitmap)
+                    onPhoto(image)
                 }
             }
         }
