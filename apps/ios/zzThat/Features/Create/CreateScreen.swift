@@ -252,6 +252,8 @@ struct CheckWordLabel: View {
 struct WriteCheckScreenState {
     var canonical: String
     var photo: UIImage?
+    /// The boxes to pick from before any payload is read (FR-052).
+    var visual: [VisualCandidate] = []
     var candidates: [ReadCandidate] = []
     var reading = false
     var verdict: WriteCheckModel.Verdict?
@@ -267,6 +269,7 @@ struct WriteCheckScreen: View {
     let state: WriteCheckScreenState
     @Binding var pickerItem: PhotosPickerItem?
     var onTakePhoto: () -> Void = {}
+    var onSelectBox: (VisualCandidate) -> Void = { _ in }
     var onSelect: (ReadCandidate) -> Void = { _ in }
 
     var body: some View {
@@ -274,9 +277,16 @@ struct WriteCheckScreen: View {
             CodeText(canonical: state.canonical)
             Text(.writecheckOnDevice).textRole(.secondary)
             if let photo = state.photo {
-                PhotoBoxes(image: photo, candidates: state.candidates)
+                if state.candidates.isEmpty {
+                    PhotoBoxes(image: photo, groups: state.visual.map { [$0.outline] })
+                } else {
+                    PhotoBoxes(image: photo, candidates: state.candidates)
+                }
                 if state.verdict == nil, state.candidates.count > 1 {
                     CandidateList(candidates: state.candidates, onSelect: onSelect)
+                } else if state.verdict == nil, state.candidates.isEmpty, !state.visual.isEmpty, !state.reading,
+                          state.message == nil {
+                    BoxList(photo: photo, candidates: state.visual, onSelect: onSelectBox)
                 }
             }
             switch state.verdict {
