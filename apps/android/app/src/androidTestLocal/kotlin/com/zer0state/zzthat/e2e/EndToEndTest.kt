@@ -46,11 +46,13 @@ class EndToEndTest {
 
     /**
      * The Terms step before the first create on this device (design/UX.md,
-     * Terms): confirm 18 or older and accept the Terms, when it shows.
+     * Terms): confirm 18 or older and accept the Terms, when it shows. A fresh
+     * install always shows it, but a slow emulator can take a while to read
+     * the stored acceptance, so this waits as long as every other step.
      */
     private fun confirmTermsIfAsked() {
         try {
-            rule.waitUntil(3_000) { exists("terms.age_confirm") }
+            rule.waitUntil(15_000) { exists("terms.age_confirm") }
         } catch (error: ComposeTimeoutException) {
             return
         }
