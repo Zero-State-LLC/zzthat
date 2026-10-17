@@ -1,6 +1,5 @@
 package com.zer0state.zzthat.app
 
-import android.graphics.Bitmap
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -85,11 +84,12 @@ import com.zer0state.zzthat.scan.ClarifyModel
 import com.zer0state.zzthat.scan.ClarifyScreen
 import com.zer0state.zzthat.scan.ClarifyScreenState
 import com.zer0state.zzthat.scan.ClarifyStep
+import com.zer0state.zzthat.scan.CameraPipeline
+import com.zer0state.zzthat.scan.CaptureImage
 import com.zer0state.zzthat.scan.DemoPhoto
 import com.zer0state.zzthat.scan.ScanModel
 import com.zer0state.zzthat.scan.ScanScreen
 import com.zer0state.zzthat.scan.ScanScreenState
-import com.zer0state.zzthat.scan.TextReader
 import com.zer0state.zzthat.scan.TypeModel
 import com.zer0state.zzthat.scan.TypeScreen
 import com.zer0state.zzthat.scan.TypeScreenState
@@ -143,7 +143,7 @@ private fun back(nav: NavHostController): Back = Back { nav.popBackStack() }
 
 /** The tab shell: three tabs, each with its own back stack, and Account, Sign in, Report, and Licenses over them. */
 @Composable
-fun Root(app: AppModel, models: TabModels, reader: TextReader, reducedMotion: Boolean) {
+fun Root(app: AppModel, models: TabModels, camera: CameraPipeline, reducedMotion: Boolean) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val hierarchy = entry?.destination?.hierarchy.orEmpty().toList()
@@ -186,7 +186,7 @@ fun Root(app: AppModel, models: TabModels, reader: TextReader, reducedMotion: Bo
                 popExitTransition = { exit },
             ) {
                 navigation<ScanGraph>(startDestination = ScanHome) {
-                    composable<ScanHome> { ScanRoute(app, models.scan, reader, nav) }
+                    composable<ScanHome> { ScanRoute(app, models.scan, camera, nav) }
                     composable<TypeDestination> { TypeRoute(app, nav) }
                     composable<ClarifyDestination> { ClarifyRoute(app, it.toRoute(), nav) }
                     composable<ResolveDestination> { ResolveRoute(app, it.toRoute<ResolveDestination>().canonical, nav) }
@@ -194,7 +194,7 @@ fun Root(app: AppModel, models: TabModels, reader: TextReader, reducedMotion: Bo
                 navigation<CreateGraph>(startDestination = CreateHome) {
                     composable<CreateHome> { CreateRoute(app, models.create, nav) }
                     composable<MintedDestination> { MintedRoute(app, models.create, it.toRoute<MintedDestination>().codeId, nav) }
-                    composable<WriteCheckDestination> { WriteCheckRoute(app, it.toRoute<WriteCheckDestination>().canonical, reader, nav) }
+                    composable<WriteCheckDestination> { WriteCheckRoute(app, it.toRoute<WriteCheckDestination>().canonical, camera, nav) }
                 }
                 navigation<CodesGraph>(startDestination = CodesHome) {
                     composable<CodesHome> { CodesRoute(app, models, nav) }
@@ -221,14 +221,22 @@ private fun AccountAction(nav: NavHostController) {
 // MARK: Scan
 
 @Composable
-private fun ScanRoute(app: AppModel, scan: ScanModel, reader: TextReader, nav: NavHostController) {
+private fun ScanRoute(app: AppModel, scan: ScanModel, camera: CameraPipeline, nav: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     fun open(canonical: String) {
         scope.launch { scan.message = openCanonical(canonical, app, nav) }
     }
-    suspend fun read(bitmap: Bitmap) {
-        scan.read(bitmap, app, reader)?.let(::open)
+    suspend fun read(image: CaptureImage) {
+        scan.read(image, app, camera)?.let(::open)
+    }
+    fun act(action: CandidateAction?) {
+        when (action) {
+            is CandidateAction.Resolve -> open(action.canonical)
+            is CandidateAction.Clarify -> nav.navigate(ClarifyDestination(Grammar.format(action.input.parts), camera = true))
+            is CandidateAction.Message -> scan.message = action.key
+            null -> Unit
+        }
     }
     val capture = rememberPhotoCapture(
         app,
@@ -248,7 +256,7 @@ private fun ScanRoute(app: AppModel, scan: ScanModel, reader: TextReader, nav: N
         ScanScreen(
             state = ScanScreenState(
                 photo = scan.photo?.asImageBitmap(),
-                candidates = scan.candidates,
+                rows = scan.rows,
                 reading = scan.reading,
                 message = scan.message,
                 demo = app.isDemo,
@@ -257,20 +265,14 @@ private fun ScanRoute(app: AppModel, scan: ScanModel, reader: TextReader, nav: N
             onTakePhoto = {
                 if (app.isDemo) {
                     // Demo reads the fixture photo on the device instead of the camera.
-                    scope.launch { read(DemoPhoto.make(context, listOf(DemoPhoto.CANONICAL)).bitmap) }
+                    scope.launch { read(DemoPhoto.make(context, listOf(DemoPhoto.CANONICAL)).image) }
                 } else {
                     capture.takePhoto()
                 }
             },
             onPickPhoto = capture.pickPhoto,
             onTypeInstead = { nav.navigate(TypeDestination) },
-            onSelect = { candidate ->
-                when (val action = CandidateAction.of(candidate, ReadSource.CAMERA)) {
-                    is CandidateAction.Resolve -> open(action.canonical)
-                    is CandidateAction.Clarify -> nav.navigate(ClarifyDestination(Grammar.format(action.input.parts), camera = true))
-                    is CandidateAction.Message -> scan.message = action.key
-                }
-            },
+            onSelect = { row -> scope.launch { act(scan.select(row, app, camera)) } },
         )
     }
 }
@@ -459,13 +461,13 @@ private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav:
 }
 
 @Composable
-private fun WriteCheckRoute(app: AppModel, canonical: String, reader: TextReader, nav: NavHostController) {
+private fun WriteCheckRoute(app: AppModel, canonical: String, camera: CameraPipeline, nav: NavHostController) {
     val model = remember(canonical) { WriteCheckModel(canonical) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val capture = rememberPhotoCapture(
         app,
-        onPhoto = { model.read(it, app, reader) },
+        onPhoto = { model.read(it, app, camera) },
         onUnreadable = {},
         onCameraOff = { model.cameraIsOff() },
     )
@@ -477,7 +479,7 @@ private fun WriteCheckRoute(app: AppModel, canonical: String, reader: TextReader
             state = WriteCheckScreenState(
                 canonical = canonical,
                 photo = model.photo?.asImageBitmap(),
-                candidates = model.candidates,
+                rows = model.rows,
                 reading = model.reading,
                 verdict = model.verdict,
                 message = model.message,
@@ -487,13 +489,13 @@ private fun WriteCheckRoute(app: AppModel, canonical: String, reader: TextReader
             onTakePhoto = {
                 if (app.isDemo) {
                     // The fixture photo shows the minted code, drawn on the device.
-                    scope.launch { model.read(DemoPhoto.make(context, listOf(canonical)).bitmap, app, reader) }
+                    scope.launch { model.read(DemoPhoto.make(context, listOf(canonical)).image, app, camera) }
                 } else {
                     capture.takePhoto()
                 }
             },
             onPickPhoto = capture.pickPhoto,
-            onSelect = model::pick,
+            onSelect = { row -> scope.launch { model.pick(row, app, camera) } },
         )
     }
 }

@@ -2,7 +2,7 @@
 
 **Status: draft for Danny. Do not submit.** Task T081. Store submission, store spend, and the privacy policy URL need Danny's yes (FR-031, constitution IX, T083). Danny may change any field here before he submits.
 
-**Finalization is held** until Danny supplies the legal name and address, the effective date, a children's section, and EU and California rights (B2, [DANNY 2026-10-05 #43]).
+**Finalization is held** until Danny supplies the legal name, the address, the governing-law state, and the policy host (B2, [DANNY 2026-10-05 #43]; zzThis D-2026-10-11-08). The launch is US-only, so there are no EU or UK sections; the effective date is the day the policy goes live.
 
 ## Listing text
 
@@ -66,4 +66,4 @@ Danny may change the rating or any answer before he submits.
 
 ## Not in the spec
 
-Store screenshots, a subtitle or short description, keywords, and the store category are not in the spec, so this draft does not write them.
+Store screenshots, the subtitle, short description, keywords, category, and App Review notes are proposed in [review-and-metadata-draft.md](review-and-metadata-draft.md), for Michael and Danny.

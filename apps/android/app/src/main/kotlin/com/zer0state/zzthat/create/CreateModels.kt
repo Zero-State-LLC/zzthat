@@ -14,8 +14,13 @@ import com.zer0state.zzthat.api.generated.models.Code
 import com.zer0state.zzthat.api.message
 import com.zer0state.zzthat.app.AppModel
 import com.zer0state.zzthat.app.res
+import com.zer0state.zzthat.grammar.PairRead
 import com.zer0state.zzthat.grammar.ReadCandidate
-import com.zer0state.zzthat.scan.TextReader
+import com.zer0state.zzthat.scan.BitmapImage
+import com.zer0state.zzthat.scan.CameraPipeline
+import com.zer0state.zzthat.scan.CameraSession
+import com.zer0state.zzthat.scan.CaptureImage
+import com.zer0state.zzthat.scan.ScanRow
 import com.zer0state.zzthat.ui.FieldLimits
 
 /**
@@ -171,8 +176,9 @@ class MintedModel(code: Code) {
 }
 
 /**
- * Write check (FR-037): the read pipeline on the person's photo, compared
- * with the minted code on the device. Nothing is uploaded.
+ * Write check (FR-037): the camera read pipeline on the person's photo,
+ * compared with the minted code on the device. Nothing is uploaded. The
+ * comparison is not a resolve, so confirm-only does not apply to it.
  */
 class WriteCheckModel(val canonical: String) {
     enum class Verdict {
@@ -180,12 +186,12 @@ class WriteCheckModel(val canonical: String) {
         MISMATCH,
     }
 
-    var photo by mutableStateOf<Bitmap?>(null)
-        private set
-    var candidates by mutableStateOf<List<ReadCandidate>>(emptyList())
-        private set
-    var reading by mutableStateOf(false)
-        private set
+    val session = CameraSession()
+
+    val photo: Bitmap? get() = (session.image as? BitmapImage)?.bitmap
+    val rows: List<ScanRow> get() = session.rows
+    val reading: Boolean get() = session.reading
+
     var verdict by mutableStateOf<Verdict?>(null)
         private set
 
@@ -193,42 +199,49 @@ class WriteCheckModel(val canonical: String) {
     var message by mutableStateOf<Int?>(null)
         private set
 
-    suspend fun read(bitmap: Bitmap, app: AppModel, reader: TextReader) {
-        photo = bitmap
+    suspend fun read(image: CaptureImage, app: AppModel, camera: CameraPipeline) {
         verdict = null
         message = null
-        candidates = emptyList()
-        reading = true
-        val lines = try {
-            reader.read(bitmap)
-        } catch (error: Exception) {
-            emptyList()
+        when (val outcome = session.begin(image, camera, app.pipeline)) {
+            is CameraSession.Outcome.Empty -> message = R.string.scan_no_code
+            is CameraSession.Outcome.Rows -> outcome.read?.let(::settle)
+            is CameraSession.Outcome.PairDone -> Unit
         }
-        candidates = app.pipeline.read(lines).candidates
-        reading = false
-        val codes = candidates.filter { it.canonical != null }
-        if (candidates.isEmpty()) {
-            message = R.string.scan_no_code
-        } else if (codes.size == 1 && candidates.size == 1) {
-            pick(codes.first())
+    }
+
+    /** The person picked the candidate their photo shows (spec 004 FR-017). A pair not read yet is read now, and only it. */
+    suspend fun pick(row: ScanRow, app: AppModel, camera: CameraPipeline) {
+        when (row) {
+            is ScanRow.Read -> pick(row.candidate)
+            is ScanRow.Unread -> {
+                val done = session.open(row, camera, app.pipeline) as? CameraSession.Outcome.PairDone
+                if (done == null) pick(null) else settle(done.read)
+            }
         }
+    }
+
+    /** One reading decides; several wait for a tap; none is a message. */
+    private fun settle(read: PairRead) {
+        when (read.candidates.size) {
+            0 -> message = R.string.scan_no_code
+            1 -> pick(read.candidates.single())
+            else -> Unit
+        }
+    }
+
+    private fun pick(candidate: ReadCandidate?) {
+        verdict = if (candidate?.canonical == canonical) Verdict.MATCH else Verdict.MISMATCH
+        message = null
     }
 
     fun cameraIsOff() {
         message = R.string.scan_camera_off
     }
 
-    /** The person picked the candidate their photo shows (spec 004 FR-017). */
-    fun pick(candidate: ReadCandidate) {
-        verdict = if (candidate.canonical == canonical) Verdict.MATCH else Verdict.MISMATCH
-        message = null
-    }
-
-    /** The check ends: its photo is deleted (FR-004). */
+    /** The check ends: its photo is deleted (FR-004) and the evidence dropped. */
     fun end(app: AppModel) {
         app.photos.end()
-        photo = null
-        candidates = emptyList()
+        session.clear()
         verdict = null
         message = null
     }

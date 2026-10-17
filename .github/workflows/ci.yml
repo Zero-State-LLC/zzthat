@@ -1,7 +1,7 @@
 name: CI
 
-# Spec lint and the pinned OpenAPI check. App tests wait for
-# .github/workflows/apps-ci.yml, which the build adds with the test targets.
+# Spec lint and the pinned OpenAPI check. App tests run in
+# .github/workflows/apps-ci.yml.
 # The job id stays `build`, matching the zzThis required check name.
 
 on:
