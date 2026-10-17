@@ -95,8 +95,8 @@ class ApiStub(private val handler: (Sent) -> Reply) : Closeable {
 object Fixtures {
     const val MILLIS = "2026-10-04T00:00:00.123Z"
     const val ACCOUNT = """{"id":"account-1","providers":["dev"],"created_at":"$MILLIS"}"""
-    const val CODE_PAGE = """{"codes":[{"id":"code-1","canonical":"zz-copper-lantern-sky-zz","check_word":"sky","status":"active","record_id":"record-1","scope":"free_public","rerolls_remaining":3,"created_at":"$MILLIS","title":"Lost cat"}],"next_cursor":null}"""
-    const val CODE = """{"id":"code-1","canonical":"zz-copper-lantern-sky-zz","check_word":"sky","status":"active","record_id":"record-1","scope":"free_public","rerolls_remaining":3,"created_at":"$MILLIS"}"""
+    const val CODE_PAGE = """{"codes":[{"id":"code-1","canonical":"zz-copper-lantern-sky-zz","check_word":"sky","status":"active","record_id":"record-1","scope":"free_public","rerolls_remaining":5,"created_at":"$MILLIS","title":"Lost cat"}],"next_cursor":null}"""
+    const val CODE = """{"id":"code-1","canonical":"zz-copper-lantern-sky-zz","check_word":"sky","status":"active","record_id":"record-1","scope":"free_public","rerolls_remaining":5,"created_at":"$MILLIS"}"""
     const val DISCOVERY = """{"contract":"1","free_public":true,"auth_providers":["dev"],"scopes":["free_public"],"wordlist_version":"fixture-7","photo_reads":false}"""
     const val NONCE = """{"nonce":"nonce-1","expires_in":600}"""
     const val OWNER_RECORD = """{"id":"record-1","version":2,"title":"Lost cat","body":"Answers on this page.","updated_at":"$MILLIS"}"""

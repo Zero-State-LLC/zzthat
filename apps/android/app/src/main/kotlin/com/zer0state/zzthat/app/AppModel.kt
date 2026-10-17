@@ -28,6 +28,7 @@ import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
 import com.zer0state.zzthat.storage.ResolveCache
 import com.zer0state.zzthat.storage.SavedStore
+import com.zer0state.zzthat.storage.TermsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -51,6 +52,10 @@ class AppModel(
     val hidden: HiddenStore,
     /** The codes saved on this device (FR-050). Never sent anywhere. */
     val saved: SavedStore,
+    /** The Terms version accepted on this device (design/UX.md, Terms). Never sent anywhere. */
+    val terms: TermsStore,
+    /** The current Terms version, `terms.version` from the pinned copy.json. It is compared, never shown. */
+    val termsVersion: String,
     val photos: PhotoScratch,
     val connectivity: Connectivity,
     /** The wordlists bundled from contracts/wordlists (FR-044). */
@@ -78,6 +83,14 @@ class AppModel(
     var savedRevision by mutableIntStateOf(0)
         private set
 
+    /** The Terms version accepted on this device, mirrored from [terms] by [loadTerms]. */
+    var acceptedTermsVersion by mutableStateOf<String?>(null)
+        private set
+
+    /** The signed-in account's id from `GET /v1/me`, for `account.id` (D-2026-10-13-08). Memory only: shown, never stored. */
+    var accountId by mutableStateOf<String?>(null)
+        private set
+
     val isDemo: Boolean get() = config.isDemo
 
     /** Demo builds answer from memory, so they are never offline. */
@@ -102,6 +115,7 @@ class AppModel(
         isSignedIn = withContext(Dispatchers.IO) { service.tokens.hasSession }
         if (!isSignedIn) providerStore.set(null)
         provider = providerStore.value()
+        loadTerms()
         refreshDiscovery()
     }
 
@@ -124,11 +138,13 @@ class AppModel(
     private suspend fun sessionEnded() {
         isSignedIn = false
         provider = null
+        accountId = null
         providerStore.set(null)
     }
 
     /** Account shows the provider the server reports (runtime.md, Localization). */
     suspend fun noteAccount(account: Account) {
+        accountId = account.id
         // A provider the contract does not list yet has no name to show (T106).
         val first = account.providers.firstOrNull { it != Account.Providers.unknown_default_open_api } ?: return
         providerStore.set(first.value)
@@ -144,7 +160,8 @@ class AppModel(
 
     /**
      * `DELETE /v1/me`, then the tokens, the draft, the hidden codes and blocked
-     * creators, Saved, and every cache (Auth step 9, FR-035, FR-050).
+     * creators, Saved, the accepted Terms version, and every cache (Auth step 9,
+     * FR-035, FR-050; design/UX.md, Terms).
      */
     suspend fun deleteAccount(): ApiResult<Unit> {
         val result = service.deleteAccount()
@@ -154,6 +171,8 @@ class AppModel(
         hiddenRevision += 1
         saved.clear()
         savedRevision += 1
+        terms.clear()
+        acceptedTermsVersion = null
         withContext(Dispatchers.IO) {
             cache.removeAll()
             photos.purge()
@@ -162,6 +181,22 @@ class AppModel(
         sessionEnded()
         ownerRevision += 1
         return result
+    }
+
+    // MARK: Terms (design/UX.md, Terms). Device only: none of these calls a server.
+
+    /** The Terms step shows before the next create: nothing is stored, or the stored version is not the current `terms.version`. */
+    val needsTerms: Boolean get() = acceptedTermsVersion != termsVersion
+
+    /** Reads the accepted version from the device. */
+    suspend fun loadTerms() {
+        acceptedTermsVersion = terms.acceptedVersion()
+    }
+
+    /** The person confirmed 18 or older and accepted the Terms. */
+    suspend fun acceptTerms() {
+        terms.accept(termsVersion)
+        acceptedTermsVersion = termsVersion
     }
 
     /** A 401 the refresh could not fix: the person signs in again. */
@@ -264,6 +299,8 @@ class AppModel(
                 providerStore = ProviderStore(local),
                 hidden = HiddenStore(local),
                 saved = SavedStore(local),
+                terms = TermsStore(local),
+                termsVersion = context.getString(com.zer0state.zzthat.R.string.terms_version),
                 photos = PhotoScratch(PhotoScratch.defaultDirectory(context.cacheDir)),
                 connectivity = connectivity,
                 bundledLists = loadBundledLists(context),

@@ -18,8 +18,8 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class PickerFlowTest {
     private val code = """{"id":"code-1","canonical":"zz-copper-lantern-sky-zz","check_word":"sky","status":"active","record_id":"record-1",""" +
-        """"scope":"free_public","rerolls_remaining":3,"created_at":"2026-10-04T00:00:00Z"}"""
-    private val rerolled = code.replace("zz-copper-lantern-sky-zz", "zz-river-falcon-sky-zz").replace("\"rerolls_remaining\":3", "\"rerolls_remaining\":2")
+        """"scope":"free_public","rerolls_remaining":5,"created_at":"2026-10-04T00:00:00Z"}"""
+    private val rerolled = code.replace("zz-copper-lantern-sky-zz", "zz-river-falcon-sky-zz").replace("\"rerolls_remaining\":5", "\"rerolls_remaining\":4")
 
     private val bodies = CopyOnWriteArrayList<String>()
 

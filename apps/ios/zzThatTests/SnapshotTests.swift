@@ -147,6 +147,9 @@ struct SnapshotTests {
         OwnedCode(id: "demo-code-3", canonical: "zz-b2-4-zz", checkWord: nil, status: .revoked,
                   recordId: "demo-record-3", scope: .freePublic, rerollsRemaining: 0, createdAt: DemoAPI.fixedDate,
                   title: DemoAPI.records["zz-b2-4-zz"]!.title),
+        OwnedCode(id: "demo-code-4", canonical: "zz-harbor-maple-river-zz", checkWord: "river", status: .expired,
+                  recordId: "demo-record-4", scope: .freePublic, rerollsRemaining: 0, createdAt: DemoAPI.fixedDate,
+                  title: DemoAPI.expiredRecord.title),
     ]
     static let demoOwnerRecord = OwnerRecord(id: "demo-record-1", version: 1,
                                              title: DemoAPI.records["zz-copper-lantern-sky-zz"]!.title,
@@ -161,9 +164,14 @@ struct SnapshotTests {
         TypeScreen(text: .constant(text), state: state)
     }
 
-    static func create(_ state: CreateScreenState, title: String = "", body: String = "") -> some View {
-        CreateScreen(title: .constant(title), bodyText: .constant(body), state: state)
+    static func create(_ state: CreateScreenState, title: String = "", body: String = "",
+                       confirmed: Bool = false) -> some View {
+        CreateScreen(title: .constant(title), bodyText: .constant(body), state: state,
+                     ageConfirmed: .constant(confirmed), termsAccepted: .constant(confirmed))
     }
+
+    /// The Local and Demo placeholder Terms link (Shared.xcconfig).
+    static let termsURL = URL(string: "https://zzthat.com/terms/")
 
     static func minted(_ state: MintedScreenState) -> some View { MintedScreen(state: state) }
 
@@ -189,7 +197,8 @@ struct SnapshotTests {
 
     static let signedInAccount = AccountScreenState(signedIn: true, provider: .apple,
                                                     supportEmail: "support@zer0state.com",
-                                                    privacyURL: URL(string: "https://zero-state-llc.github.io/zzthis/privacy/"))
+                                                    privacyURL: URL(string: "https://zero-state-llc.github.io/zzthis/privacy/"),
+                                                    termsURL: termsURL, accountID: DemoAPI.account.id)
 
     // MARK: Cases
 
@@ -278,6 +287,27 @@ struct SnapshotTests {
         Case("create-demo") {
             create(CreateScreenState(gate: .form, demo: true), title: demoRecord.title, body: demoRecord.body)
         },
+        // The Terms step before the first create (design/UX.md, Terms).
+        Case("terms-empty") {
+            create(CreateScreenState(gate: .form, termsNeeded: true, termsURL: termsURL),
+                   title: demoRecord.title, body: demoRecord.body)
+        },
+        Case("terms-confirmed") {
+            create(CreateScreenState(gate: .form, termsNeeded: true, termsURL: termsURL),
+                   title: demoRecord.title, body: demoRecord.body, confirmed: true)
+        },
+        Case("terms-no-link") {
+            create(CreateScreenState(gate: .form, termsNeeded: true), title: demoRecord.title, body: demoRecord.body)
+        },
+        Case("terms-demo") {
+            create(CreateScreenState(gate: .form, demo: true, termsNeeded: true, termsURL: termsURL),
+                   title: demoRecord.title, body: demoRecord.body)
+        },
+        // A 429 during the daily cap (design/UX.md, Create: the daily limit).
+        Case("create-daily-limit") {
+            create(CreateScreenState(gate: .form, phase: .failure(.createDailyLimit), waiting: true),
+                   title: demoRecord.title, body: demoRecord.body)
+        },
         Case("unavailable-empty") { create(CreateScreenState(gate: .unavailable)) },
         Case("unavailable-offline") { create(CreateScreenState(gate: .unavailable, offline: true)) },
         Case("unavailable-demo") { create(CreateScreenState(gate: .unavailable, demo: true)) },
@@ -292,6 +322,10 @@ struct SnapshotTests {
         Case("minted-offline") {
             minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
                                      offline: true))
+        },
+        Case("minted-daily-limit") {
+            minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
+                                     phase: .failure(.createDailyLimit), waiting: true))
         },
         Case("minted-kept") {
             minted(MintedScreenState(canonical: demoMint.canonical, checkWord: demoMint.checkWord, capReached: false,
@@ -335,6 +369,9 @@ struct SnapshotTests {
         },
         Case("codes-demo") {
             CodesScreen(state: CodesScreenState(signedIn: true, rows: demoRows, phase: .loaded, demo: true))
+        },
+        Case("detail-expired") {
+            detail(CodeDetailScreenState(row: demoRows[3], phase: .loaded))
         },
         Case("detail-loading") { detail(CodeDetailScreenState(row: demoRows[0], phase: .loading)) },
         Case("detail-error") { detail(CodeDetailScreenState(phase: .notFound)) },

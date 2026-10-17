@@ -129,7 +129,10 @@ struct OwnerFlowTests {
         await model.reroll(app: app)
         #expect(model.code.canonical != minted.canonical)
         #expect(app.cache.lookup(minted.canonical, online: false) == .none)
-        await model.reroll(app: app)
+        // A new plain code has 5 re-rolls (zzThis RM-125).
+        for _ in 0..<3 { await model.reroll(app: app) }
+        #expect(!model.capReached)
+        #expect(model.code.rerollsRemaining == 1)
         await model.reroll(app: app)
         #expect(model.capReached)
         #expect(model.code.rerollsRemaining == 0)
@@ -200,12 +203,12 @@ struct OwnerFlowTests {
         let transport = AppStubTransport { _, _ in .init(status: 500, json: #"{"error":"failed"}"#) }
         let app = TestApp.make(service: try await TestApp.liveService(transport), online: false)
         let code = MintedCode(id: "code-1", canonical: "zz-copper-sky-river-zz", checkWord: "river", status: .active,
-                              recordId: "record-1", scope: .freePublic, rerollsRemaining: 3, createdAt: Date())
+                              recordId: "record-1", scope: .freePublic, rerollsRemaining: 5, createdAt: Date())
         let minted = MintedModel(code: code)
         await minted.reroll(app: app)
         #expect(minted.phase == .failure(.errorNoConnection))
         let row = OwnedCode(id: "code-1", canonical: code.canonical, checkWord: "river", status: .active,
-                            recordId: "record-1", scope: .freePublic, rerollsRemaining: 3, createdAt: Date(), title: "t")
+                            recordId: "record-1", scope: .freePublic, rerollsRemaining: 5, createdAt: Date(), title: "t")
         let detail = CodeDetailModel(codeID: row.id, row: row)
         await detail.revoke(app: app)
         #expect(detail.revokePhase == .failure(.errorNoConnection))

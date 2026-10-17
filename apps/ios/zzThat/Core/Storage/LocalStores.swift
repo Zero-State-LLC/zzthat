@@ -102,6 +102,26 @@ final class SavedStore: @unchecked Sendable {
     }
 }
 
+/// The Terms version the person accepted on this device (design/UX.md,
+/// Terms; zzThis D-2026-10-13-04). Client-only: never sent, and the server
+/// neither stores nor checks it. Account deletion clears it, so the next
+/// account on the device sees the Terms step again.
+final class TermsStore: @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let key = "terms.accepted_version"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var acceptedVersion: String? {
+        get { defaults.string(forKey: key) }
+        set {
+            if let newValue { defaults.set(newValue, forKey: key) } else { defaults.removeObject(forKey: key) }
+        }
+    }
+}
+
 /// The provider of the signed-in account, so Account can show it offline
 /// (runtime.md, Screens: Account, Offline). Not a secret.
 final class ProviderStore: @unchecked Sendable {

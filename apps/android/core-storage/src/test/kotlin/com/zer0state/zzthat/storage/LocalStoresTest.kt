@@ -57,6 +57,20 @@ class LocalStoresTest {
         assertNull(provider.value())
     }
 
+    /** design/UX.md, Terms: the accepted Terms version stays on the device until cleared (account deletion). */
+    @Test
+    fun theAcceptedTermsVersionIsKeptUntilCleared() = runBlocking {
+        val store = dataStore()
+        val terms = TermsStore(store)
+        assertNull(terms.acceptedVersion())
+        terms.accept("draft-2026-10-14")
+        assertEquals("draft-2026-10-14", TermsStore(store).acceptedVersion())
+        terms.accept("2026-11-01")
+        assertEquals("a new version replaces the old one", "2026-11-01", terms.acceptedVersion())
+        terms.clear()
+        assertNull(terms.acceptedVersion())
+    }
+
     /** FR-035: hidden codes stay on the device until unhidden or cleared, beside the other local values. */
     @Test
     fun hiddenCodesAreKeptUntilUnhiddenOrCleared() = runBlocking {

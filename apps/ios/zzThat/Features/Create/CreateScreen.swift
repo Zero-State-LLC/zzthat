@@ -18,6 +18,11 @@ struct CreateScreenState {
     var phase: CreateModel.Phase = .editing
     var offline = false
     var demo = false
+    /// The Terms step shows above Get a code (design/UX.md, Terms).
+    var termsNeeded = false
+    var termsURL: URL?
+    /// A 429 `Retry-After` wait is on: Get a code stays off (FR-033).
+    var waiting = false
 }
 
 /// Create (design/UX.md, Create). Signed out, it asks for sign-in. While
@@ -28,8 +33,15 @@ struct CreateScreen: View {
     @Binding var title: String
     @Binding var bodyText: String
     let state: CreateScreenState
+    var ageConfirmed: Binding<Bool> = .constant(false)
+    var termsAccepted: Binding<Bool> = .constant(false)
     var onSubmit: () -> Void = {}
     var onSignIn: () -> Void = {}
+
+    /// Get a code waits for both Terms confirmations when the step shows.
+    private var termsDone: Bool {
+        !state.termsNeeded || (ageConfirmed.wrappedValue && termsAccepted.wrappedValue)
+    }
 
     var body: some View {
         switch state.gate {
@@ -55,17 +67,79 @@ struct CreateScreen: View {
                 LimitedField(label: .createBodyLabel, text: $bodyText, limit: FieldLimits.body, multiline: true,
                              identifier: "create.body")
                 Text(.createPublicHint).textRole(.secondary)
+                if state.termsNeeded {
+                    TermsStep(ageConfirmed: ageConfirmed, termsAccepted: termsAccepted, termsURL: state.termsURL)
+                }
                 if case .failure(let key) = state.phase, key != .createOffline || !state.offline {
                     Message(key: key, emphasis: true)
                 }
                 Button(action: onSubmit) { Text(.createSubmit) }
                     .buttonStyle(.zzPrimary)
-                    .disabled(state.offline || state.phase == .minting)
+                    .disabled(state.offline || state.phase == .minting || state.waiting || !termsDone)
                     .accessibilityHint(state.offline ? Text(.errorNoConnection) : Text(verbatim: ""))
                     .accessibilityIdentifier("create.submit")
                 if state.offline { Text(.errorNoConnection).textRole(.caption) }
             }
         }
+    }
+}
+
+/// The Terms step (design/UX.md, Terms; D-2026-10-13-04): one step before
+/// the person's first create on this device, not two screens. The person
+/// confirms they are 18 or older (`terms.age_confirm`) and accepts the Terms
+/// (`terms.accept`); `terms.link` opens the Terms of Use. Without a configured
+/// Terms URL the link is hidden.
+struct TermsStep: View {
+    @Environment(\.colorScheme) private var scheme
+    @Binding var ageConfirmed: Bool
+    @Binding var termsAccepted: Bool
+    let termsURL: URL?
+
+    var body: some View {
+        let palette = Palette(scheme)
+        VStack(alignment: .leading, spacing: 0) {
+            TermsCheck(key: .termsAgeConfirm, isOn: $ageConfirmed)
+            Divider().overlay(palette.rule)
+            TermsCheck(key: .termsAccept, isOn: $termsAccepted)
+            if let termsURL {
+                Divider().overlay(palette.rule)
+                Link(destination: termsURL) {
+                    LinkRow(text: CopyKey.termsLink.text, symbol: "arrow.up.right")
+                }
+                .accessibilityIdentifier("terms.link")
+            }
+        }
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
+        .overlay(RoundedRectangle(cornerRadius: ZZRadius.radiusChip).strokeBorder(palette.rule, lineWidth: ZZSpace.ruleHair))
+    }
+}
+
+/// One Terms confirmation: a check box row, read by VoiceOver as a toggle.
+struct TermsCheck: View {
+    @Environment(\.colorScheme) private var scheme
+    let key: CopyKey
+    @Binding var isOn: Bool
+
+    var body: some View {
+        let palette = Palette(scheme)
+        Button {
+            isOn.toggle()
+        } label: {
+            HStack {
+                Text(key).textRole(.body)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(isOn ? palette.accentInk : palette.ruleStrong)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, ZZSpace.spaceSm)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? [.isToggle, .isSelected] : [.isToggle])
+        .accessibilityIdentifier(key.rawValue)
     }
 }
 
@@ -108,6 +182,8 @@ struct MintedScreenState {
     var phase: MintedModel.Phase = .idle
     var offline = false
     var demo = false
+    /// A 429 `Retry-After` wait is on: Get different words stays off (FR-033).
+    var waiting = false
 }
 
 /// Minted code (design/UX.md): the code is the largest text, in the mono
@@ -138,7 +214,7 @@ struct MintedScreen: View {
                 Text(.mintedPickHelp).textRole(.secondary)
                 Button(action: onReroll) { Text(.mintedReroll) }
                     .buttonStyle(.zzSecondary)
-                    .disabled(state.phase == .rerolling)
+                    .disabled(state.phase == .rerolling || state.waiting)
                     .accessibilityIdentifier("minted.reroll")
                 Button(action: onKeep) { Text(.mintedKeep) }
                     .buttonStyle(.zzSecondary)

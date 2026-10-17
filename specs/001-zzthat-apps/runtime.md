@@ -4,7 +4,7 @@ Feature: [spec.md](spec.md). This file is the build and runtime contract for the
 Decisions: [decisions.md](decisions.md). Visuals: [design.md](design.md).
 Status: implementation in progress. The trees below now exist; this document remains normative for implementation and verification. A path being present does not mean its task or acceptance evidence is complete. V1 capture is on-device only and never sends a photo, crop, or OCR transcript.
 
-Every named screen uses the pattern in zzThis `design/UX.md` at pin `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
+Every named screen uses the pattern in zzThis `design/UX.md` at pin `08a3c26f78004e885c0405e662135112133144ed`, and every sentence comes from `design/copy.json` at that pin. Do not invent a pattern, a palette, or a sentence.
 
 ## Toolchain
 
@@ -73,10 +73,10 @@ Each feature calls core modules. Features do not call each other except through 
 | App / `:app` | Process entry, tabs, dependency wiring, build configuration | HTTP, grammar rules, tokens |
 | Navigation | The route list below | Screen layout |
 | Scan | Camera handoff, candidate list, clarify, typed entry | Resolve rendering |
-| Create | Mint, re-roll, suggested-word picker (RM-113), write check, unavailable state, draft | A person-typed code string (claim; not in v1.1) |
+| Create | Mint, re-roll, suggested-word picker (RM-113), the Terms step, write check, unavailable state, draft | A person-typed code string (claim; not in v1.1) |
 | Resolve | Title and body, not-found, share, report entry | Issue |
 | Codes | My codes, Saved (local, RM-115), Code detail, Edit record, revoke | Public resolve rules |
-| Account | Sign-in, sign-out, delete, support and privacy links, licenses | A profile form |
+| Account | Sign-in, sign-out, delete, the account id, the early-release note, support, privacy, and Terms links, community links, licenses | A profile form |
 | Report | The four reasons in FR-035, the one-day review sentence, and Hide this code and Block this creator, kept on the device | A server-side block list |
 | API (`ZZAPI`, `:core-api`, a plain Kotlin JVM module) | The generated client, the request middleware, the demo implementation | Hand-written request types |
 | Auth | Nonce, provider sign-in, token refresh, secure store | A password |
@@ -137,7 +137,7 @@ Each screen implements five states. Strings come from `copy.json`.
 | Clarify | Confirm one uncertain word or a check-word mismatch | Not used | `scan.check_mismatch` | Same | Fixture word | Scan with the camera, step 4 |
 | Type | Same parser and resolve as Scan (US2a) | `type.empty` | `type.malformed`, 429 | Keep the typed text. Resolve waits. | A fixture string labeled Demo | Scan |
 | Resolve | Title and body, or one not-found (US3) | Not used. Not-found is the error row. | `resolve.not_found` | FR-041, then `resolve.not_on_device` | Fixture title and body labeled Demo | Resolve |
-| Create | Mint a wordlist code (US1, ZQ11); optional suggested-word picker over server candidates (RM-113) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
+| Create | Mint a wordlist code (US1, ZQ11); optional suggested-word picker over server candidates (RM-113) | `create.signed_out`, or Unavailable | `create.content_refused`, 401. A 400 other than `contract-version`, or a 500, shows `error.nothing_saved` and keeps the title and body. A 429 on mint or re-roll waits for `Retry-After` with Get a code and Get different words off and the title and body kept; a wait longer than an hour is the RM-072 daily cap and shows `create.daily_limit`, a shorter one `resolve.rate_limited` (design/UX.md, Create: the daily limit; FR-033). | Draft only, labeled `create.draft_label` | A fixture code labeled Demo, not minted | Create |
 | Minted code | The canonical form and the check word, and re-roll | Not used after a 201 | `minted.reroll_cap` keeps the words | Hide re-roll. The words stay. | Demo words. The button does not call. | Minted code |
 | Write check | The photo of the handwriting matches the minted code (FR-037) | No photo yet | `writecheck.mismatch`. No upload. | Runs on the device | A fixture photo labeled Demo | Write check |
 | My codes | Owner list with titles | `codes.empty`, or `codes.signed_out` | 401, 403, 500 | `error.no_connection`. No list is kept, because owner responses are `no-store`. | Fixture rows labeled Demo | My codes |
@@ -147,7 +147,8 @@ Each screen implements five states. Strings come from `copy.json`.
 | Revoke confirm | One confirm, then revoke | Not used | `error.nothing_saved`. The code stays active. | Refuse | Demo confirm does not call | Revoke confirm |
 | Unavailable | Create while `free_public` is false or the issuer is not ready (FR-018) | `create.unavailable` | Not a second error | Same copy | Same copy, labeled Demo | Create |
 | Sign in | Provider buttons from discovery (FR-040) | `signin.why` with the buttons | `signin.failed`. No half session. | Refuse sign-in | Buttons labeled Demo. They do not call. | Sign in |
-| Account | Provider, sign out, delete, support, privacy, licenses | Signed out: go to Sign in | `delete.failed` | Show the cached provider. Delete refused. | Fixture account labeled Demo | Account |
+| Terms step | Before the first create on a device, and again when `terms.version` changes: `terms.age_confirm` and `terms.accept`, both needed before Get a code; `terms.link` opens the Terms URL (D-2026-10-13-04). Scan and Type never show it. | Not used | Not used | Same step. Get a code stays refused offline. | Same step, labeled Demo | Terms |
+| Account | Provider, the account id beside `account.id` (signed in), sign out, delete, `account.early_release`, support, privacy, `account.terms`, `account.discord`, `account.instagram`, licenses | Signed out: go to Sign in | `delete.failed` | Show the cached provider. Delete refused. | Fixture account labeled Demo | Account |
 | Delete confirm | `DELETE /v1/me` (FR-034) | Not used | `delete.failed`. The account stays. | Refuse | Demo confirm does not call | Revoke confirm and Delete confirm |
 | Licenses | The bundled `NOTICE` and `OFL.txt`, then the generated third-party notices (T087), as plain text, opened from `account.licenses` | Not used | Not used | Same text. It is bundled. | Same text, labeled Demo | Account |
 | Report | The reasons in FR-035 | Reason not chosen yet | 429. Never say whether the code exists. | Refuse | Demo send does not call | Report |
@@ -170,7 +171,7 @@ The Licenses screen also shows the third-party notices that the build generates 
 | Bundle and application id | `com.zer0state.zzthat.demo` | `com.zer0state.zzthat.local` | `com.zer0state.zzthat` (ZQ24) |
 | Display name | zzThat Demo | zzThat Local | zzThat |
 
-Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `zzsupport@zer0state.com` once the mailbox exists (zzThis D-2026-10-11-04, RM-122; until then builds keep `support@zer0state.com`), and the privacy policy link is the marketing site's privacy page (ZQ25). They are not secrets, but Release values are still injected rather than committed.
+Google client ids are build settings with placeholder values until Danny creates the clients. The support contact is `zzsupport@zer0state.com` once the mailbox exists (zzThis D-2026-10-11-04, RM-122; until then builds keep `support@zer0state.com`), and the privacy policy link is the marketing site's privacy page (ZQ25). The Terms of Use link is a build setting the same way (`ZZ_TERMS_URL` on iOS, `TERMS_URL` on Android): Local and Demo carry a placeholder on the zzThat host that zzThis D-2026-10-11-09 proposes, never a zzThis host (D-2026-10-11-07), until Danny picks the host; Release injects it, and without a value the Terms links are hidden. They are not secrets, but Release values are still injected rather than committed. The Discord and Instagram addresses on Account are build constants, the same as the zzThis site footer (`src/content/navigation.ts`, RM-111).
 
 iOS Google setup [INFERRED]: the Local and Release xcconfigs define `ZZ_GOOGLE_IOS_CLIENT_ID` and `ZZ_GOOGLE_REVERSED_CLIENT_ID`. In `project.yml`, Info.plist sets `GIDClientID` to `$(ZZ_GOOGLE_IOS_CLIENT_ID)` and registers a URL type whose scheme is `$(ZZ_GOOGLE_REVERSED_CLIENT_ID)`. The app forwards `.onOpenURL` to `GIDSignIn.sharedInstance.handle(_:)`. GoogleSignIn raises an exception when `GIDClientID` or the URL scheme is missing, so while the value is still a placeholder the Google button is hidden. Demo builds have neither key and never call GoogleSignIn.
 
@@ -222,6 +223,7 @@ No password, phone, or profile field (ZQ7). The app asks Apple for no name and n
 | Photo | The app's cache folder | Temporary for the active scan or write check; deleted when that operation ends (FR-004) |
 | Hidden codes and blocked creators | App storage, on this device only; never sent. A blocked creator is the Resolve `creator` reference (zzThis RM-112). | Until Unhide or Unblock, `account.unhide_all`, or account deletion (FR-035) |
 | Saved codes | App storage, on this device only; canonical codes only, no photo or thumbnail; never sent | Until removed, `account.clear_saved`, or account deletion (FR-050) |
+| Accepted terms version | App storage, on this device only; the `terms.version` value the person accepted at the Terms step; never sent (zzThis D-2026-10-13-04) | Until a new `terms.version` is accepted, or account deletion (design/UX.md, Terms) |
 
 A `no-store` response is never written. Every `/v1` response except a cacheable resolve sends `no-store` (spec 005 FR-028), including tokens, owner responses, 404, and 429. A 404 body is exactly `{ "error": "not-found" }`. A 429 body is exactly `{ "error": "rate-limited" }`. Not-found is never cached. No record-signing key is stored. The V1 client does not invoke a photo-read/upload route, even if discovery reports `photo_reads: true` (FR-045).
 

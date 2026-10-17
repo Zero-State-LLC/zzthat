@@ -16,7 +16,7 @@ Create stays gated until the zzThis resolver adds free public codes (zzThis spec
 | [#8](https://github.com/Zero-State-LLC/zzthat/issues/8) | ZQ8 | A report action is in. No on-device block list (superseded by SC1). No personal data in the code string. |
 | [#9](https://github.com/Zero-State-LLC/zzthat/issues/9) | ZQ9 | Share the canonical code as text. `share.url` stays null. |
 | [#10](https://github.com/Zero-State-LLC/zzthat/issues/10) | ZQ10 | No voice and no microphone in the first release. Later voice, if any, stays on the device. |
-| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls. The person-written claim path is dropped. Suggested-word picker (server candidates only) is zzThis D-2026-10-11-01 option C / RM-113; person-made claim stays v2.0 (RM-116). |
+| [#11](https://github.com/Zero-State-LLC/zzthat/issues/11) | ZQ11 | The server chooses the words for every code, including free public, matching zzThis spec 002 US2. Create calls mint and shows the wordlist code and its check word. "Get different words" is capped at 3 re-rolls (5 since zzThis RM-125, D-2026-10-13-02, accepted 2026-10-14). The person-written claim path is dropped. Suggested-word picker (server candidates only) is zzThis D-2026-10-11-01 option C / RM-113; person-made claim stays v2.0 (RM-116). |
 | [#12](https://github.com/Zero-State-LLC/zzthat/issues/12) | ZQ12 | The useful page is a screen in the app. |
 | [#13](https://github.com/Zero-State-LLC/zzthat/issues/13) | ZQ13 | No live-code suggestions. Exact match. |
 | [#14](https://github.com/Zero-State-LLC/zzthat/issues/14) | ZQ14 | **Superseded for V1:** no photo, crop, or OCR transcript is uploaded, including after retry confirmation. Only the user-selected canonical code is sent for ordinary resolution. Any future server-reading capability requires explicit scope promotion and a new privacy/security review. Confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903). |
@@ -43,7 +43,7 @@ ZQ22 to ZQ26 were added on 2026-10-04 with the zzThis pin `484100308376bce01c88f
 
 ZQ27 and ZQ28 were added on 2026-10-04 from the pre-build audit and decided on 2026-10-05 by established practice, as Danny asked on zzThis #75. Danny can reopen either. Their issues are #40 and #41.
 
-Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), and the re-roll cap of 3 (#11). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). This repo follows those answers.
+Low-confidence defaults, still chosen: the age rating (#15), the rate-limit numbers (#20), and the re-roll cap of 3 (#11; zzThis D-2026-10-13-02 raised it to 5). zzThis Q18, Q25 (no device at all), Q30 to Q32, Q36, and Q37 were decided in zzThis on 2026-10-04 ([zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)). This repo follows those answers.
 
 ## Build decisions on #43 (2026-10-05)
 

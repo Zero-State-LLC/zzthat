@@ -12,6 +12,8 @@
 	<string>$(ZZ_SUPPORT_EMAIL)</string>
 	<key>ZZPrivacyURL</key>
 	<string>$(ZZ_PRIVACY_URL)</string>
+	<key>ZZTermsURL</key>
+	<string>$(ZZ_TERMS_URL)</string>
 	<!-- Each pinned TTF in Resources/Fonts (design.md, Sync), the same list in
 	     all three Info plists. BundleTests fails when a bundled TTF is not
 	     listed here, or a listed one is not bundled. -->

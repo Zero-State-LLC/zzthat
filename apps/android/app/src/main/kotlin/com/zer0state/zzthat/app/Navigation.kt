@@ -103,6 +103,7 @@ import com.zer0state.zzthat.ui.openLink
 import com.zer0state.zzthat.ui.rememberPhotoCapture
 import com.zer0state.zzthat.ui.share
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import llc.zerostate.zzthis.design.ZZMotion
@@ -403,11 +404,19 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
     LaunchedEffect(Unit) {
         // GET /v1 before Create (spec.md, API contract).
         model.loadDraft(app)
+        app.loadTerms()
         app.refreshDiscovery()
         checking = false
     }
     val online = app.isOnline
     LaunchedEffect(online) { if (!online && model.hasDraft) model.saveDraft(app) }
+    // Get a code turns back on when Retry-After ends (FR-033).
+    LaunchedEffect(model.retryAt) {
+        val retryAt = model.retryAt ?: return@LaunchedEffect
+        delay(maxOf(retryAt - System.currentTimeMillis(), 0L))
+        model.endWait()
+    }
+    val context = LocalContext.current
     val gate = when {
         model.mintUnavailable || app.discovery?.freePublic == false -> CreateScreenState.Gate.UNAVAILABLE
         checking && app.discovery == null && app.isOnline -> CreateScreenState.Gate.LOADING
@@ -418,7 +427,17 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
         CreateScreen(
             title = model.title,
             body = model.body,
-            state = CreateScreenState(gate, model.phase, offline = !online, demo = app.isDemo),
+            state = CreateScreenState(
+                gate,
+                model.phase,
+                offline = !online,
+                demo = app.isDemo,
+                termsNeeded = app.needsTerms,
+                termsUrl = app.config.termsUrl,
+                ageConfirmed = model.ageConfirmed,
+                termsAccepted = model.termsAccepted,
+                waiting = model.waiting,
+            ),
             onTitle = {
                 model.title = it
                 if (!app.isOnline) scope.launch { model.saveDraft(app) }
@@ -429,6 +448,9 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
             },
             onSubmit = { scope.launch { model.mint(app)?.let { nav.onMain { navigate(MintedDestination(it.id)) } } } },
             onSignIn = { nav.navigate(SignInDestination) },
+            onAgeConfirmed = { model.ageConfirmed = it },
+            onTermsAccepted = { model.termsAccepted = it },
+            onTermsLink = { openLink(context, it) },
         )
     }
 }
@@ -437,6 +459,12 @@ private fun CreateRoute(app: AppModel, model: CreateModel, nav: NavHostControlle
 private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav: NavHostController) {
     val model = create.mintedModel(codeId)
     val scope = rememberCoroutineScope()
+    // Get different words turns back on when Retry-After ends (FR-033).
+    LaunchedEffect(model?.retryAt) {
+        val retryAt = model?.retryAt ?: return@LaunchedEffect
+        delay(maxOf(retryAt - System.currentTimeMillis(), 0L))
+        model.endWait()
+    }
     Frame(stringResource(R.string.nav_create), back(nav)) {
         if (model == null) {
             // The tab that minted this code is gone (the process restarted): Create starts again.
@@ -451,6 +479,7 @@ private fun MintedRoute(app: AppModel, create: CreateModel, codeId: String, nav:
                     offline = !app.isOnline,
                     demo = app.isDemo,
                     kept = model.kept,
+                    waiting = model.waiting,
                 ),
                 onReroll = { scope.launch { model.reroll(app) } },
                 onWriteCheck = { nav.navigate(WriteCheckDestination(model.code.canonical)) },
@@ -632,12 +661,15 @@ private fun AccountRoute(app: AppModel, nav: NavHostController) {
                 demo = app.isDemo,
                 unhideAllDone = unhideAllDone,
                 clearSavedDone = clearSavedDone,
+                termsUrl = app.config.termsUrl,
+                accountId = app.accountId,
             ),
             onSignOut = { scope.launch { app.signOut() } },
             onDelete = { confirmingDelete = true },
             onLicenses = { nav.navigate(LicensesDestination) },
             onSupport = { openLink(context, "mailto:$it") },
             onPrivacy = { openLink(context, it) },
+            onLink = { openLink(context, it) },
             onUnhideAll = {
                 scope.launch {
                     app.unhideAll()

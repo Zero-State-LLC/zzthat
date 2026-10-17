@@ -1,9 +1,18 @@
 package com.zer0state.zzthat.create
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -23,16 +33,19 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.zer0state.zzthat.R
+import com.zer0state.zzthat.account.LinkRow
 import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.scan.CandidateList
 import com.zer0state.zzthat.scan.ScanRow
 import com.zer0state.zzthat.scan.CaptureButtons
 import com.zer0state.zzthat.ui.ButtonKind
+import com.zer0state.zzthat.ui.ChipShape
 import com.zer0state.zzthat.ui.CodeText
 import com.zer0state.zzthat.ui.FieldLimits
 import com.zer0state.zzthat.ui.LimitedField
 import com.zer0state.zzthat.ui.LocalPalette
 import com.zer0state.zzthat.ui.Message
+import com.zer0state.zzthat.ui.MinTouch
 import com.zer0state.zzthat.ui.PhotoBoxes
 import com.zer0state.zzthat.ui.RoleText
 import com.zer0state.zzthat.ui.TextRole
@@ -48,7 +61,17 @@ data class CreateScreenState(
     val phase: CreateModel.Phase = CreateModel.Phase.Editing,
     val offline: Boolean = false,
     val demo: Boolean = false,
+    /** The Terms step shows above Get a code (design/UX.md, Terms). */
+    val termsNeeded: Boolean = false,
+    val termsUrl: String? = null,
+    val ageConfirmed: Boolean = false,
+    val termsAccepted: Boolean = false,
+    /** A 429 `Retry-After` wait is on: Get a code stays off (FR-033). */
+    val waiting: Boolean = false,
 ) {
+    /** Get a code waits for both Terms confirmations when the step shows. */
+    val termsDone: Boolean get() = !termsNeeded || (ageConfirmed && termsAccepted)
+
     enum class Gate {
         LOADING,
         SIGNED_OUT,
@@ -72,6 +95,9 @@ fun CreateScreen(
     onBody: (String) -> Unit = {},
     onSubmit: () -> Unit = {},
     onSignIn: () -> Unit = {},
+    onAgeConfirmed: (Boolean) -> Unit = {},
+    onTermsAccepted: (Boolean) -> Unit = {},
+    onTermsLink: (String) -> Unit = {},
 ) {
     when (state.gate) {
         CreateScreenState.Gate.UNAVAILABLE -> UnavailableScreen(state.demo)
@@ -88,16 +114,75 @@ fun CreateScreen(
             LimitedField(R.string.create_title_label, title, onTitle, FieldLimits.TITLE, "create.title")
             LimitedField(R.string.create_body_label, body, onBody, FieldLimits.BODY, "create.body", multiline = true)
             RoleText(stringResource(R.string.create_public_hint), TextRole.SECONDARY)
+            if (state.termsNeeded) {
+                TermsStep(state.ageConfirmed, state.termsAccepted, state.termsUrl, onAgeConfirmed, onTermsAccepted, onTermsLink)
+            }
             val failure = state.phase as? CreateModel.Phase.Failure
             if (failure != null && (failure.key != R.string.create_offline || !state.offline)) Message(failure.key, emphasis = true)
             ZZButton(
                 stringResource(R.string.create_submit),
                 "create.submit",
-                enabled = !state.offline && state.phase != CreateModel.Phase.Minting,
+                enabled = !state.offline && state.phase != CreateModel.Phase.Minting && !state.waiting && state.termsDone,
                 onClick = onSubmit,
             )
             if (state.offline) RoleText(stringResource(R.string.error_no_connection), TextRole.CAPTION)
         }
+    }
+}
+
+/**
+ * The Terms step (design/UX.md, Terms; D-2026-10-13-04): one step before the
+ * person's first create on this device, not two screens. The person confirms
+ * they are 18 or older (`terms.age_confirm`) and accepts the Terms
+ * (`terms.accept`); `terms.link` opens the Terms of Use. Without a configured
+ * Terms URL the link is hidden.
+ */
+@Composable
+fun TermsStep(
+    ageConfirmed: Boolean,
+    termsAccepted: Boolean,
+    termsUrl: String?,
+    onAgeConfirmed: (Boolean) -> Unit,
+    onTermsAccepted: (Boolean) -> Unit,
+    onTermsLink: (String) -> Unit,
+) {
+    val palette = LocalPalette.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.panel, ChipShape)
+            .border(ZZSpace.RuleHair, palette.rule, ChipShape),
+    ) {
+        TermsCheck(R.string.terms_age_confirm, "terms.age_confirm", ageConfirmed, onAgeConfirmed)
+        HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
+        TermsCheck(R.string.terms_accept, "terms.accept", termsAccepted, onTermsAccepted)
+        if (termsUrl != null) {
+            HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
+            LinkRow(stringResource(R.string.terms_link), "terms.link") { onTermsLink(termsUrl) }
+        }
+    }
+}
+
+/** One Terms confirmation: a check box row, read by TalkBack as a check box. */
+@Composable
+private fun TermsCheck(@StringRes text: Int, tag: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val palette = LocalPalette.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .testTag(tag)
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = MinTouch)
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onChange)
+            .padding(start = ZZSpace.SpaceSm),
+    ) {
+        Text(stringResource(text), style = TextRole.BODY.style(), modifier = Modifier.weight(1f))
+        Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            colors = CheckboxDefaults.colors(checkedColor = palette.accentInk, uncheckedColor = palette.ruleStrong),
+            modifier = Modifier.padding(end = ZZSpace.SpaceXs),
+        )
     }
 }
 
@@ -138,6 +223,8 @@ data class MintedScreenState(
     val demo: Boolean = false,
     /** The person kept these words (RM-113). */
     val kept: Boolean = false,
+    /** A 429 `Retry-After` wait is on: Get different words stays off (FR-033). */
+    val waiting: Boolean = false,
 )
 
 /**
@@ -168,7 +255,7 @@ fun MintedScreen(state: MintedScreenState, onReroll: () -> Unit = {}, onWriteChe
                 stringResource(R.string.minted_reroll),
                 "minted.reroll",
                 ButtonKind.SECONDARY,
-                enabled = state.phase != MintedModel.Phase.Rerolling,
+                enabled = state.phase != MintedModel.Phase.Rerolling && !state.waiting,
                 onClick = onReroll,
             )
             ZZButton(

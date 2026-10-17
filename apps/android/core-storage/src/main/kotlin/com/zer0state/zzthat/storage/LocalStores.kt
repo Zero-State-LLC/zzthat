@@ -57,6 +57,28 @@ class LastCanonicalStore(private val store: DataStore<Preferences>) {
     }
 }
 
+/**
+ * The Terms version the person accepted on this device (design/UX.md, Terms;
+ * zzThis D-2026-10-13-04). Client-only: never sent, and the server neither
+ * stores nor checks it. Account deletion clears it, so the next account on
+ * the device sees the Terms step again.
+ */
+class TermsStore(private val store: DataStore<Preferences>) {
+    suspend fun acceptedVersion(): String? = store.data.first()[KEY]
+
+    suspend fun accept(version: String) {
+        store.edit { it[KEY] = version }
+    }
+
+    suspend fun clear() {
+        store.edit { it.remove(KEY) }
+    }
+
+    private companion object {
+        val KEY = stringPreferencesKey("terms.accepted_version")
+    }
+}
+
 /** The provider of the signed-in account, so Account can show it offline (runtime.md, Screens: Account). Not a secret. */
 class ProviderStore(private val store: DataStore<Preferences>) {
     suspend fun value(): String? = store.data.first()[KEY]

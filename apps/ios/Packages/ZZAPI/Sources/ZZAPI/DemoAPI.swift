@@ -32,12 +32,25 @@ public actor DemoAPI: APIProtocol {
         "zz-b2-4-zz": Record(title: "Duffel group B2, item 4 (demo)", body: "Hand receipt: DEMO-HR-02"),
     ]
 
-    /// The words a demo mint and its re-rolls show, from the fixture-7 list.
+    /// The idle-expired demo row in My codes (zzThis D-2026-10-11-15, T103).
+    /// It is not public: an expired code resolves to not-found (FR-010).
+    public static let expiredRecord = Record(
+        title: "Physical thing: bicycle (demo)",
+        body: "Owner contact: Withheld: public code, protected record (demo)")
+
+    /// The re-rolls a new plain code gets (zzThis RM-125; the pinned OpenAPI
+    /// `rerolls_remaining` maximum).
+    public static let rerollCap = 5
+
+    /// The words a demo mint and its re-rolls show, from the fixture-7 list:
+    /// one entry per mint and re-roll, so no re-roll shows earlier words.
     public static let mintSequence: [(canonical: String, checkWord: String)] = [
         ("zz-copper-sky-river-zz", "river"),
         ("zz-lantern-maple-copper-zz", "copper"),
         ("zz-sky-river-maple-zz", "maple"),
         ("zz-harbor-falcon-maple-zz", "maple"),
+        ("zz-maple-harbor-falcon-zz", "falcon"),
+        ("zz-river-lantern-falcon-zz", "falcon"),
     ]
 
     struct Owned {
@@ -63,6 +76,9 @@ public actor DemoAPI: APIProtocol {
                                        status: .revoked, recordID: "demo-record-3",
                                        title: Self.records["zz-b2-4-zz"]!.title),
                   record: Self.records["zz-b2-4-zz"]!, version: 1),
+            Owned(code: Self.ownedCode(id: "demo-code-4", canonical: "zz-harbor-maple-river-zz", checkWord: "river",
+                                       status: .expired, recordID: "demo-record-4", title: Self.expiredRecord.title),
+                  record: Self.expiredRecord, version: 1),
         ]
     }
 
@@ -119,7 +135,7 @@ public actor DemoAPI: APIProtocol {
 
     public func mintCode(_ input: Operations.MintCode.Input) async throws -> Operations.MintCode.Output {
         guard case .json(let request) = input.body else { return .badRequest(Self.error(.malformed)) }
-        let code = nextCode(recordID: "demo-record-new", record: request.record, rerolls: 3)
+        let code = nextCode(recordID: "demo-record-new", record: request.record, rerolls: Self.rerollCap)
         return .created(.init(headers: .init(xZZContract: ._1, cacheControl: .noStore), body: .json(code)))
     }
 
