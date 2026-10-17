@@ -21,10 +21,15 @@ struct AccountScreenState {
     var loading = false
     var offline = false
     var demo = false
+    /// The Terms of Use link (`account.terms`), a build setting. Nil hides it.
+    var termsURL: URL?
+    /// The signed-in account's id from `GET /v1/me`, shown beside `account.id`.
+    var accountID: String?
 }
 
-/// Account (design/UX.md): the provider, Sign out, Delete account, the
-/// support contact and privacy link from build settings (FR-047), and
+/// Account (design/UX.md): the provider, the account id, Sign out, Delete
+/// account, the early-release note, the support contact, privacy and Terms
+/// links from build settings (FR-047), the community links (RM-111), and
 /// `account.licenses`. No profile form (ZQ7). `account.unhide_all` shows
 /// signed in or out, because hiding a code needs no account (FR-035).
 struct AccountScreen<SignedOut: View>: View {
@@ -43,6 +48,9 @@ struct AccountScreen<SignedOut: View>: View {
                     Text(verbatim: CopyKey.accountSignedInWith.text(provider.copy.text))
                         .textRole(.title)
                         .accessibilityIdentifier("account.signed_in_with")
+                }
+                if let accountID = state.accountID {
+                    AccountIDRow(accountID: accountID)
                 }
                 Button(action: onSignOut) { Text(.accountSignOut) }
                     .buttonStyle(.zzSecondary)
@@ -72,8 +80,32 @@ struct AccountScreen<SignedOut: View>: View {
                     .buttonStyle(.zzSecondary)
                     .accessibilityIdentifier("account.clear_saved")
             }
-            AccountLinks(supportEmail: state.supportEmail, privacyURL: state.privacyURL, onLicenses: onLicenses)
+            // RM-121, D-2026-10-11-06: a plain note, not a link or a banner.
+            Text(.accountEarlyRelease)
+                .textRole(.secondary)
+                .accessibilityIdentifier("account.early_release")
+            AccountLinks(supportEmail: state.supportEmail, privacyURL: state.privacyURL, termsURL: state.termsURL,
+                         onLicenses: onLicenses)
         }
+    }
+}
+
+/// `account.id` with the account's id beside it as plain, selectable text,
+/// not inside the string (design/UX.md, Account; D-2026-10-13-08). It is what
+/// a person quotes in an access or deletion request.
+struct AccountIDRow: View {
+    let accountID: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ZZSpace.space3xs) {
+            Text(.accountId).textRole(.secondary)
+            Text(verbatim: accountID)
+                .zzFont(.mono, ZZTextSize.textSm)
+                .textSelection(.enabled)
+                .accessibilityIdentifier("account.id.value")
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("account.id")
     }
 }
 
@@ -81,6 +113,7 @@ struct AccountLinks: View {
     @Environment(\.colorScheme) private var scheme
     let supportEmail: String?
     let privacyURL: URL?
+    var termsURL: URL?
     let onLicenses: () -> Void
 
     var body: some View {
@@ -100,6 +133,25 @@ struct AccountLinks: View {
                 .accessibilityIdentifier("account.privacy")
                 Divider().overlay(palette.rule)
             }
+            if let termsURL {
+                Link(destination: termsURL) {
+                    LinkRow(text: CopyKey.accountTerms.text, symbol: "arrow.up.right")
+                }
+                .accessibilityIdentifier("account.terms")
+                Divider().overlay(palette.rule)
+            }
+            // The community links (RM-111): build constants, the same
+            // addresses as the zzThis site footer.
+            Link(destination: BuildConfig.discordURL) {
+                LinkRow(text: CopyKey.accountDiscord.text, symbol: "arrow.up.right")
+            }
+            .accessibilityIdentifier("account.discord")
+            Divider().overlay(palette.rule)
+            Link(destination: BuildConfig.instagramURL) {
+                LinkRow(text: CopyKey.accountInstagram.text, symbol: "arrow.up.right")
+            }
+            .accessibilityIdentifier("account.instagram")
+            Divider().overlay(palette.rule)
             Button(action: onLicenses) {
                 LinkRow(text: CopyKey.accountLicenses.text, symbol: "chevron.right")
             }
@@ -214,7 +266,8 @@ struct AccountSheet: View {
                                                     supportEmail: app.config.supportEmail,
                                                     privacyURL: app.config.privacyURL, deletePhase: deletePhase,
                                                     unhideAllDone: unhideAllDone, clearSavedDone: clearSavedDone,
-                                                    loading: loading, offline: !app.isOnline, demo: app.isDemo),
+                                                    loading: loading, offline: !app.isOnline, demo: app.isDemo,
+                                                    termsURL: app.config.termsURL, accountID: app.accountID),
                           onSignOut: { Task { await app.signOut() } },
                           onDelete: { confirmingDelete = true },
                           onLicenses: { path.append(.licenses) },

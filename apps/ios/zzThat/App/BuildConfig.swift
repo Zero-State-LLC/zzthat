@@ -15,6 +15,11 @@ struct BuildConfig: Sendable {
     let apiOrigin: URL?
     let supportEmail: String?
     let privacyURL: URL?
+    /// The Terms of Use (design/UX.md, Terms), a build setting like the
+    /// privacy link. Release injects it. Nil when no URL is configured: then
+    /// `terms.link` and `account.terms` are hidden, and the Terms step still
+    /// asks for both confirmations.
+    let termsURL: URL?
     /// Nil while the Google client id is still a placeholder: GoogleSignIn
     /// raises an exception without a real `GIDClientID` and URL scheme, so
     /// the Google button stays hidden (runtime.md, iOS Google setup).
@@ -33,11 +38,19 @@ struct BuildConfig: Sendable {
 
     static let current = BuildConfig(bundle: .main)
 
-    init(kind: BuildKind, apiOrigin: URL?, supportEmail: String?, privacyURL: URL?, googleClientID: String?) {
+    /// The zzThat community links on Account (design/UX.md, Account: early
+    /// release and community links; RM-111). Build constants, not copy: the
+    /// same addresses as the zzThis site footer, `src/content/navigation.ts`.
+    static let discordURL = URL(string: "https://discord.gg/hwXvVKYzn4")!
+    static let instagramURL = URL(string: "https://www.instagram.com/zzthatcom/")!
+
+    init(kind: BuildKind, apiOrigin: URL?, supportEmail: String?, privacyURL: URL?, termsURL: URL? = nil,
+         googleClientID: String?) {
         self.kind = kind
         self.apiOrigin = apiOrigin
         self.supportEmail = supportEmail
         self.privacyURL = privacyURL
+        self.termsURL = termsURL
         self.googleClientID = googleClientID
     }
 
@@ -51,6 +64,7 @@ struct BuildConfig: Sendable {
         apiOrigin = kind == .demo ? nil : value("ZZAPIOrigin").flatMap(URL.init(string:))
         supportEmail = value("ZZSupportEmail")
         privacyURL = value("ZZPrivacyURL").flatMap(URL.init(string:))
+        termsURL = value("ZZTermsURL").flatMap(URL.init(string:))
         let client = value("GIDClientID")
         let scheme = (bundle.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]])?
             .compactMap { $0["CFBundleURLSchemes"] as? [String] }.joined().first

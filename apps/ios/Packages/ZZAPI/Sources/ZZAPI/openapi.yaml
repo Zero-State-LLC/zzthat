@@ -918,7 +918,7 @@ components:
         status: { type: string, enum: [active, used, expired, revoked] }
         record_id: { type: string }
         scope: { type: string, enum: [enterprise, logistics, free_public] }
-        rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
+        rerolls_remaining: { type: integer, minimum: 0, maximum: 5 }
         created_at:
           type: string
           format: date-time
@@ -944,7 +944,7 @@ components:
         status: { type: string, enum: [active, used, expired, revoked] }
         record_id: { type: string }
         scope: { type: string, enum: [enterprise, logistics, free_public] }
-        rerolls_remaining: { type: integer, minimum: 0, maximum: 3 }
+        rerolls_remaining: { type: integer, minimum: 0, maximum: 5 }
         created_at:
           type: string
           format: date-time

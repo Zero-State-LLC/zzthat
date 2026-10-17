@@ -43,6 +43,11 @@ android {
         // secrets. Release injects its own values (below).
         buildConfigField("String", "SUPPORT_EMAIL", quoted("support@zer0state.com"))
         buildConfigField("String", "PRIVACY_URL", quoted("https://zero-state-llc.github.io/zzthis/privacy/"))
+        // The Terms of Use (zzThis D-2026-10-13-04, RM-103). A placeholder on
+        // the zzThat host that D-2026-10-11-09 proposes, never a zzThis host
+        // (D-2026-10-11-07), until Michael approves the Terms and Danny picks
+        // the host. Release injects its own value. Blank hides the link.
+        buildConfigField("String", "TERMS_URL", quoted("https://zzthat.com/terms/"))
     }
 
     flavorDimensions += "build"
@@ -77,6 +82,7 @@ android {
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", quoted(injected("zzGoogleWebClientId").ifEmpty { "unset" }))
             buildConfigField("String", "SUPPORT_EMAIL", quoted(injected("zzSupportEmail")))
             buildConfigField("String", "PRIVACY_URL", quoted(injected("zzPrivacyUrl")))
+            buildConfigField("String", "TERMS_URL", quoted(injected("zzTermsUrl")))
         }
     }
 

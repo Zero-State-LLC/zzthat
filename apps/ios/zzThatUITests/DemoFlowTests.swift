@@ -67,6 +67,7 @@ final class DemoFlowTests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 10))
         title.tap()
         title.typeText("Lost cat")
+        flow.confirmTermsIfAsked()
         flow.tap("create.submit")
         let code = app.staticTexts["minted.code"]
         XCTAssertTrue(code.waitForExistence(timeout: 10))
@@ -96,6 +97,15 @@ final class DemoFlowTests: XCTestCase {
 @MainActor
 private struct DemoFlow {
     let app: XCUIApplication
+
+    /// The Terms step before the first create on this device (design/UX.md,
+    /// Terms): confirm 18 or older and accept the Terms, when it shows.
+    func confirmTermsIfAsked() {
+        let age = app.descendants(matching: .any)["terms.age_confirm"].firstMatch
+        guard age.waitForExistence(timeout: 3) else { return }
+        age.tap()
+        app.descendants(matching: .any)["terms.accept"].firstMatch.tap()
+    }
 
     func tap(_ identifier: String, timeout: TimeInterval = 10) {
         let element = app.descendants(matching: .any)[identifier].firstMatch

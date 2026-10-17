@@ -55,6 +55,8 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
             RECORDS.getValue("zz-river-falcon-sky-zz"), 1),
         Owned(owned("demo-code-3", "zz-b2-4-zz", null, OwnedCode.Status.revoked, "demo-record-3"),
             RECORDS.getValue("zz-b2-4-zz"), 1),
+        Owned(owned("demo-code-4", "zz-harbor-maple-river-zz", "river", OwnedCode.Status.expired, "demo-record-4", EXPIRED_RECORD.title),
+            EXPIRED_RECORD, 1),
     )
     private var minted = 0
 
@@ -92,7 +94,7 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
     // MARK: CodesApi
 
     override suspend fun mintCode(xZZContract: CodesApi.XZZContractMintCode, mintRequest: MintRequest): Response<Code> =
-        synchronized(lock) { ok(nextCode("demo-record-new", Record(mintRequest.record.title, mintRequest.record.body), 3), 201) }
+        synchronized(lock) { ok(nextCode("demo-record-new", Record(mintRequest.record.title, mintRequest.record.body), REROLL_CAP), 201) }
 
     override suspend fun rerollCode(xZZContract: CodesApi.XZZContractRerollCode, id: String): Response<Code> = synchronized(lock) {
         val index = owned.indexOfFirst { it.code.id == id }
@@ -187,12 +189,26 @@ class DemoApi : MetaApi, AuthApi, CodesApi, RecordsApi, ReportsApi {
             "zz-b2-4-zz" to Record("Duffel group B2, item 4 (demo)", "Hand receipt: DEMO-HR-02"),
         )
 
-        /** The words a demo mint and its re-rolls show (canonical, check word), from the fixture-7 list. */
+        /**
+         * The idle-expired demo row in My codes (zzThis D-2026-10-11-15, T103).
+         * It is not public: an expired code resolves to not-found (FR-010).
+         */
+        val EXPIRED_RECORD = Record("Physical thing: bicycle (demo)", "Owner contact: Withheld: public code, protected record (demo)")
+
+        /** The re-rolls a new plain code gets (zzThis RM-125; the pinned OpenAPI `rerolls_remaining` maximum). */
+        const val REROLL_CAP = 5
+
+        /**
+         * The words a demo mint and its re-rolls show (canonical, check word), from the fixture-7 list:
+         * one entry per mint and re-roll, so no re-roll shows earlier words.
+         */
         val MINT_SEQUENCE: List<Pair<String, String>> = listOf(
             "zz-copper-sky-river-zz" to "river",
             "zz-lantern-maple-copper-zz" to "copper",
             "zz-sky-river-maple-zz" to "maple",
             "zz-harbor-falcon-maple-zz" to "maple",
+            "zz-maple-harbor-falcon-zz" to "falcon",
+            "zz-river-lantern-falcon-zz" to "falcon",
         )
 
         val DISCOVERY = Discovery(

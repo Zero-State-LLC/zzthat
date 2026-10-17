@@ -50,6 +50,7 @@ Sources: zzThat [spec.md](../../specs/001-zzthat-apps/spec.md) (Privacy and perm
 - The last code you opened, so you can try again.
 - The codes you hid with Hide this code, and the creators you blocked with Block this creator. A blocked creator is kept as an opaque reference that does not name the person. These lists are never sent anywhere. Unhide everything on this device, or deleting your account, clears them.
 - The codes you saved with Save. Only the codes are kept, no photos. The list is never sent anywhere. Clear saved codes on this device, or deleting your account, clears it.
+- Which version of the Terms of Use you accepted, and that you confirmed you are 18 or older, before your first code on this phone. It is never sent anywhere. Deleting your account clears it.
 - A draft title and message, labeled "Not a code yet.", if you start a code while offline. It holds no code and is not sent anywhere until you create the code.
 
 ## Sign-in with Apple or Google

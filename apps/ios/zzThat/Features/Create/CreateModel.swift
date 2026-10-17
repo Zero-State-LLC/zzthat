@@ -4,6 +4,26 @@ import UIKit
 import ZZAPI
 import ZZCore
 
+/// A 429 on mint or re-roll (FR-033, T014; design/UX.md, Create: the daily
+/// limit). The client waits for `Retry-After` and keeps Get a code and Get
+/// different words off until then.
+enum CreateWait {
+    /// A `Retry-After` longer than this, in seconds, is the RM-072 daily cap,
+    /// which can run to the next UTC midnight, and shows `create.daily_limit`.
+    /// A shorter one is a burst limit and keeps `resolve.rate_limited`.
+    /// UX.md names the daily cap by its long wait, and no burst window in
+    /// zzThis spec 005 runs as long as an hour.
+    static let dailyLimitSeconds = 3600
+
+    static func message(retryAfter: Int) -> CopyKey {
+        retryAfter > dailyLimitSeconds ? .createDailyLimit : .resolveRateLimited
+    }
+
+    static func until(retryAfter: Int, now: Date = Date()) -> Date {
+        now.addingTimeInterval(TimeInterval(max(retryAfter, 1)))
+    }
+}
+
 /// Create (US1): mint a wordlist code. The server chooses the words and the
 /// check word (ZQ11), so there is no field for code words (FR-019, T034).
 @MainActor
@@ -20,7 +40,27 @@ final class CreateModel {
     var phase: Phase = .editing
     /// A mint answered `scope-unavailable` or `not-ready` (FR-018).
     private(set) var mintUnavailable = false
+    /// The Terms step (design/UX.md, Terms; D-2026-10-13-04): the person
+    /// confirms they are 18 or older and accepts the Terms. Both are needed
+    /// before the first create on this device, and again when `terms.version`
+    /// changes. Client-only: nothing about it is sent.
+    var ageConfirmed = false
+    var termsAccepted = false
+    /// After a 429, Get a code stays off until this time (FR-033).
+    private(set) var retryAt: Date?
     @ObservationIgnored private var draftLoaded = false
+
+    var waiting: Bool { retryAt != nil }
+
+    /// The `Retry-After` wait is over: Get a code turns back on.
+    func endWait() {
+        retryAt = nil
+    }
+
+    /// Whether Get a code may run: the Terms step is done, or not needed.
+    func termsDone(app: AppModel) -> Bool {
+        !app.needsTerms || (ageConfirmed && termsAccepted)
+    }
 
     /// The local draft, labeled "Not a code yet." (FR-024). It holds no code words.
     func loadDraft(app: AppModel) {
@@ -40,9 +80,22 @@ final class CreateModel {
 
     /// `POST /v1/codes`. Refused offline, never queued as a success (FR-022).
     func mint(app: AppModel) async -> MintedCode? {
+        if let retryAt {
+            guard Date() >= retryAt else { return nil }
+            endWait()
+        }
         guard !FieldLimits.isBlank(title) else {
             phase = .failure(.createTitleRequired)
             return nil
+        }
+        // Both confirmations come before Create continues (design/UX.md, Terms).
+        guard termsDone(app: app) else { return nil }
+        if app.needsTerms {
+            app.acceptTerms()
+            // Consumed: if the step shows again (a new version, or after
+            // account deletion), it starts unchecked.
+            ageConfirmed = false
+            termsAccepted = false
         }
         guard app.isOnline else {
             saveDraft(app: app)
@@ -66,6 +119,10 @@ final class CreateModel {
         case .failure(.unauthorized):
             phase = .failure(.commonSignInNeeded)
             app.needsSignIn()
+        case .failure(.rateLimited(let retryAfter)):
+            // The title and body stay as typed; Get a code waits (FR-033).
+            retryAt = CreateWait.until(retryAfter: retryAfter)
+            phase = .failure(CreateWait.message(retryAfter: retryAfter))
         case .failure(let failure):
             let key = CopyKey(failure.message(for: .mint))
             if key == .createUnavailable { mintUnavailable = true }
@@ -77,7 +134,7 @@ final class CreateModel {
 }
 
 /// Minted code (design/UX.md, Minted code): the canonical form, the check
-/// word, and up to 3 re-rolls (FR-017).
+/// word, and the re-rolls `rerolls_remaining` allows, 5 for a new code (FR-017, RM-125).
 @MainActor
 @Observable
 final class MintedModel {
@@ -90,6 +147,15 @@ final class MintedModel {
     private(set) var code: MintedCode
     private(set) var capReached: Bool
     private(set) var phase: Phase = .idle
+    /// After a 429, Get different words stays off until this time (FR-033).
+    private(set) var retryAt: Date?
+
+    var waiting: Bool { retryAt != nil }
+
+    /// The `Retry-After` wait is over: Get different words turns back on.
+    func endWait() {
+        retryAt = nil
+    }
 
     init(code: MintedCode) {
         self.code = code
@@ -99,6 +165,10 @@ final class MintedModel {
     /// `POST /v1/codes/{id}/reroll`. Each tap replaces the current code; at
     /// the cap, or once the code was resolved, the words stay.
     func reroll(app: AppModel) async {
+        if let retryAt {
+            guard Date() >= retryAt else { return }
+            endWait()
+        }
         guard app.isOnline else {
             phase = .failure(.errorNoConnection)
             return
@@ -116,6 +186,10 @@ final class MintedModel {
         case .failure(.unauthorized):
             phase = .failure(.commonSignInNeeded)
             app.needsSignIn()
+        case .failure(.rateLimited(let retryAfter)):
+            // The words stay; Get different words waits (FR-033).
+            retryAt = CreateWait.until(retryAfter: retryAfter)
+            phase = .failure(CreateWait.message(retryAfter: retryAfter))
         case .failure(let failure):
             let key = CopyKey(failure.message(for: .reroll))
             if key == .mintedRerollCap { capReached = true }

@@ -33,10 +33,14 @@ class DemoApiTest {
     fun rerollStopsAtTheCap() = runBlocking {
         val service = demo()
         var code = (service.mint("Lost cat", "") as ApiResult.Ok).value
-        assertEquals(3, code.rerollsRemaining)
-        for (remaining in listOf(2, 1, 0)) {
+        assertEquals(5, code.rerollsRemaining)
+        val seen = mutableListOf(code.canonical)
+        for (remaining in listOf(4, 3, 2, 1, 0)) {
             code = (service.reroll(code.id) as ApiResult.Ok).value
             assertEquals(remaining, code.rerollsRemaining)
+            // A re-roll retires the old words for good (design/UX.md, Minted code).
+            assertFalse(code.canonical in seen)
+            seen += code.canonical
         }
         assertEquals(MessageKey.MINTED_REROLL_CAP, service.reroll(code.id).failureOrNull?.message(CallContext.REROLL))
     }

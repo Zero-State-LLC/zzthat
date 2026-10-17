@@ -63,6 +63,18 @@ class BuildTest {
         assertEquals("https://zero-state-llc.github.io/zzthis/privacy/", config.privacyUrl)
     }
 
+    /**
+     * The Terms link is a build setting like the privacy link (design/UX.md,
+     * Terms). Demo and Local carry a zzThat placeholder, never a zzThis host
+     * (D-2026-10-11-07); Release injects its own.
+     */
+    @Test
+    fun theTermsLinkComesFromBuildSettings() {
+        if (config.kind == BuildKind.PROD) return assertEquals("injected at build time", BuildConfig.TERMS_URL, config.termsUrl.orEmpty())
+        assertEquals("https://zzthat.com/terms/", config.termsUrl)
+        assertFalse(config.termsUrl.orEmpty().lowercase().contains("zzthis"))
+    }
+
     /** Release step 1: apps/VERSION is the user-visible version. */
     @Test
     fun theVersionIsAppsVersion() {

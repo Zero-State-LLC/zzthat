@@ -62,6 +62,22 @@ struct BundleTests {
         #expect(BuildConfig.current.privacyURL?.host() == "zero-state-llc.github.io")
     }
 
+    /// The Terms link is a build setting like the privacy link (design/UX.md,
+    /// Terms). Demo and Local carry a zzThat placeholder, never a zzThis host
+    /// (D-2026-10-11-07); Release injects its own.
+    @Test func theTermsLinkComesFromBuildSettings() throws {
+        let url = try #require(BuildConfig.current.termsURL)
+        #expect(url.scheme == "https")
+        #expect(url.host() == "zzthat.com")
+        #expect(!url.absoluteString.lowercased().contains("zzthis"))
+    }
+
+    /// RM-111: the community links are the zzThis site footer's addresses.
+    @Test func theCommunityLinksAreTheFooterAddresses() {
+        #expect(BuildConfig.discordURL.absoluteString == "https://discord.gg/hwXvVKYzn4")
+        #expect(BuildConfig.instagramURL.absoluteString == "https://www.instagram.com/zzthatcom/")
+    }
+
     /// Release step 1: apps/VERSION is the user-visible version.
     @Test func versionIsAppsVersion() throws {
         let version = try String(contentsOf: Self.repo.appendingPathComponent("apps/VERSION"), encoding: .utf8)

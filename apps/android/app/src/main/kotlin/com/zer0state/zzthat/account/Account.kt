@@ -41,6 +41,7 @@ import com.google.android.gms.common.SignInButton
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.api.generated.models.TokenRequest
 import com.zer0state.zzthat.app.AppModel
+import com.zer0state.zzthat.app.BuildSettings
 import com.zer0state.zzthat.app.FlavorFeatures
 import com.zer0state.zzthat.app.providerRes
 import com.zer0state.zzthat.auth.GoogleIdTokens
@@ -77,6 +78,10 @@ data class AccountScreenState(
     val unhideAllDone: Boolean = false,
     /** Saved on this device was cleared (FR-050). */
     val clearSavedDone: Boolean = false,
+    /** The Terms of Use link (`account.terms`), a build setting. Null hides it. */
+    val termsUrl: String? = null,
+    /** The signed-in account's id from `GET /v1/me`, shown beside `account.id`. */
+    val accountId: String? = null,
 ) {
     sealed interface DeletePhase {
         data object Idle : DeletePhase
@@ -88,8 +93,9 @@ data class AccountScreenState(
 }
 
 /**
- * Account (design/UX.md): the provider, Sign out, Delete account, the support
- * contact and privacy link from build settings (FR-047), and
+ * Account (design/UX.md): the provider, the account id, Sign out, Delete
+ * account, the early-release note, the support contact, privacy and Terms
+ * links from build settings (FR-047), the community links (RM-111), and
  * `account.licenses`. No profile form (ZQ7). Signed out, it shows Sign in.
  * Signed in or out, it offers the FR-035 reset, Unhide everything on this
  * device, which also unblocks every creator, and the FR-050 Clear saved
@@ -103,6 +109,7 @@ fun AccountScreen(
     onLicenses: () -> Unit = {},
     onSupport: (String) -> Unit = {},
     onPrivacy: (String) -> Unit = {},
+    onLink: (String) -> Unit = {},
     onUnhideAll: () -> Unit = {},
     onClearSaved: () -> Unit = {},
     signedOut: @Composable ColumnScope.() -> Unit = {},
@@ -117,6 +124,7 @@ fun AccountScreen(
                     Modifier.testTag("account.signed_in_with"),
                 )
             }
+            state.accountId?.let { AccountIdRow(it) }
             ZZButton(stringResource(R.string.account_sign_out), "account.sign_out", ButtonKind.SECONDARY, onClick = onSignOut)
             (state.deletePhase as? AccountScreenState.DeletePhase.Failure)?.let { Message(it.key, emphasis = true) }
             ZZButton(
@@ -134,12 +142,41 @@ fun AccountScreen(
         if (state.unhideAllDone) Message(R.string.account_unhide_all_done)
         ZZButton(stringResource(R.string.account_clear_saved), "account.clear_saved", ButtonKind.SECONDARY, onClick = onClearSaved)
         if (state.clearSavedDone) Message(R.string.account_clear_saved_done)
-        AccountLinks(state.supportEmail, state.privacyUrl, onSupport, onPrivacy, onLicenses)
+        // RM-121, D-2026-10-11-06: a plain note, not a link or a banner.
+        RoleText(stringResource(R.string.account_early_release), TextRole.SECONDARY, Modifier.testTag("account.early_release"))
+        AccountLinks(state.supportEmail, state.privacyUrl, onSupport, onPrivacy, onLicenses, state.termsUrl, onLink)
+    }
+}
+
+/**
+ * `account.id` with the account's id beside it as plain, selectable text, not
+ * inside the string (design/UX.md, Account; D-2026-10-13-08). It is what a
+ * person quotes in an access or deletion request.
+ */
+@Composable
+fun AccountIdRow(accountId: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(ZZSpace.Space3xs), modifier = Modifier.testTag("account.id")) {
+        RoleText(stringResource(R.string.account_id), TextRole.SECONDARY)
+        SelectionContainer {
+            Text(
+                accountId,
+                style = TextStyle(fontFamily = ZZFonts.mono, fontSize = ZZType.TextSm, color = LocalPalette.current.ink),
+                modifier = Modifier.testTag("account.id.value"),
+            )
+        }
     }
 }
 
 @Composable
-fun AccountLinks(supportEmail: String?, privacyUrl: String?, onSupport: (String) -> Unit, onPrivacy: (String) -> Unit, onLicenses: () -> Unit) {
+fun AccountLinks(
+    supportEmail: String?,
+    privacyUrl: String?,
+    onSupport: (String) -> Unit,
+    onPrivacy: (String) -> Unit,
+    onLicenses: () -> Unit,
+    termsUrl: String? = null,
+    onLink: (String) -> Unit = {},
+) {
     val palette = LocalPalette.current
     Column(
         modifier = Modifier
@@ -155,12 +192,21 @@ fun AccountLinks(supportEmail: String?, privacyUrl: String?, onSupport: (String)
             LinkRow(stringResource(R.string.account_privacy), "account.privacy") { onPrivacy(privacyUrl) }
             HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
         }
+        if (termsUrl != null) {
+            LinkRow(stringResource(R.string.account_terms), "account.terms") { onLink(termsUrl) }
+            HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
+        }
+        // The community links (RM-111): build constants, the same addresses as the zzThis site footer.
+        LinkRow(stringResource(R.string.account_discord), "account.discord") { onLink(BuildSettings.DISCORD_URL) }
+        HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
+        LinkRow(stringResource(R.string.account_instagram), "account.instagram") { onLink(BuildSettings.INSTAGRAM_URL) }
+        HorizontalDivider(color = palette.rule, thickness = ZZSpace.RuleHair)
         LinkRow(stringResource(R.string.account_licenses), "account.licenses", onClick = onLicenses)
     }
 }
 
 @Composable
-private fun LinkRow(text: String, tag: String, onClick: () -> Unit) {
+fun LinkRow(text: String, tag: String, onClick: () -> Unit) {
     Text(
         text = text,
         style = TextRole.BODY.style().copy(color = LocalPalette.current.accentInk),

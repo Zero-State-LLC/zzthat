@@ -111,7 +111,13 @@ data class CodeDetailScreenState(
     val revokePhase: CodeDetailModel.RevokePhase = CodeDetailModel.RevokePhase.Idle,
     val saved: Boolean = false,
     val demo: Boolean = false,
-)
+) {
+    /** Revoke shows only while the code is active (T052): not for a used, expired, or revoked code (T103). */
+    val showsRevoke: Boolean get() = row?.status == OwnedCode.Status.active
+
+    /** A revoked code has no Edit. */
+    val showsEdit: Boolean get() = row != null && row.status != OwnedCode.Status.revoked
+}
 
 /**
  * Code detail (design/UX.md): the code, the title, the body as plain text,
@@ -147,10 +153,10 @@ fun CodeDetailScreen(
                 (state.revokePhase as? CodeDetailModel.RevokePhase.Failure)?.let { Message(it.key, emphasis = true) }
                 if (phase == CodeDetailModel.Phase.Loaded) {
                     ZZButton(stringResource(R.string.resolve_share), "detail.share") { onShare(row.canonical) }
-                    if (row.status != OwnedCode.Status.revoked) {
+                    if (state.showsEdit) {
                         ZZButton(stringResource(R.string.detail_edit), "detail.edit", ButtonKind.SECONDARY, onClick = onEdit)
                     }
-                    if (row.status == OwnedCode.Status.active) {
+                    if (state.showsRevoke) {
                         ZZButton(
                             stringResource(R.string.detail_revoke),
                             "detail.revoke",

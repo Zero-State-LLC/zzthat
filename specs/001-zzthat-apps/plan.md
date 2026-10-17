@@ -21,11 +21,11 @@ anti-slop-code, production-systems, google-developer-style. Spec lint: `.github/
 | Recognition | V1 is on-device and fiducial-first: detect and pair terminal `zz` on the same baseline, crop or rotate only, then recognize the payload behind `RecognitionResult`. Apple Vision on iOS. A qualified on-device Android engine (ML Kit or PP-OCR, selected by ZZ-OCR-QUAL-001). No perspective or projective rectification, no cloud fallback, and no photo, crop, or OCR transcript upload, regardless of `photo_reads`. | V1 decision confirmed in [zzThis PR #89](https://github.com/Zero-State-LLC/zzthis/pull/89#issuecomment-6050761903); Q18 no-cloud lock preserved. |
 | API | zzThis spec 005 and the pinned `contracts/zzthis-v1.openapi.yaml`. Prefix `/v1`. Header `X-ZZ-Contract: 1`. | ZQ19 |
 | Auth | Native Apple or Google sign-in, a server nonce, and the provider ID token (zzThis spec 005 FR-020). Apple and Google on iOS, Google on Android. Access token 15 minutes. Rotating refresh in the Keychain or Keystore-encrypted DataStore. | ZQ18 [DANNY 2026-10-04] (Q66). ZQ23. |
-| Create | Shows the Unavailable state until `GET /v1` says `free_public` is true. It is never hidden. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 3. | ZQ3, ZQ11 |
+| Create | Shows the Unavailable state until `GET /v1` says `free_public` is true. It is never hidden. Mint returns a server-chosen wordlist code and its check word. Re-roll cap is 5 (zzThis RM-125, D-2026-10-13-02). | ZQ3, ZQ11 |
 | On-device storage | Session tokens, last canonical read, public resolves for 60 seconds online and 360 seconds offline (FR-041), drafts labeled "Not a code yet." | FR-041, ZQ16, ZQ26. zzThis spec 005 FR-018. |
 | Secrets | None in the tree. No record-signing keys in the app. | Constitution IX |
 | Structure | Trees, modules, and navigation in runtime.md | [runtime.md](runtime.md) |
-| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`. ZQ19. |
+| API client | Generated from the pinned `contracts/zzthis-v1.openapi.yaml`: Swift OpenAPI Generator, and OpenAPI Generator `kotlin` with Retrofit | zzThis `e0119193792e64c93ed37ac575ab8c5d4ed1f3e4`. ZQ19. |
 | Design and strings | Pinned copy via `scripts/sync-zzthis.sh`, one sha in `contracts/ZZTHIS-API-PIN`, with fonts and `copy.json` | design.md. Not a submodule. |
 | Recognition engines | Engine-neutral recognition adapters. Apple Vision is the iOS baseline. Android ML Kit and PP-OCR are qualification candidates; only the ZZ-OCR-QUAL-001 winner ships enabled by default. One still photo, on device. | runtime.md, Read pipeline; zzThis PR #89 / accepted 2026-10-06 recognition intent |
 | Builds | Demo, Local, and Release, with XcodeGen and Gradle flavors | runtime.md, Build configurations |
@@ -66,7 +66,7 @@ The one-shot order is in zzThis `docs/ONE-SHOT-BRIEF.md` and in [tasks.md](tasks
 - Two native parsers can drift. FR-039 is the control.
 - ZQ11 matches spec 002 US2. The server chooses the words for free public codes too. This repo does not propose a person-written claim.
 - Public resolve without a session (ZQ6) disagrees with the inferred "every call is authenticated" line in Section 10.6. The not-found collapse for private records has to stay.
-- The re-roll cap of 3 is in zzThis spec 005 FR-006. Replaced words are never reissued (zzThis Q36, decided in zzThis on 2026-10-04, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)).
+- The re-roll cap of 5 is in zzThis spec 005 FR-006 (RM-125, D-2026-10-13-02; it was 3). Replaced words are never reissued (zzThis Q36, decided in zzThis on 2026-10-04, [zzThis #74](https://github.com/Zero-State-LLC/zzthis/issues/74)).
 - Rate-limit numbers are still the starting table (ZQ20). The cache lifetime is not: Q26 is zzThis spec 005 FR-018, and FR-041 sets the app's 60 and 360 seconds.
 - The Kotlin OpenAPI generator's 3.1 support is partial. The contract avoids the constructs it handles worst. The `apps-ci.yml` `android` job generates the Kotlin client on every pull request, so a problem there is a red check. Under ZQ27, the Swift client is generated only when the `ios` job runs (`workflow_dispatch` or the `ios-ci` label) and in the dev Mac run that the PR body quotes.
 - Handwriting recognition quality on each platform is unmeasured. No accuracy number is a release criterion (FR-029).
