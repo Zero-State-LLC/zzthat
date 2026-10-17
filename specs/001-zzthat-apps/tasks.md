@@ -114,7 +114,7 @@ Done when: `apps-ci.yml` passes with the string check and the manifest check.
 ## Phase 10: Whole-system check
 
 - [x] T085 One snapshot per screen state, light and dark, on both platforms (SC-13).
-- [ ] T086 `.github/workflows/apps-e2e.yml` on the ZQ27 triggers, and the end-to-end run in runtime.md, once per platform (SC-12). The builder opens the draft PR, adds the `run-e2e` label, and links the apps-e2e.yml run in the PR body. Under ZQ27, the builder runs the iOS end-to-end test on the dev Mac, with `-skipPackagePluginValidation`, and pastes the command, the commit sha, and the log tail into the PR body. Evidence with no Actions run is listed under "could not verify".
+- [x] T086 `.github/workflows/apps-e2e.yml` on the ZQ27 triggers, and the end-to-end run in runtime.md, once per platform (SC-12). The builder opens the draft PR, adds the `run-e2e` label, and links the apps-e2e.yml run in the PR body. Under ZQ27, the builder runs the iOS end-to-end test on the dev Mac, with `-skipPackagePluginValidation`, and pastes the command, the commit sha, and the log tail into the PR body. Evidence with no Actions run is listed under "could not verify". Run 2026-10-17 at zzThis pin 08a3c26 (after #84 to #93): iOS on the dev Mac and Android on the emulator, both passing, with the evidence in the PR body; the Android run also needed the Terms step that #84 added.
 
 Done when: both end-to-end runs pass against the local zzThis Worker at the pin, with the evidence T086 names.
 
