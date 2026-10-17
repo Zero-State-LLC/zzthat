@@ -38,9 +38,6 @@ object ReasonCodes {
     /** A closing marker with no opening marker on its baseline. */
     const val MISSING_OPENING_FIDUCIAL = "missing-opening-fiducial"
 
-    /** The zzThis decision-band-mapping `missing-marker` capture issue. */
-    const val MISSING_MARKER = "missing-marker"
-
     /**
      * An unpaired marker with words beside it whose side cannot be told. The
      * pinned zzThis ocr-qualification-decoder-replay.mjs reads this code, like
@@ -77,6 +74,14 @@ object ReasonCodes {
 
     /** The configuration itself is invalid (decision-band-mapping `invalid-thresholds-abstain`). */
     const val INVALID_CONFIGURATION = "invalid-configuration"
+
+    /**
+     * Evidence that does not hold together: an image with no size, a marker
+     * box outside [0,1] or with no area, a repeated detection id, or pair,
+     * ROI, and mark ids that do not link. The frame fails closed with no
+     * candidates (zzThis specs/004-capture/qualification.md, adapter input).
+     */
+    const val INVALID_EVIDENCE = "invalid-evidence"
 }
 
 /**
@@ -147,7 +152,6 @@ data class CaptureConfig(
          * the app's own codes mapped by recognition.md, Error mapping.
          */
         val DEFAULT_REASON_BANDS: Map<String, Band> = mapOf(
-            ReasonCodes.MISSING_MARKER to Band.RETRY,
             ReasonCodes.PARTIAL_FIDUCIAL to Band.RETRY,
             "cutoff-marker" to Band.RETRY,
             "blur" to Band.RETRY,
@@ -166,6 +170,7 @@ data class CaptureConfig(
             ReasonCodes.NO_PAYLOAD_TEXT to Band.RETRY,
             ReasonCodes.HYPOTHESIS_LIMIT_EXCEEDED to Band.ABSTAIN,
             ReasonCodes.INVALID_CONFIGURATION to Band.ABSTAIN,
+            ReasonCodes.INVALID_EVIDENCE to Band.ABSTAIN,
         )
 
         /** The build's capture configuration. NOT QUALIFIED: see the file comment. */

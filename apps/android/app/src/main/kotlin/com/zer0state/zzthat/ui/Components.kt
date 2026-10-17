@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -56,6 +57,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.grammar.NormRect
@@ -170,20 +173,42 @@ fun RoleText(text: String, role: TextRole, modifier: Modifier = Modifier) {
 @Composable
 fun CodeText(canonical: String, checkWord: String? = null, size: TextUnit = ZZType.TextMd, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
-    val text = buildAnnotatedString {
-        append(canonical)
-        if (checkWord != null) {
-            val start = canonical.lastIndexOf("-$checkWord-zz")
-            if (start >= 0) addStyle(SpanStyle(color = palette.accentInk), start + 1, start + 1 + checkWord.length)
+    val style = TextStyle(fontFamily = ZZFonts.mono, fontSize = size, fontWeight = ZZType.WeightMedium, color = palette.ink)
+    val checkStart = checkWord?.let { canonical.lastIndexOf("-$it-zz") }?.takeIf { it >= 0 }?.plus(1)
+    // One piece per part, each with the hyphen after it, so a long code
+    // wraps only after a hyphen and no part splits across lines
+    // (runtime.md, Accessibility). Copy and TalkBack get the code as one.
+    val pieces = codePieces(canonical)
+    SelectionContainer {
+        FlowRow(modifier = modifier.semantics(mergeDescendants = true) { contentDescription = canonical }) {
+            var offset = 0
+            for (piece in pieces) {
+                val start = offset
+                offset += piece.length
+                val text = buildAnnotatedString {
+                    append(piece)
+                    if (checkStart != null && checkWord != null && checkStart >= start && checkStart < offset) {
+                        addStyle(SpanStyle(color = palette.accentInk), checkStart - start, checkStart - start + checkWord.length)
+                    }
+                }
+                Text(text = text, style = style)
+            }
         }
     }
-    SelectionContainer {
-        Text(
-            text = text,
-            style = TextStyle(fontFamily = ZZFonts.mono, fontSize = size, fontWeight = ZZType.WeightMedium, color = palette.ink),
-            modifier = modifier.semantics { contentDescription = canonical },
-        )
+}
+
+/** A code split after each hyphen: `zz-copper-sky-zz` is `zz-`, `copper-`, `sky-`, `zz`. */
+internal fun codePieces(canonical: String): List<String> {
+    val pieces = mutableListOf<String>()
+    var start = 0
+    for ((index, char) in canonical.withIndex()) {
+        if (char == '-') {
+            pieces += canonical.substring(start, index + 1)
+            start = index + 1
+        }
     }
+    if (start < canonical.length) pieces += canonical.substring(start)
+    return pieces
 }
 
 /** Text read from a photo or typed, shown as written in the mono font. */
@@ -339,6 +364,27 @@ fun LimitedField(
         )
     }
 }
+
+/**
+ * One candidate's region of the photo, drawn from the photo in memory and
+ * [height] tall (zzThis spec 004 FR-013, FR-020: the person picks the box
+ * they mean). Nothing is cropped to a file. Decorative: the row's number
+ * and caption are what TalkBack reads.
+ */
+@Composable
+fun PhotoRegion(image: ImageBitmap, region: NormRect, height: Dp = MinTouch) {
+    val left = (region.minX.coerceIn(0.0, 1.0) * image.width).toInt()
+    val top = (region.minY.coerceIn(0.0, 1.0) * image.height).toInt()
+    val right = (region.maxX.coerceIn(0.0, 1.0) * image.width).toInt().coerceAtLeast(left + 1).coerceAtMost(image.width)
+    val bottom = (region.maxY.coerceIn(0.0, 1.0) * image.height).toInt().coerceAtLeast(top + 1).coerceAtMost(image.height)
+    val source = IntSize(right - left, bottom - top)
+    val width = minOf(height * (source.width.toFloat() / source.height), PhotoRegionMaxWidth)
+    Canvas(modifier = Modifier.size(width, height).clip(ChipShape)) {
+        drawImage(image, srcOffset = IntOffset(left, top), srcSize = source, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+    }
+}
+
+private val PhotoRegionMaxWidth = 240.dp
 
 /**
  * The photo with a numbered box around each candidate (design/UX.md, Scan

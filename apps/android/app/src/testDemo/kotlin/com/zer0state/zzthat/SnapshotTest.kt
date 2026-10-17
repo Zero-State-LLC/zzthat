@@ -119,7 +119,29 @@ class SnapshotTest {
                     }
                 }
             }
+            if (case.name in LARGE_TEXT) {
+                // runtime.md, Accessibility (T076): the main screens at twice
+                // the text size, light only, on a tall screen so nothing
+                // scrolls out of view. The text grows, and the canonical
+                // code wraps rather than truncates.
+                paparazzi.unsafeUpdateConfig(deviceConfig = LARGE_TEXT_DEVICE)
+                paparazzi.snapshot(name = "${case.name}-font200") {
+                    ZZTheme(dark = false) {
+                        val chrome = case.chrome
+                        if (chrome != null) framed(chrome, case.content) else case.content()
+                    }
+                }
+                paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig.PIXEL_5)
+            }
         }
+    }
+
+    private companion object {
+        val LARGE_TEXT = setOf(
+            "scan-demo", "pick-demo", "type-demo", "resolve-demo", "create-demo", "terms-demo", "minted-demo",
+            "writecheck-demo", "codes-demo", "detail-demo", "signin-demo", "account-demo",
+        )
+        val LARGE_TEXT_DEVICE = DeviceConfig.PIXEL_5.copy(fontScale = 2.0f, screenHeight = DeviceConfig.PIXEL_5.screenHeight * 2)
     }
 
     private val account = R.string.nav_account to "nav.account"
