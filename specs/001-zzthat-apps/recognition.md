@@ -1,7 +1,7 @@
 # Recognition integration contract
 
-Status: normative for the recognition boundary. Application code for T023 to T025 waits on zzThat #77.
-Upstream authority: zzThis spec 004 and ZZ-OCR-QUAL-001 at the pinned commit (`contracts/ZZTHIS-API-PIN`, zzThat #76, which contains merged zzThis #89).
+Status: normative for the recognition boundary. T023 to T025 are built on both platforms (Android #85, iOS #86) and not yet qualified.
+Upstream authority: zzThis spec 004 and ZZ-OCR-QUAL-001 at the pinned commit (`contracts/ZZTHIS-API-PIN`, which contains merged zzThis #89).
 
 ## Boundary
 
@@ -96,7 +96,7 @@ Engine/model/runtime versions, preprocessing, and confidence-to-band mapping are
 
 ## Upstream pin movement
 
-Do not copy unmerged upstream prose into the committed zzThis pin. zzThis #89 is merged. zzThat #76 advanced `contracts/ZZTHIS-API-PIN` to `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, which contains that merge. #44 and #45 reconciled this contract against the merged spec 004. Building T023 to T025 waits on zzThat #77. The next pin movement uses the same flow:
+Do not copy unmerged upstream prose into the committed zzThis pin. #44 and #45 reconciled this contract against the merged spec 004, and the adapters were built against it (#85, #86). Each pin movement uses this flow:
 
 1. advance `contracts/ZZTHIS-API-PIN` through the existing sync flow;
 2. regenerate/sync governed artifacts;
