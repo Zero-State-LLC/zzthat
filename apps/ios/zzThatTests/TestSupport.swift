@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import HTTPTypes
 import OpenAPIRuntime
 import ZZAPI
@@ -108,5 +109,95 @@ enum TestApp {
                                      transport: transport)
         if signedIn { try await service.tokens.signIn(accessToken: "access-0", refreshToken: "refresh-0") }
         return service
+    }
+}
+
+/// Camera evidence for a photo drawn by `DemoPhoto`, shaped the way the
+/// Vision adapter reports it: a zz mark at each end of each line that has
+/// one, and the payload between them as one hypothesis. No Vision call, so
+/// snapshots and flow tests are deterministic.
+enum CaptureFixture {
+    typealias Photo = (image: UIImage, lines: [(text: String, box: CGRect)])
+
+    static let width = 1200
+    static func height(_ photo: Photo) -> Int { Int(photo.image.size.height) }
+
+    static func markers(_ photo: Photo) -> [MarkerObservation] {
+        photo.lines.flatMap { line -> [MarkerObservation] in
+            let text = line.text
+            guard hasMarks(text) else { return [] }
+            let mark = line.box.width * 2 / Double(text.count)
+            func quad(_ x: Double) -> [NormalizedPoint] {
+                [NormalizedPoint(x: x, y: line.box.minY), NormalizedPoint(x: x + mark, y: line.box.minY),
+                 NormalizedPoint(x: x + mark, y: line.box.maxY), NormalizedPoint(x: x, y: line.box.maxY)]
+            }
+            return [MarkerObservation(quad: quad(line.box.minX), baselineAngleDegrees: 0, inkBefore: false, inkAfter: true),
+                    MarkerObservation(quad: quad(line.box.maxX - mark), baselineAngleDegrees: 0, inkBefore: true,
+                                      inkAfter: false)]
+        }
+    }
+
+    static func frame(_ photo: Photo, configuration: CaptureConfiguration = .current) -> RecognitionResult {
+        MarkerPairing.frame(imageId: "fixture", markers: markers(photo), imageWidth: width, imageHeight: height(photo),
+                            engineId: "fixture", engineVersion: "0", configuration: configuration)
+    }
+
+    /// The payload between the marks of the line the pair is on.
+    static func hypotheses(_ photo: Photo, pairIndex: Int, confidence: Double? = 0.97) -> [PayloadHypothesis] {
+        let text = photo.lines.filter { hasMarks($0.text) }[pairIndex].text
+        let payload = String(text.dropFirst(2).dropLast(2))
+        return [PayloadHypothesis(lines: [PayloadLine(text: payload, confidence: confidence,
+                                                      cropBox: CGRect(x: 0.05, y: 0.2, width: 0.9, height: 0.6))])]
+    }
+
+    /// A line written as one code: zz at both ends.
+    static func hasMarks(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        return lower.count > 4 && lower.hasPrefix("zz") && lower.hasSuffix("zz")
+    }
+
+    /// The frame, then the reading of one pair, through the app's pipeline.
+    static func read(_ photo: Photo, pipeline: ReadPipeline, pairIndex: Int = 0,
+                     configuration: CaptureConfiguration = .current) -> (RecognitionResult, CaptureOutcome) {
+        let frame = frame(photo, configuration: configuration)
+        let capture = CapturePipeline(decoder: pipeline, configuration: configuration, adapter: FixtureCaptureAdapter())
+        let candidate = frame.visualCandidates.filter { $0.pairId != nil }[pairIndex]
+        return (frame, capture.process(frame, candidateId: candidate.id,
+                                       hypotheses: hypotheses(photo, pairIndex: pairIndex)))
+    }
+}
+
+/// The fixture evidence as an adapter, for the Scan flow tests. It counts
+/// payload reads and records nothing else.
+final class FixtureCaptureAdapter: RecognitionAdapter, @unchecked Sendable {
+    let photo: CaptureFixture.Photo?
+    private let lock = NSLock()
+    private var reads = 0
+
+    init(photo: CaptureFixture.Photo? = nil) {
+        self.photo = photo
+    }
+
+    let engineId = "fixture"
+    let engineVersion = "0"
+    var payloadReads: Int { lock.withLock { reads } }
+
+    func prepare(imageData: Data) async throws -> CaptureImage {
+        CaptureImage(pixelWidth: CaptureFixture.width, pixelHeight: photo.map(CaptureFixture.height) ?? 100,
+                     backing: nil)
+    }
+
+    func detectMarkers(in image: CaptureImage) async throws -> [MarkerObservation] {
+        photo.map(CaptureFixture.markers) ?? []
+    }
+
+    func readPayload(in image: CaptureImage, roi: ROIGeometry) async throws -> [PayloadHypothesis] {
+        guard let photo else { return [] }
+        lock.withLock { reads += 1 }
+        // The pair whose ROI center falls on a line is that line's pair.
+        let lines = photo.lines.filter { CaptureFixture.hasMarks($0.text) }
+        let y = roi.centerY / Double(image.pixelHeight)
+        let index = lines.firstIndex { $0.box.minY <= y && y <= $0.box.maxY } ?? 0
+        return CaptureFixture.hypotheses(photo, pairIndex: index)
     }
 }

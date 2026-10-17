@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import UIKit
+import ZZCore
 @testable import zzThat
 
 private actor RecognitionStarted {
@@ -20,16 +21,31 @@ private actor RecognitionStarted {
     }
 }
 
+/// An adapter whose marker detection waits until the scan is cancelled.
+private struct SlowAdapter: RecognitionAdapter {
+    let started: RecognitionStarted
+    let engineId = "slow"
+    let engineVersion = "0"
+
+    func prepare(imageData: Data) async throws -> CaptureImage {
+        CaptureImage(pixelWidth: 100, pixelHeight: 100, backing: nil)
+    }
+
+    func detectMarkers(in image: CaptureImage) async throws -> [MarkerObservation] {
+        await started.signal()
+        try await Task.sleep(for: .seconds(30))
+        return []
+    }
+
+    func readPayload(in image: CaptureImage, roi: ROIGeometry) async throws -> [PayloadHypothesis] { [] }
+}
+
 @MainActor
 @Suite("Scan photo lifecycle")
 struct ScanLifecycleTests {
     @Test func endingScanCancelsRecognitionAndDoesNotRestorePhoto() async throws {
         let started = RecognitionStarted()
-        let scan = ScanModel(recognize: { _ in
-            await started.signal()
-            try await Task.sleep(for: .seconds(30))
-            return []
-        })
+        let scan = ScanModel(adapter: SlowAdapter(started: started))
         let app = TestApp.make(service: TestApp.demoService(), kind: .demo)
         let image = DemoPhoto.make(lines: [DemoPhoto.canonical]).image
         #expect(image.jpegData(compressionQuality: 0.9) != nil)
@@ -49,5 +65,7 @@ struct ScanLifecycleTests {
         #expect(result == nil)
         #expect(scan.photo.map { _ in true } == nil)
         #expect(scan.candidates.isEmpty)
+        #expect(scan.visual.isEmpty)
+        #expect(!scan.holdsEvidence)
     }
 }

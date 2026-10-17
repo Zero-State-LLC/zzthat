@@ -41,34 +41,45 @@ struct ClarifyInput: Hashable {
 }
 
 /// One scan: the photo, the on-device read, and the candidates (runtime.md,
-/// Read pipeline). The photo stays on the device, in the caches folder only
-/// while the scan runs (FR-004).
+/// Read pipeline; recognition-adapter.md). The photo stays on the device, in
+/// the caches folder only while the scan runs (FR-004). The recognition
+/// evidence and the upright image stay in memory for this attempt only.
 @MainActor
 @Observable
 final class ScanModel {
     private(set) var photo: UIImage?
+    /// Every box the person can pick before any payload is read (FR-052).
+    private(set) var visual: [VisualCandidate] = []
+    /// The read pair's decoded hypotheses, in the engine's order.
     private(set) var candidates: [ReadCandidate] = []
     private(set) var reading = false
     /// The one sentence under the photo: an empty read, a band reason, the
     /// camera being off, a 429, or the offline wait.
     var message: CopyKey?
     private(set) var hasRead = false
-    private let recognize: @Sendable (Data) async throws -> [RecognizedLine]
-    private var recognitionTask: Task<[RecognizedLine], Error>?
+    private let adapter: any RecognitionAdapter
+    private let configuration: CaptureConfiguration
+    private var session: CaptureSession?
+    private var cancelRecognition: (@Sendable () -> Void)?
+    private var photos: PhotoScratch?
     private var readGeneration = 0
 
-    init(recognize: @escaping @Sendable (Data) async throws -> [RecognizedLine] = { data in
-        try await Task.detached(priority: .userInitiated) {
-            try VisionReader.recognize(imageData: data)
-        }.value
-    }) {
-        self.recognize = recognize
+    init(adapter: any RecognitionAdapter = VisionRecognitionAdapter(),
+         configuration: CaptureConfiguration = .current) {
+        self.adapter = adapter
+        self.configuration = configuration
     }
 
     var isEmpty: Bool { photo == nil && !reading }
 
-    /// Reads one still photo. Returns the canonical code to open at once
-    /// when there is one candidate and it is in Accept.
+    private func pipeline(_ app: AppModel) -> CapturePipeline {
+        CapturePipeline(decoder: app.pipeline, configuration: configuration, adapter: adapter)
+    }
+
+    /// Reads one still photo: finds and pairs the zz marks, then reads the
+    /// payload only when one complete pair is the only candidate. Returns
+    /// the canonical code to open at once, which needs that one reading to
+    /// be in Accept.
     func read(_ image: UIImage, app: AppModel) async -> String? {
         guard let data = image.jpegData(compressionQuality: 0.9) else {
             message = .scanNoCode
@@ -79,27 +90,76 @@ final class ScanModel {
         _ = try? app.photos.begin(data)
         photo = image
         reading = true
-        message = nil
-        candidates = []
-        let recognize = self.recognize
-        let task = Task.detached(priority: .userInitiated) { try await recognize(data) }
-        recognitionTask = task
-        defer {
-            if generation == readGeneration {
-                reading = false
-                recognitionTask = nil
-            }
-        }
-        let lines = (try? await task.value) ?? []
-        guard generation == readGeneration, !Task.isCancelled else {
-            if generation == readGeneration { end(app: app) }
+        let pipeline = pipeline(app)
+        let detected = await run(generation) { await pipeline.detect(imageData: data) }
+        guard let detected, generation == readGeneration else { return nil }
+        session = detected
+        hasRead = true
+        visual = detected.result.visualCandidates
+        if let disposition = pipeline.frameDisposition(detected.result) {
+            reading = false
+            message = Self.message(for: disposition)
             return nil
         }
-        let result = app.pipeline.read(lines: lines)
-        hasRead = true
-        candidates = result.candidates
-        if result.candidates.isEmpty { message = .scanNoCode }
-        return result.autoOpen?.canonical
+        guard let only = detected.automaticSelection else {
+            reading = false
+            if visual.isEmpty { message = .scanNoCode }
+            return nil
+        }
+        return await process(only, pipeline: pipeline, session: detected, generation: generation)
+    }
+
+    /// The person picked a box (FR-026, FR-052). Only a complete pair with
+    /// safe geometry is read.
+    func select(_ candidate: VisualCandidate, app: AppModel) async -> String? {
+        guard let session, !reading else { return nil }
+        reading = true
+        message = nil
+        candidates = []
+        return await process(candidate, pipeline: pipeline(app), session: session, generation: readGeneration)
+    }
+
+    private func process(_ candidate: VisualCandidate, pipeline: CapturePipeline, session: CaptureSession,
+                         generation: Int) async -> String? {
+        let outcome = await run(generation) { await pipeline.process(session, candidateId: candidate.id) }
+        guard let outcome, generation == readGeneration else { return nil }
+        reading = false
+        self.session = session.with(outcome.result)
+        if let disposition = outcome.disposition {
+            message = Self.message(for: disposition)
+            return nil
+        }
+        candidates = outcome.decoded
+        // Open at once only for one reading in Accept (spec 004 step 7).
+        guard outcome.decoded.count == 1, let only = outcome.decoded.first, only.band == .accept else { return nil }
+        return only.canonical
+    }
+
+    /// Runs recognition off the main actor; nil when the scan ended first.
+    private func run<T: Sendable>(_ generation: Int, _ work: @escaping @Sendable () async -> T) async -> T? {
+        let task = Task.detached(priority: .userInitiated) { await work() }
+        cancelRecognition = { task.cancel() }
+        let value = await task.value
+        guard generation == readGeneration else { return nil }
+        cancelRecognition = nil
+        if Task.isCancelled {
+            end()
+            return nil
+        }
+        return value
+    }
+
+    /// The sentence for a frame or a candidate that ended without a
+    /// reading (spec 004 bands, with the existing copy).
+    static func message(for disposition: BandDecision) -> CopyKey {
+        switch disposition.band {
+        case .retry:
+            disposition.reason == CaptureIssue.missingMarker.rawValue ? .scanPartial : .scanRetry
+        case .abstain:
+            disposition.reason == CaptureIssue.bareMark.rawValue ? .scanBare : .scanNoCode
+        case .accept, .clarify:
+            .scanNoCode
+        }
     }
 
     /// Demo builds read the fixture photo on the device instead of the camera.
@@ -111,18 +171,29 @@ final class ScanModel {
         message = .scanCameraOff
     }
 
-    /// The scan ends: the photo is deleted (FR-004, T063).
+    /// The scan ends: the photo is deleted (FR-004, T063), and the evidence
+    /// and the upright image are dropped.
     func end(app: AppModel) {
+        photos = app.photos
+        end()
+    }
+
+    private func end() {
         readGeneration += 1
-        recognitionTask?.cancel()
-        recognitionTask = nil
-        app.photos.end()
+        cancelRecognition?()
+        cancelRecognition = nil
+        photos?.end()
+        session = nil
         photo = nil
+        visual = []
         candidates = []
         message = nil
         hasRead = false
         reading = false
     }
+
+    /// Whether any evidence of the attempt is still held.
+    var holdsEvidence: Bool { session != nil }
 }
 
 /// Typed entry (US2a): the same grammar and the same resolve call. The whole

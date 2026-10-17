@@ -25,14 +25,21 @@ final class DemoFlowTests: XCTestCase {
         XCTAssertEqual(picker.label, Copy.text("scan.choose_photo"))
 
         // Scan the fixture photo on the device. Its check word verifies against
-        // the bundled fixture-7 list, so the one candidate in Accept opens at once.
+        // the bundled fixture-7 list, so the spec 004 table would accept it,
+        // but camera capture is confirm-only until a PASS receipt exists
+        // (T102): the reading waits, then Clarify shows the whole code and
+        // one confirm opens it.
         flow.tap("scan.take_photo")
         // The first Vision request on a fresh simulator loads its model, which
         // can take well over 30 seconds.
-        if !app.staticTexts["record.title"].waitForExistence(timeout: 120) {
+        if !app.buttons["scan.candidate.1"].waitForExistence(timeout: 120) {
             print("DEMOFLOW tree after the fixture photo:\n\(app.debugDescription)")
-            XCTFail("the fixture photo did not open its record")
+            XCTFail("the fixture photo did not list its reading")
         }
+        XCTAssertFalse(app.staticTexts["record.title"].exists, "a camera reading never opens without a confirm")
+        flow.tap("scan.candidate.1")
+        flow.tap("clarify.as_written")
+        XCTAssertTrue(app.staticTexts["record.title"].waitForExistence(timeout: 10))
         flow.tap("resolve.report")
         flow.tap("report.reason.spam")
         flow.tap("report.send")
