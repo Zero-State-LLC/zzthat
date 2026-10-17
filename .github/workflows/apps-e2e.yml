@@ -20,7 +20,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: apps-e2e-${{ github.event.pull_request.number || github.ref }}
+  # A label other than run-e2e or ios-ci runs nothing, so it gets its own group and
+  # never cancels a real run of the same pull request.
+  group: apps-e2e-${{ github.event.pull_request.number || github.ref }}-${{ (github.event.action == 'labeled' && github.event.label.name != 'run-e2e' && github.event.label.name != 'ios-ci') && 'skip' || 'run' }}
   cancel-in-progress: true
 
 env:
@@ -32,7 +34,7 @@ env:
 
 jobs:
   android:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-e2e') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-e2e')) && (github.event.action != 'labeled' || github.event.label.name == 'run-e2e') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -95,7 +97,7 @@ jobs:
           if-no-files-found: ignore
 
   ios:
-    if: ${{ github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'run-e2e') && contains(github.event.pull_request.labels.*.name, 'ios-ci')) }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'run-e2e') && contains(github.event.pull_request.labels.*.name, 'ios-ci'))) && (github.event.action != 'labeled' || github.event.label.name == 'run-e2e' || github.event.label.name == 'ios-ci') }}
     runs-on: macos-26
     timeout-minutes: 60
     steps:
