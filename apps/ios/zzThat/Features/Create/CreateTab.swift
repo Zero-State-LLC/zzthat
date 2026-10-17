@@ -37,8 +37,17 @@ struct CreateRoot: View {
 
     var body: some View {
         CreateScreen(title: $model.title, bodyText: $model.body,
-                     state: CreateScreenState(gate: gate, phase: model.phase, offline: !app.isOnline, demo: app.isDemo),
+                     state: CreateScreenState(gate: gate, phase: model.phase, offline: !app.isOnline, demo: app.isDemo,
+                                              termsNeeded: app.needsTerms, termsURL: app.config.termsURL,
+                                              waiting: model.waiting),
+                     ageConfirmed: $model.ageConfirmed, termsAccepted: $model.termsAccepted,
                      onSubmit: submit, onSignIn: { sheets.signIn = true })
+            .task(id: model.retryAt) {
+                // Get a code turns back on when Retry-After ends (FR-033).
+                guard let retryAt = model.retryAt else { return }
+                try? await Task.sleep(for: .seconds(max(retryAt.timeIntervalSinceNow, 0)))
+                if !Task.isCancelled { model.endWait() }
+            }
             .task {
                 // GET /v1 before Create (spec.md, API contract).
                 model.loadDraft(app: app)
@@ -77,11 +86,17 @@ struct MintedRoute: View {
     var body: some View {
         MintedScreen(state: MintedScreenState(canonical: model.code.canonical, checkWord: model.code.checkWord,
                                               capReached: model.capReached, kept: kept, phase: model.phase,
-                                              offline: !app.isOnline, demo: app.isDemo),
+                                              offline: !app.isOnline, demo: app.isDemo, waiting: model.waiting),
                      onReroll: { Task { await model.reroll(app: app) } },
                      onKeep: { kept = true },
                      onWriteCheck: { path.append(.writeCheck(model.code.canonical)) })
             .navigationBarTitleDisplayMode(.inline)
+            .task(id: model.retryAt) {
+                // Get different words turns back on when Retry-After ends (FR-033).
+                guard let retryAt = model.retryAt else { return }
+                try? await Task.sleep(for: .seconds(max(retryAt.timeIntervalSinceNow, 0)))
+                if !Task.isCancelled { model.endWait() }
+            }
     }
 }
 

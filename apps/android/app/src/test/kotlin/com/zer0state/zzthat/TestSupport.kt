@@ -20,9 +20,11 @@ import com.zer0state.zzthat.storage.PhotoScratch
 import com.zer0state.zzthat.storage.ProviderStore
 import com.zer0state.zzthat.storage.ResolveCache
 import com.zer0state.zzthat.storage.SavedStore
+import com.zer0state.zzthat.storage.TermsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -31,6 +33,7 @@ import java.io.Closeable
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.xml.parsers.DocumentBuilderFactory
 
 /** A clock the FR-041 tests move by hand. */
 class FakeClock(private var now: Long = 1_791_072_000_000L) : AppClock {
@@ -110,12 +113,30 @@ object Fixtures {
     const val FAILED = """{"error":"failed"}"""
 }
 
+/** Values from the generated catalog, `main/res/values/strings.xml`, which JVM unit tests cannot load as resources. */
+object Catalog {
+    private val strings: Map<String, String> by lazy {
+        val file = File(System.getProperty("zz.appSrc"), "main/res/values/strings.xml")
+        val nodes = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file).getElementsByTagName("string")
+        (0 until nodes.length).associate { nodes.item(it).attributes.getNamedItem("name").nodeValue to nodes.item(it).textContent }
+    }
+
+    fun text(name: String): String = strings.getValue(name)
+
+    /** `terms.version` at the pin (design/UX.md, Terms). */
+    val TERMS_VERSION: String get() = text("terms_version")
+}
+
 object TestApp {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun temporaryDirectory(): File = Files.createTempDirectory("zzthat-tests").toFile().apply { deleteOnExit() }
 
-    /** An app on the given service. [kind] is not Demo unless asked, so the connectivity flag decides online and offline. */
+    /**
+     * An app on the given service. [kind] is not Demo unless asked, so the connectivity flag decides online and offline.
+     * [acceptedTermsVersion] is what the device stored at the Terms step: by default the current `terms.version`, as
+     * after the step. The Terms tests pass null for a device that never saw it, or an older version.
+     */
     fun make(
         service: ZZService,
         kind: BuildKind = BuildKind.LOCAL,
@@ -123,11 +144,15 @@ object TestApp {
         clock: FakeClock = FakeClock(),
         googleWebClientId: String = "unset",
         bundledLists: List<com.zer0state.zzthat.grammar.WordList> = emptyList(),
+        acceptedTermsVersion: String? = Catalog.TERMS_VERSION,
+        termsUrl: String? = null,
     ): AppModel {
         val folder = temporaryDirectory()
         val local = PreferenceDataStoreFactory.create(scope = scope) { File(folder, "local.preferences_pb") }
+        val terms = TermsStore(local)
+        if (acceptedTermsVersion != null) runBlocking { terms.accept(acceptedTermsVersion) }
         return AppModel(
-            config = BuildSettings(kind, "http://localhost:8787", "support@zer0state.com", null, googleWebClientId),
+            config = BuildSettings(kind, "http://localhost:8787", "support@zer0state.com", null, googleWebClientId, termsUrl),
             service = service,
             cache = ResolveCache(File(folder, "resolve-cache.json"), clock),
             drafts = DraftStore(local),
@@ -135,11 +160,13 @@ object TestApp {
             providerStore = ProviderStore(local),
             hidden = HiddenStore(local),
             saved = SavedStore(local),
+            terms = terms,
+            termsVersion = Catalog.TERMS_VERSION,
             photos = PhotoScratch(File(folder, "photos")),
             connectivity = Connectivity(online),
             bundledLists = bundledLists,
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
-        )
+        ).also { runBlocking { it.loadTerms() } }
     }
 
     fun demoService(): ZZService = ZZService(DemoApi().apis(), TokenStore(MemoryRefreshTokenStorage()))

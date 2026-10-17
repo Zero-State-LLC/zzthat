@@ -34,6 +34,7 @@ final class EndToEndTests: XCTestCase {
         flow.wait(title, "the Create form after sign-in")
         title.tap()
         title.typeText("E2E")
+        flow.confirmTermsIfAsked()
         flow.tap("create.submit")
 
         // Re-roll until reroll-cap: the button goes away and the words stay.
@@ -45,9 +46,9 @@ final class EndToEndTests: XCTestCase {
             reroll.tap()
             XCTAssertTrue(flow.waitForChange(of: before), "re-roll \(rerolls + 1) gives new words")
             rerolls += 1
-            XCTAssertLessThanOrEqual(rerolls, 3, "the cap is 3 re-rolls (FR-017)")
+            XCTAssertLessThanOrEqual(rerolls, 5, "the cap is 5 re-rolls (FR-017, zzThis RM-125)")
         }
-        XCTAssertEqual(rerolls, 3)
+        XCTAssertEqual(rerolls, 5)
         flow.wait(app.staticTexts["message.minted.reroll_cap"], "minted.reroll_cap", timeout: 5)
         let code = flow.mintedCode()
         XCTAssertTrue(code.hasPrefix("zz-") && code.hasSuffix("-zz"), code)
@@ -115,6 +116,15 @@ enum Copy {
 @MainActor
 private struct Flow {
     let app: XCUIApplication
+
+    /// The Terms step before the first create on this device (design/UX.md,
+    /// Terms): confirm 18 or older and accept the Terms, when it shows.
+    func confirmTermsIfAsked() {
+        let age = app.descendants(matching: .any)["terms.age_confirm"].firstMatch
+        guard age.waitForExistence(timeout: 3) else { return }
+        age.tap()
+        app.descendants(matching: .any)["terms.accept"].firstMatch.tap()
+    }
 
     func tap(_ identifier: String, timeout: TimeInterval = 15) {
         let element = app.descendants(matching: .any)[identifier].firstMatch

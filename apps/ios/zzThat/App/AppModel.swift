@@ -18,6 +18,10 @@ final class AppModel {
     let providerStore: ProviderStore
     let hiddenStore: HiddenStore
     let savedStore: SavedStore
+    let termsStore: TermsStore
+    /// The current Terms version, `terms.version` from the pinned copy.json
+    /// (design/UX.md, Terms). It is compared, never shown.
+    let termsVersion: String
     let photos: PhotoScratch
     let connectivity: Connectivity
     /// The wordlists bundled from contracts/wordlists (FR-044). The pin has
@@ -36,10 +40,16 @@ final class AppModel {
     private(set) var blockedCreators: Set<String>
     /// Codes saved on this device, newest first (FR-050).
     private(set) var savedCodes: [String]
+    /// The Terms version accepted on this device, mirrored from `termsStore`.
+    private(set) var acceptedTermsVersion: String?
+    /// The signed-in account's id from `GET /v1/me`, for `account.id`
+    /// (D-2026-10-13-08). Memory only: it is shown, never stored.
+    private(set) var accountID: String?
 
     init(config: BuildConfig, service: ZZService, cache: ResolveCache, drafts: DraftStore,
          lastCanonical: LastCanonicalStore, providerStore: ProviderStore, hiddenStore: HiddenStore,
-         savedStore: SavedStore, photos: PhotoScratch, connectivity: Connectivity, bundledLists: [WordList]) {
+         savedStore: SavedStore, termsStore: TermsStore, termsVersion: String = CopyKey.termsVersion.text,
+         photos: PhotoScratch, connectivity: Connectivity, bundledLists: [WordList]) {
         self.config = config
         self.service = service
         self.cache = cache
@@ -48,6 +58,8 @@ final class AppModel {
         self.providerStore = providerStore
         self.hiddenStore = hiddenStore
         self.savedStore = savedStore
+        self.termsStore = termsStore
+        self.termsVersion = termsVersion
         self.photos = photos
         self.connectivity = connectivity
         self.bundledLists = bundledLists
@@ -55,6 +67,7 @@ final class AppModel {
         hiddenCodes = hiddenStore.codes
         blockedCreators = hiddenStore.creators
         savedCodes = savedStore.codes
+        acceptedTermsVersion = termsStore.acceptedVersion
     }
 
     /// The app as the build configures it.
@@ -75,7 +88,7 @@ final class AppModel {
         if !config.isDemo { connectivity.watch() }
         return AppModel(config: config, service: service, cache: ResolveCache(), drafts: DraftStore(),
                         lastCanonical: LastCanonicalStore(), providerStore: ProviderStore(), hiddenStore: HiddenStore(),
-                        savedStore: SavedStore(), photos: PhotoScratch(), connectivity: connectivity, bundledLists: Self.loadBundledLists())
+                        savedStore: SavedStore(), termsStore: TermsStore(), photos: PhotoScratch(), connectivity: connectivity, bundledLists: Self.loadBundledLists())
     }
 
     nonisolated static func loadBundledLists(bundle: Bundle = .main) -> [WordList] {
@@ -132,11 +145,13 @@ final class AppModel {
     private func sessionEnded() {
         isSignedIn = false
         provider = nil
+        accountID = nil
         providerStore.value = nil
     }
 
     /// Account shows the provider the server reports (runtime.md, Localization).
     func noteAccount(_ account: Account) {
+        accountID = account.id
         guard let first = account.providers.first, let value = SignInProvider(rawValue: first.rawValue) else { return }
         providerStore.value = value
         provider = value
@@ -150,7 +165,8 @@ final class AppModel {
     }
 
     /// `DELETE /v1/me`, then the tokens, the draft, every cache, the hidden
-    /// codes and blocked creators, and Saved (Auth step 9, FR-035, FR-050).
+    /// codes and blocked creators, Saved, and the accepted Terms version
+    /// (Auth step 9, FR-035, FR-050; design/UX.md, Terms).
     func deleteAccount() async -> Result<Void, APIFailure> {
         let result = await service.deleteAccount()
         guard case .success = result else { return result }
@@ -159,6 +175,8 @@ final class AppModel {
         lastCanonical.value = nil
         unhideAll()
         clearSaved()
+        termsStore.acceptedVersion = nil
+        acceptedTermsVersion = nil
         photos.purge()
         sessionEnded()
         ownerRevision += 1
@@ -219,6 +237,18 @@ final class AppModel {
     func clearSaved() {
         savedCodes = []
         savedStore.codes = []
+    }
+
+    // MARK: Terms (design/UX.md, Terms). Device only: none of these calls a server.
+
+    /// The Terms step shows before the next create: nothing is stored, or
+    /// the stored version is not the current `terms.version`.
+    var needsTerms: Bool { acceptedTermsVersion != termsVersion }
+
+    /// The person confirmed 18 or older and accepted the Terms.
+    func acceptTerms() {
+        termsStore.acceptedVersion = termsVersion
+        acceptedTermsVersion = termsVersion
     }
 
     /// A 401 the refresh could not fix: the person signs in again.

@@ -24,6 +24,28 @@ import com.zer0state.zzthat.scan.ScanRow
 import com.zer0state.zzthat.ui.FieldLimits
 
 /**
+ * A 429 on mint or re-roll (FR-033, T014; design/UX.md, Create: the daily
+ * limit). The client waits for `Retry-After` and keeps Get a code and Get
+ * different words off until then.
+ */
+object CreateWait {
+    /**
+     * A `Retry-After` longer than this, in seconds, is the RM-072 daily cap,
+     * which can run to the next UTC midnight, and shows `create.daily_limit`.
+     * A shorter one is a burst limit and keeps `resolve.rate_limited`. UX.md
+     * names the daily cap by its long wait, and no burst window in zzThis
+     * spec 005 runs as long as an hour.
+     */
+    const val DAILY_LIMIT_SECONDS = 3600
+
+    @StringRes
+    fun message(retryAfter: Int): Int = if (retryAfter > DAILY_LIMIT_SECONDS) R.string.create_daily_limit else R.string.resolve_rate_limited
+
+    /** When the wait ends, in wall-clock milliseconds. */
+    fun until(retryAfter: Int, nowMillis: Long = System.currentTimeMillis()): Long = nowMillis + maxOf(retryAfter, 1) * 1000L
+}
+
+/**
  * Create (US1): mint a wordlist code. The server chooses the words and the
  * check word (ZQ11), so there is no field for code words (FR-019, T034).
  */
@@ -43,6 +65,29 @@ class CreateModel {
     /** A mint answered `scope-unavailable` or `not-ready` (FR-018). */
     var mintUnavailable by mutableStateOf(false)
         private set
+
+    /**
+     * The Terms step (design/UX.md, Terms; D-2026-10-13-04): the person
+     * confirms they are 18 or older and accepts the Terms. Both are needed
+     * before the first create on this device, and again when `terms.version`
+     * changes. Client-only: nothing about it is sent.
+     */
+    var ageConfirmed by mutableStateOf(false)
+    var termsAccepted by mutableStateOf(false)
+
+    /** After a 429, Get a code stays off until this wall-clock time, in milliseconds (FR-033). */
+    var retryAt by mutableStateOf<Long?>(null)
+        private set
+
+    val waiting: Boolean get() = retryAt != null
+
+    /** The `Retry-After` wait is over: Get a code turns back on. */
+    fun endWait() {
+        retryAt = null
+    }
+
+    /** Whether Get a code may run: the Terms step is done, or not needed. */
+    fun termsDone(app: AppModel): Boolean = !app.needsTerms || (ageConfirmed && termsAccepted)
 
     private var draftLoaded = false
     private val minted = mutableMapOf<String, MintedModel>()
@@ -68,9 +113,22 @@ class CreateModel {
 
     /** `POST /v1/codes`. Refused offline, never queued as a success (FR-022). */
     suspend fun mint(app: AppModel): Code? {
+        retryAt?.let {
+            if (System.currentTimeMillis() < it) return null
+            endWait()
+        }
         if (FieldLimits.isBlank(title)) {
             phase = Phase.Failure(R.string.create_title_required)
             return null
+        }
+        // Both confirmations come before Create continues (design/UX.md, Terms).
+        if (!termsDone(app)) return null
+        if (app.needsTerms) {
+            app.acceptTerms()
+            // Consumed: if the step shows again (a new version, or after
+            // account deletion), it starts unchecked.
+            ageConfirmed = false
+            termsAccepted = false
         }
         if (!app.isOnline) {
             saveDraft(app)
@@ -97,6 +155,11 @@ class CreateModel {
                     phase = Phase.Failure(R.string.common_sign_in_needed)
                     app.needsSignIn()
                 }
+                is ApiFailure.RateLimited -> {
+                    // The title and body stay as typed; Get a code waits (FR-033).
+                    retryAt = CreateWait.until(failure.retryAfter)
+                    phase = Phase.Failure(CreateWait.message(failure.retryAfter))
+                }
                 else -> {
                     val key = failure.message(CallContext.MINT)
                     if (key == MessageKey.CREATE_UNAVAILABLE) mintUnavailable = true
@@ -111,7 +174,8 @@ class CreateModel {
 
 /**
  * Minted code (design/UX.md, Minted code): the canonical form, the check
- * word, and up to 3 re-rolls (FR-017). The suggested-word picker (zzThis
+ * word, and the re-rolls `rerolls_remaining` allows, 5 for a new code
+ * (FR-017, RM-125). The suggested-word picker (zzThis
  * RM-113) offers the server's words with Keep these words beside re-roll.
  */
 class MintedModel(code: Code) {
@@ -130,6 +194,17 @@ class MintedModel(code: Code) {
     var phase by mutableStateOf<Phase>(Phase.Idle)
         private set
 
+    /** After a 429, Get different words stays off until this wall-clock time, in milliseconds (FR-033). */
+    var retryAt by mutableStateOf<Long?>(null)
+        private set
+
+    val waiting: Boolean get() = retryAt != null
+
+    /** The `Retry-After` wait is over: Get different words turns back on. */
+    fun endWait() {
+        retryAt = null
+    }
+
     /** The person kept these words, so the picker closes and re-roll is gone. */
     var kept by mutableStateOf(false)
         private set
@@ -146,6 +221,10 @@ class MintedModel(code: Code) {
     suspend fun reroll(app: AppModel) {
         // Kept words stay, as at the cap.
         if (kept) return
+        retryAt?.let {
+            if (System.currentTimeMillis() < it) return
+            endWait()
+        }
         if (!app.isOnline) {
             phase = Phase.Failure(R.string.error_no_connection)
             return
@@ -164,6 +243,11 @@ class MintedModel(code: Code) {
                 ApiFailure.Unauthorized -> {
                     phase = Phase.Failure(R.string.common_sign_in_needed)
                     app.needsSignIn()
+                }
+                is ApiFailure.RateLimited -> {
+                    // The words stay; Get different words waits (FR-033).
+                    retryAt = CreateWait.until(failure.retryAfter)
+                    phase = Phase.Failure(CreateWait.message(failure.retryAfter))
                 }
                 else -> {
                     val key = failure.message(CallContext.REROLL)

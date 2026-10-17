@@ -34,6 +34,50 @@
         }
       }
     },
+    "account.discord" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zzThat on Discord"
+          }
+        }
+      }
+    },
+    "account.early_release" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zzThat is in early release. Features may change."
+          }
+        }
+      }
+    },
+    "account.id" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account ID"
+          }
+        }
+      }
+    },
+    "account.instagram" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zzThat on Instagram"
+          }
+        }
+      }
+    },
     "account.licenses" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -85,6 +129,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Questions: %@"
+          }
+        }
+      }
+    },
+    "account.terms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms of Use"
           }
         }
       }
@@ -294,6 +349,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Some words in the title or message are not allowed. Change them and try again."
+          }
+        }
+      }
+    },
+    "create.daily_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have made today's codes. Try again tomorrow."
           }
         }
       }
@@ -1306,6 +1372,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sign in to create and manage codes. Anyone can scan without an account."
+          }
+        }
+      }
+    },
+    "terms.accept" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I accept the Terms of Use"
+          }
+        }
+      }
+    },
+    "terms.age_confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I am 18 or older"
+          }
+        }
+      }
+    },
+    "terms.link" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms of Use"
+          }
+        }
+      }
+    },
+    "terms.version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "draft-2026-10-14"
           }
         }
       }

@@ -26,10 +26,14 @@ struct DemoAPITests {
     @Test func rerollStopsAtTheCap() async throws {
         let service = Self.demo()
         var code = try await service.mint(title: "Lost cat", body: "").get()
-        #expect(code.rerollsRemaining == 3)
-        for remaining in [2, 1, 0] {
+        #expect(code.rerollsRemaining == 5)
+        var seen = [code.canonical]
+        for remaining in [4, 3, 2, 1, 0] {
             code = try await service.reroll(codeID: code.id).get()
             #expect(code.rerollsRemaining == remaining)
+            // A re-roll retires the old words for good (design/UX.md, Minted code).
+            #expect(!seen.contains(code.canonical))
+            seen.append(code.canonical)
         }
         let capped = await service.reroll(codeID: code.id)
         #expect(capped.failure?.message(for: .reroll) == .mintedRerollCap)

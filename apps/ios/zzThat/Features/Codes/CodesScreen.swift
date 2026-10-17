@@ -83,6 +83,12 @@ struct CodeDetailScreenState {
     var revokePhase: CodeDetailModel.RevokePhase = .idle
     var saved = false
     var demo = false
+
+    /// Revoke shows only while the code is active (T052): not for a used,
+    /// expired, or revoked code (T103).
+    var showsRevoke: Bool { row?.status == .active }
+    /// A revoked code has no Edit.
+    var showsEdit: Bool { row.map { $0.status != .revoked } ?? false }
 }
 
 /// Code detail (design/UX.md): the code, the title, the body as plain text,
@@ -123,12 +129,12 @@ struct CodeDetailScreen: View {
                         ShareLink(item: row.canonical) { Text(.resolveShare) }
                             .buttonStyle(.zzPrimary)
                             .accessibilityIdentifier("detail.share")
-                        if row.status != .revoked {
+                        if state.showsEdit {
                             Button(action: onEdit) { Text(.detailEdit) }
                                 .buttonStyle(.zzSecondary)
                                 .accessibilityIdentifier("detail.edit")
                         }
-                        if row.status == .active {
+                        if state.showsRevoke {
                             Button(action: onRevoke) { Text(.detailRevoke) }
                                 .buttonStyle(.zzDestructive)
                                 .disabled(state.revokePhase == .revoking)

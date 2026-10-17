@@ -171,7 +171,10 @@ class OwnerFlowTest {
         model.reroll(app)
         assertNotEquals(minted.canonical, model.code.canonical)
         assertEquals(ResolveCache.Lookup.None, app.cache.lookup(minted.canonical, online = false))
-        model.reroll(app)
+        // A new plain code has 5 re-rolls (zzThis RM-125).
+        repeat(3) { model.reroll(app) }
+        assertFalse(model.capReached)
+        assertEquals(1, model.code.rerollsRemaining)
         model.reroll(app)
         assertTrue(model.capReached)
         assertEquals(0, model.code.rerollsRemaining)
@@ -269,7 +272,7 @@ class OwnerFlowTest {
         Stub { _, _ -> Stub.Reply(500, Fixtures.FAILED) }.use { stub ->
             val app = TestApp.make(stub.service(), online = false)
             val date = OffsetDateTime.now(ZoneOffset.UTC)
-            val code = Code("code-1", "zz-copper-sky-river-zz", "river", Code.Status.active, "record-1", Code.Scope.free_public, 3, date)
+            val code = Code("code-1", "zz-copper-sky-river-zz", "river", Code.Status.active, "record-1", Code.Scope.free_public, 5, date)
             val minted = MintedModel(code)
             minted.reroll(app)
             assertEquals(MintedModel.Phase.Failure(R.string.error_no_connection), minted.phase)

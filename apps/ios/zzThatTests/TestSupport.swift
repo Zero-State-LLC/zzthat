@@ -82,18 +82,24 @@ enum TestApp {
 
     /// An app on the given service. `kind` is not Demo unless asked, so the
     /// connectivity flag decides online and offline.
+    /// `acceptedTermsVersion` is what the device stored at the Terms step: by
+    /// default the current `terms.version`, as after the step. The Terms tests
+    /// pass nil for a device that never saw it, or an older version.
     static func make(service: ZZService, kind: BuildKind = .local, online: Bool = true,
-                     clock: FakeClock = FakeClock(), bundledLists: [WordList] = []) -> AppModel {
+                     clock: FakeClock = FakeClock(), bundledLists: [WordList] = [],
+                     acceptedTermsVersion: String? = CopyKey.termsVersion.text, termsURL: URL? = nil) -> AppModel {
         let cacheURL = temporaryURL("resolve-cache.json")
         try? FileManager.default.createDirectory(at: cacheURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         let defaults = defaults()
+        let terms = TermsStore(defaults: defaults)
+        terms.acceptedVersion = acceptedTermsVersion
         return AppModel(config: BuildConfig(kind: kind, apiOrigin: URL(string: "http://localhost:8787"),
                                             supportEmail: "support@zer0state.com", privacyURL: nil,
-                                            googleClientID: nil),
+                                            termsURL: termsURL, googleClientID: nil),
                         service: service, cache: ResolveCache(fileURL: cacheURL, clock: clock),
                         drafts: DraftStore(defaults: defaults), lastCanonical: LastCanonicalStore(defaults: defaults),
                         providerStore: ProviderStore(defaults: defaults), hiddenStore: HiddenStore(defaults: defaults),
-                        savedStore: SavedStore(defaults: defaults),
+                        savedStore: SavedStore(defaults: defaults), termsStore: terms,
                         photos: PhotoScratch(directory: temporaryURL("photos")),
                         connectivity: Connectivity(isOnline: online), bundledLists: bundledLists)
     }

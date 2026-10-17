@@ -165,7 +165,14 @@ class SnapshotTest {
         row("demo-code-1", "zz-copper-lantern-sky-zz", "sky", OwnedCode.Status.active, "demo-record-1"),
         row("demo-code-2", "zz-river-falcon-sky-zz", "sky", OwnedCode.Status.active, "demo-record-2"),
         row("demo-code-3", "zz-b2-4-zz", null, OwnedCode.Status.revoked, "demo-record-3"),
+        OwnedCode(
+            "demo-code-4", "zz-harbor-maple-river-zz", "river", OwnedCode.Status.expired, "demo-record-4",
+            OwnedCode.Scope.free_public, 0, DemoApi.FIXED_DATE, DemoApi.EXPIRED_RECORD.title,
+        ),
     )
+
+    /** The Local and Demo placeholder Terms link (app/build.gradle.kts). */
+    private val termsUrl = "https://zzthat.com/terms/"
     private val demoOwnerRecord = DemoApi.RECORDS.getValue("zz-copper-lantern-sky-zz").let {
         OwnerRecord("demo-record-1", 1, it.title, it.body, DemoApi.FIXED_DATE)
     }
@@ -174,6 +181,8 @@ class SnapshotTest {
         provider = "google",
         supportEmail = "support@zer0state.com",
         privacyUrl = "https://zero-state-llc.github.io/zzthis/privacy/",
+        termsUrl = termsUrl,
+        accountId = DemoApi.ACCOUNT.id,
     )
 
     private fun row(id: String, canonical: String, checkWord: String?, status: OwnedCode.Status, recordId: String) =
@@ -260,6 +269,31 @@ class SnapshotTest {
             },
             Case("create-offline", createRoot) { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, offline = true)) },
             Case("create-demo", createRoot) { CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, demo = true)) },
+            // The Terms step before the first create (design/UX.md, Terms).
+            Case("terms-empty", createRoot) {
+                CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, termsNeeded = true, termsUrl = termsUrl))
+            },
+            Case("terms-confirmed", createRoot) {
+                CreateScreen(
+                    demoRecord.title,
+                    demoRecord.body,
+                    CreateScreenState(CreateScreenState.Gate.FORM, termsNeeded = true, termsUrl = termsUrl, ageConfirmed = true, termsAccepted = true),
+                )
+            },
+            Case("terms-no-link", createRoot) {
+                CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, termsNeeded = true))
+            },
+            Case("terms-demo", createRoot) {
+                CreateScreen(demoRecord.title, demoRecord.body, CreateScreenState(CreateScreenState.Gate.FORM, demo = true, termsNeeded = true, termsUrl = termsUrl))
+            },
+            // A 429 during the daily cap (design/UX.md, Create: the daily limit).
+            Case("create-daily-limit", createRoot) {
+                CreateScreen(
+                    demoRecord.title,
+                    demoRecord.body,
+                    CreateScreenState(CreateScreenState.Gate.FORM, CreateModel.Phase.Failure(R.string.create_daily_limit), waiting = true),
+                )
+            },
             Case("unavailable-empty", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE)) },
             Case("unavailable-offline", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, offline = true)) },
             Case("unavailable-demo", createRoot) { CreateScreen("", "", CreateScreenState(CreateScreenState.Gate.UNAVAILABLE, demo = true)) },
@@ -268,6 +302,17 @@ class SnapshotTest {
             },
             Case("minted-error", minted) {
                 MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = true, phase = MintedModel.Phase.Failure(R.string.minted_reroll_cap)))
+            },
+            Case("minted-daily-limit", minted) {
+                MintedScreen(
+                    MintedScreenState(
+                        demoMint.first,
+                        demoMint.second,
+                        capReached = false,
+                        phase = MintedModel.Phase.Failure(R.string.create_daily_limit),
+                        waiting = true,
+                    ),
+                )
             },
             Case("minted-offline", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, offline = true)) },
             Case("minted-demo", minted) { MintedScreen(MintedScreenState(demoMint.first, demoMint.second, capReached = false, demo = true)) },
@@ -302,6 +347,7 @@ class SnapshotTest {
             Case("codes-error", codesRoot) { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_forbidden))) },
             Case("codes-offline", codesRoot) { CodesScreen(CodesScreenState(true, phase = CodesModel.Phase.Failure(R.string.error_no_connection))) },
             Case("codes-demo", codesRoot) { CodesScreen(CodesScreenState(true, demoRows, CodesModel.Phase.Loaded, demo = true)) },
+            Case("detail-expired", detail) { CodeDetailScreen(CodeDetailScreenState(demoRows[3], phase = CodeDetailModel.Phase.Loaded)) },
             Case("detail-loading", detail) { CodeDetailScreen(CodeDetailScreenState(demoRows[0], phase = CodeDetailModel.Phase.Loading)) },
             Case("detail-error", detail) { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.NotFound)) },
             Case("detail-offline", detail) { CodeDetailScreen(CodeDetailScreenState(phase = CodeDetailModel.Phase.Failure(R.string.error_no_connection))) },

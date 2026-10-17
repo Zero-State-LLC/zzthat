@@ -7,8 +7,8 @@ Constitution: [.specify/memory/constitution.md](../../.specify/memory/constituti
 Runtime: [runtime.md](runtime.md). Design consumption: [design.md](design.md).
 Camera boundary: [recognition-adapter.md](recognition-adapter.md). Camera Accept remains blocked on the upstream contract and qualification gates.
 Decisions: [decisions.md](decisions.md) (ZQ1 to ZQ28 decided by 2026-10-05).
-zzThis pin: `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
-Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/fd99d276e4546d2ebf9d23b5f6de85b08bad56c4/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/fd99d276e4546d2ebf9d23b5f6de85b08bad56c4/docs/ONE-SHOT-BRIEF.md).
+zzThis pin: `08a3c26f78004e885c0405e662135112133144ed`, in `contracts/ZZTHIS-API-PIN`. One pin covers the product rules, the API, design, strings, test vectors, and the wordlist.
+Deepened 2026-10-04 so both apps can be built in one pass with the zzThis server and web client: zzThis [analysis](https://github.com/Zero-State-LLC/zzthis/blob/08a3c26f78004e885c0405e662135112133144ed/specs/analysis-2026-10-04.md) and [build brief](https://github.com/Zero-State-LLC/zzthis/blob/08a3c26f78004e885c0405e662135112133144ed/docs/ONE-SHOT-BRIEF.md).
 
 ## Why
 
@@ -38,7 +38,7 @@ Acceptance:
 2. If the server has no free public scope, the app does not invent a code. It shows an unavailable state (FR-018, ZQ3).
 3. A code string does not contain a phone number or other personal data [ZZTHIS SPEC] Section 9a D-2026-10-03-11. The free app does not mint field codes or handles.
 4. After the person writes the minted code, the app can photograph it and confirm the reading matches that canonical form, on the device [ZZTHIS SPEC] spec 004 FR-017, with the spec 004 Client read pipeline.
-5. The person may tap "Get different words" up to 3 times. Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006. The Create UI may present server-chosen candidates in a suggested-word picker so the person feels they chose a code; the app still never sends a person-written code string (zzThis D-2026-10-11-01 option C, RM-113).
+5. The person may tap "Get different words" up to 5 times (zzThis RM-125, D-2026-10-13-02). Each tap replaces the current code. At the cap, or once the code has been resolved, the current words stay (ZQ11) [ZZTHIS SPEC] spec 005 FR-006. The Create UI may present server-chosen candidates in a suggested-word picker so the person feels they chose a code; the app still never sends a person-written code string (zzThis D-2026-10-11-01 option C, RM-113).
 6. The pitch lines `zz-kathy-lost-cat-zz` and `zz-moving-box-kitchen-3-zz` are examples in the copy [MICHAEL 2026-10-02]. Create does not claim those strings. Writing a code with no device at all stays zzThis Q25 and is not this screen.
 
 ### US2. Scan a handwritten code with the camera (P1)
@@ -125,7 +125,7 @@ Acceptance:
 | FR-014 | The first release does not request microphone permission. If voice is added later, the audio stays on the device. | [ZZTHIS SPEC] spec 004 names voice. ZQ10 keeps it out of the first release. On-device audio is [INFERRED] from Section 10.3. |
 | FR-015 | Issue, revoke, and record update require a signed-in owner. Unauthenticated write calls are the server's 401. | [ZZTHIS SPEC] spec 002 error states |
 | FR-016 | A signed-out person can resolve a public code. The app must not require an account for that read. Writes still require sign-in. The app sends no `Authorization` header on resolve, so a signed-in read stays cacheable [ZZTHIS SPEC] spec 005 FR-008. | [MICHAEL 2026-10-02] "anyone can scan". [ZZTHIS SPEC] spec 002 FR-020. ZQ6. The Section 10.6 line that every call is authenticated is an inferred sketch and does not win for this read. |
-| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll at most 3 times for that code, and then the current words stay. A suggested-word picker may show server-chosen candidates; it does not accept arbitrary user-typed code words (zzThis RM-113, D-2026-10-11-01). | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 3 is [ZZTHIS SPEC] spec 005 FR-006. D-2026-10-11-01 option C. |
+| FR-017 | Create calls mint. The server chooses the words and the check word for every code, including free public. The app shows that canonical form and the check word. It does not send a person-written code. "Get different words" calls re-roll while `rerolls_remaining` is above 0, at most 5 times for a new plain code, and then the current words stay. A suggested-word picker may show server-chosen candidates; it does not accept arbitrary user-typed code words (zzThis RM-113, D-2026-10-11-01). | [ZZTHIS SPEC] spec 002 US2. ZQ11 [DANNY 2026-10-04]. The cap of 5 is [ZZTHIS SPEC] spec 005 FR-006 (RM-125, D-2026-10-13-02; it was 3). D-2026-10-11-01 option C. |
 | FR-018 | Until the server exposes a free public scope, create shows an honest unavailable state and does not issue. | [ZZTHIS SPEC] spec 002 FR-016. zzThis D-2026-10-10-21 would open the free public scope at the v1.1 gate (merged in zzThis #139; Danny confirms the status); FR-018 holds either way. ZQ3 is [#3](https://github.com/Zero-State-LLC/zzthat/issues/3). |
 | FR-019 | The app never places a phone number or other personal data in the code string. | [ZZTHIS SPEC] Section 9a D-2026-10-03-11 |
 | FR-020 | Share sends the canonical code as text and does not send a URL. | ZQ9. [MICHAEL 2026-10-02] "anyone can scan" is met by the words. |
@@ -164,7 +164,7 @@ Acceptance:
 
 ## API contract
 
-The contract is zzThis spec 005 and its OpenAPI file, pinned at `fd99d276e4546d2ebf9d23b5f6de85b08bad56c4` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
+The contract is zzThis spec 005 and its OpenAPI file, pinned at `08a3c26f78004e885c0405e662135112133144ed` as [`contracts/zzthis-v1.openapi.yaml`](../../contracts/zzthis-v1.openapi.yaml). Wire shapes live in that file, and this section does not restate them. It lists what the apps call and the rules on the app side.
 
 | Call | When the app calls it | App rule |
 |---|---|---|
@@ -268,6 +268,7 @@ The edge purge clears only the data center that handled the write. Other data ce
 | Account id | Sent on writes, from the bearer token. | FR-040 |
 | Code string | No phone number or other personal data. | FR-019 [ZZTHIS SPEC] |
 | Page | Title and body the person wrote. | ZQ5 |
+| Accepted terms version | Kept on the device only and never sent; cleared by account deletion. | zzThis D-2026-10-13-04 |
 
 The code on paper is a public identifier. Authorization stays on the server [ZZTHIS SPEC] Section 2.7.
 
@@ -351,7 +352,7 @@ zzThis spec 003 says "check word". zzThis `docs/SPEC.md` also says "checksum wor
 
 ## Out of scope
 
-- Choosing 1, 2, or 3 words, and more than 3 re-rolls (zzThis RM-125, D-2026-10-11-11), until zzThis decides D-2026-10-13-02 and changes spec 003, spec 005 FR-006, and the OpenAPI file. Until then Create follows FR-017.
+- Choosing 1, 2, or 3 words (zzThis RM-125, D-2026-10-11-11). D-2026-10-13-02 keeps two-word codes in contract 1 and moves the length choice to v2.0. Its 5 re-rolls are in FR-017.
 
 - A web client in this repo (FR-001). The later web client is a zzthis task (ZQ1). The "Try zzThat" link target is the zzThis marketing page, not a zzthat.com site (ZQ2). zzThis spec 001 FR-016 still names zzthat.com; this repo does not edit that file.
 - A person-written claim, and a client uniqueness check (ZQ11). Real person-made claim is zzThis v2.0 / RM-116 (D-2026-10-11-01 option A), not this release.

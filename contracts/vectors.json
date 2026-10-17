@@ -1,5 +1,5 @@
 {
-  "about": "Shared test vectors for the zz code library on every platform (TypeScript, Swift, Kotlin). The grammar, classifier, and matching-key rows copy docs/SPEC.md Section 2.2a (G9, G1a, G10). The scanner and check-word rows are the rules decided on 2026-10-04 (#74) in spec 003 and spec 004. A platform passes when every row passes. Do not edit a row to match a bug. Rows whose note starts with a D-2026-10-04 id follow an INFERRED reading in docs/SPEC.md Section 9a that waits for Michael and Danny's review. The spec 005 T035 parser change moved the former grammar_pending rows into grammar, so every platform runs every grammar row.",
+  "about": "Shared test vectors for the zz code library on every platform (TypeScript, Swift, Kotlin). The grammar, classifier, and matching-key rows copy docs/SPEC.md Section 2.2a (G9, G1a, G10). The scanner and check-word rows are the rules decided on 2026-10-04 (#74) in spec 003 and spec 004. A platform passes when every row passes. Do not edit a row to match a bug. Rows whose note starts with a D-2026-10-04 id follow an INFERRED reading in docs/SPEC.md Section 9a that waits for Michael and Danny's review. The spec 005 T035 parser change moved the former grammar_pending rows into grammar, so every platform runs every grammar row. The capture_band rows are the spec 004 band tables, including confirm-only mode (FR-023).",
   "grammar": [
     {
       "input": "zz-copper-lantern-sky-zz",
@@ -1182,6 +1182,308 @@
       {
         "input": "zz-copper-lantern-sky-maple-zz",
         "result": "wrong-length"
+      }
+    ]
+  },
+  "capture_band": {
+    "about": "Spec 004 capture bands (Prototype band values and Confirm-only mode, FR-023, D-2026-10-13-05). Lists are the check_word fixture-7 list; thresholds are the prototype parameters (Q37). A camera row gives each payload word with its line index and line confidence; the candidate takes the lowest. A typed row gives the code as typed. A row without confirm_only runs the base band table. A row with confirm_only: true runs confirm-only mode: a camera row that would be accept is clarify, and every other camera band and every typed band is unchanged. Each camera accept row has a confirm_only counterpart that expects clarify.",
+    "wordlist": "fixture-7",
+    "thresholds": {
+      "accept_min_confidence": 0.8,
+      "retry_below_confidence": 0.5
+    },
+    "rows": [
+      {
+        "name": "every word at 0.80 is accept",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.8
+          }
+        ],
+        "band": "accept"
+      },
+      {
+        "name": "confirm-only: every word at 0.80 is clarify",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.8
+          }
+        ],
+        "confirm_only": true,
+        "band": "clarify"
+      },
+      {
+        "name": "every word at 0.95 on one line is accept",
+        "source": "camera",
+        "canonical": "zz-maple-sky-copper-zz",
+        "rows": [
+          {
+            "token": "maple",
+            "line": 0,
+            "confidence": 0.95
+          },
+          {
+            "token": "sky",
+            "line": 0,
+            "confidence": 0.95
+          },
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.95
+          }
+        ],
+        "band": "accept"
+      },
+      {
+        "name": "confirm-only: every word at 0.95 on one line is clarify",
+        "source": "camera",
+        "canonical": "zz-maple-sky-copper-zz",
+        "rows": [
+          {
+            "token": "maple",
+            "line": 0,
+            "confidence": 0.95
+          },
+          {
+            "token": "sky",
+            "line": 0,
+            "confidence": 0.95
+          },
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.95
+          }
+        ],
+        "confirm_only": true,
+        "band": "clarify"
+      },
+      {
+        "name": "one word at 0.79 is clarify",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.79
+          }
+        ],
+        "band": "clarify"
+      },
+      {
+        "name": "confirm-only: one word at 0.79 is clarify",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.8
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.79
+          }
+        ],
+        "confirm_only": true,
+        "band": "clarify"
+      },
+      {
+        "name": "one word at 0.45 is retry",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.9
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.9
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.45
+          }
+        ],
+        "band": "retry"
+      },
+      {
+        "name": "confirm-only: one word at 0.45 is retry",
+        "source": "camera",
+        "canonical": "zz-copper-lantern-sky-zz",
+        "rows": [
+          {
+            "token": "copper",
+            "line": 0,
+            "confidence": 0.9
+          },
+          {
+            "token": "lantern",
+            "line": 0,
+            "confidence": 0.9
+          },
+          {
+            "token": "sky",
+            "line": 1,
+            "confidence": 0.45
+          }
+        ],
+        "confirm_only": true,
+        "band": "retry"
+      },
+      {
+        "name": "typed word code whose check word verifies is accept",
+        "source": "typed",
+        "input": "zz-copper-lantern-sky-zz",
+        "band": "accept"
+      },
+      {
+        "name": "confirm-only: typed word code whose check word verifies is accept",
+        "source": "typed",
+        "input": "zz-copper-lantern-sky-zz",
+        "confirm_only": true,
+        "band": "accept"
+      },
+      {
+        "name": "typed handle is accept as typed",
+        "source": "typed",
+        "input": "zz-@agentsmith-zz",
+        "band": "accept"
+      },
+      {
+        "name": "confirm-only: typed handle is accept as typed",
+        "source": "typed",
+        "input": "zz-@agentsmith-zz",
+        "confirm_only": true,
+        "band": "accept"
+      },
+      {
+        "name": "typed field code is accept as typed",
+        "source": "typed",
+        "input": "zz-b2-smith-1-zz",
+        "band": "accept"
+      },
+      {
+        "name": "confirm-only: typed field code is accept as typed",
+        "source": "typed",
+        "input": "zz-b2-smith-1-zz",
+        "confirm_only": true,
+        "band": "accept"
+      },
+      {
+        "name": "typed near-word is clarify",
+        "source": "typed",
+        "input": "zz-coppr-lantern-sky-zz",
+        "band": "clarify"
+      },
+      {
+        "name": "confirm-only: typed near-word is clarify",
+        "source": "typed",
+        "input": "zz-coppr-lantern-sky-zz",
+        "confirm_only": true,
+        "band": "clarify"
+      },
+      {
+        "name": "typed check-word mismatch is clarify",
+        "source": "typed",
+        "input": "zz-copper-maple-sky-zz",
+        "band": "clarify"
+      },
+      {
+        "name": "confirm-only: typed check-word mismatch is clarify",
+        "source": "typed",
+        "input": "zz-copper-maple-sky-zz",
+        "confirm_only": true,
+        "band": "clarify"
+      },
+      {
+        "name": "typed wrong-length word code is abstain",
+        "source": "typed",
+        "input": "zz-copper-lantern-zz",
+        "band": "abstain"
+      },
+      {
+        "name": "confirm-only: typed wrong-length word code is abstain",
+        "source": "typed",
+        "input": "zz-copper-lantern-zz",
+        "confirm_only": true,
+        "band": "abstain"
+      },
+      {
+        "name": "typed bare mark is abstain",
+        "source": "typed",
+        "input": "zz",
+        "band": "abstain"
+      },
+      {
+        "name": "confirm-only: typed bare mark is abstain",
+        "source": "typed",
+        "input": "zz",
+        "confirm_only": true,
+        "band": "abstain"
+      },
+      {
+        "name": "typed reserved symbol is abstain",
+        "source": "typed",
+        "input": "zz-time:-zz",
+        "band": "abstain"
+      },
+      {
+        "name": "confirm-only: typed reserved symbol is abstain",
+        "source": "typed",
+        "input": "zz-time:-zz",
+        "confirm_only": true,
+        "band": "abstain"
       }
     ]
   }
