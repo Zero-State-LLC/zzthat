@@ -84,6 +84,44 @@ struct CaptureFlowTests {
         #expect(scan.candidates.map(\.band) == [.clarify])
     }
 
+    // MARK: Write check on the boundary (T023, T033)
+
+    @Test func writeCheckReadsASoleCodeOnTheBoundaryAndMatches() async {
+        let app = await Self.demoApp()
+        let adapter = FixtureCaptureAdapter(photo: Self.one)
+        let check = WriteCheckModel(canonical: DemoPhoto.canonical, adapter: adapter)
+        await check.read(Self.one.image, app: app)
+        #expect(adapter.payloadReads == 1)
+        #expect(check.verdict == .match)
+        check.end(app: app)
+        #expect(!check.holdsEvidence)
+        #expect(check.photo == nil)
+    }
+
+    @Test func writeCheckWaitsForAPickAndReadsOnlyThePick() async throws {
+        let app = await Self.demoApp()
+        let adapter = FixtureCaptureAdapter(photo: Self.two)
+        let check = WriteCheckModel(canonical: "zz-b2-4-zz", adapter: adapter)
+        await check.read(Self.two.image, app: app)
+        #expect(check.visual.count == 2)
+        #expect(check.verdict == nil)
+        #expect(check.message == nil)
+        #expect(adapter.payloadReads == 0)
+        await check.pick(check.visual[0], app: app)
+        #expect(adapter.payloadReads == 1)
+        #expect(check.verdict == .mismatch)
+    }
+
+    @Test func writeCheckPicksTheMintedCodesBox() async throws {
+        let app = await Self.demoApp()
+        let adapter = FixtureCaptureAdapter(photo: Self.two)
+        let check = WriteCheckModel(canonical: "zz-b2-4-zz", adapter: adapter)
+        await check.read(Self.two.image, app: app)
+        await check.pick(check.visual[1], app: app)
+        #expect(adapter.payloadReads == 1)
+        #expect(check.verdict == .match)
+    }
+
     /// Over the marker limit, the whole frame fails closed: no box, no read.
     @Test func tooManyMarksFailTheFrameAndReadNothing() async throws {
         let crowded = DemoPhoto.make(lines: ["zz-river-falcon-sky-zz", "zz-b2-4-zz", "zz-copper-lantern-sky-zz",
