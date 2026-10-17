@@ -61,6 +61,37 @@ struct SnapshotTests {
         }
     }
 
+    /// runtime.md, Accessibility (T076): the main screens at the largest
+    /// accessibility text size, light only, on a tall canvas so nothing
+    /// scrolls out of view. The text grows, and the canonical code wraps
+    /// rather than truncates.
+    static let largeText = ViewImageConfig(
+        safeArea: UIEdgeInsets(top: 62, left: 0, bottom: 34, right: 0),
+        size: CGSize(width: 402, height: 2400),
+        traits: UITraitCollection { traits in
+            traits.userInterfaceIdiom = .phone
+            traits.horizontalSizeClass = .compact
+            traits.verticalSizeClass = .regular
+            traits.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
+            traits.layoutDirection = .leftToRight
+            traits.displayScale = 1
+        })
+
+    nonisolated static let largeTextNames: Set<String> = ["scan-demo", "pick-demo", "type-demo", "resolve-demo", "create-demo",
+                                              "terms-demo", "minted-demo", "writecheck-demo", "codes-demo",
+                                              "detail-demo", "signin-demo", "account-demo"]
+
+    @Test(arguments: cases.filter { largeTextNames.contains($0.name) })
+    func largeTextScreen(_ testCase: Case) {
+        let view = NavigationStack { testCase.view() }
+            .environment(\.colorScheme, .light)
+            .environment(\.dynamicTypeSize, .accessibility5)
+        assertSnapshot(of: view,
+                       as: .image(precision: 1, perceptualPrecision: 0.98, layout: .device(config: Self.largeText),
+                                  traits: Self.traits(.light)),
+                       named: "\(testCase.name)-ax5")
+    }
+
     /// The two confirm dialogs are system alerts (design/UX.md, Revoke
     /// confirm and Delete confirm): the title, the body, the destructive
     /// action, and Cancel, which is the default. A system alert renders only

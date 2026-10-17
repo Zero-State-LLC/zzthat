@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -172,20 +173,42 @@ fun RoleText(text: String, role: TextRole, modifier: Modifier = Modifier) {
 @Composable
 fun CodeText(canonical: String, checkWord: String? = null, size: TextUnit = ZZType.TextMd, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
-    val text = buildAnnotatedString {
-        append(canonical)
-        if (checkWord != null) {
-            val start = canonical.lastIndexOf("-$checkWord-zz")
-            if (start >= 0) addStyle(SpanStyle(color = palette.accentInk), start + 1, start + 1 + checkWord.length)
+    val style = TextStyle(fontFamily = ZZFonts.mono, fontSize = size, fontWeight = ZZType.WeightMedium, color = palette.ink)
+    val checkStart = checkWord?.let { canonical.lastIndexOf("-$it-zz") }?.takeIf { it >= 0 }?.plus(1)
+    // One piece per part, each with the hyphen after it, so a long code
+    // wraps only after a hyphen and no part splits across lines
+    // (runtime.md, Accessibility). Copy and TalkBack get the code as one.
+    val pieces = codePieces(canonical)
+    SelectionContainer {
+        FlowRow(modifier = modifier.semantics(mergeDescendants = true) { contentDescription = canonical }) {
+            var offset = 0
+            for (piece in pieces) {
+                val start = offset
+                offset += piece.length
+                val text = buildAnnotatedString {
+                    append(piece)
+                    if (checkStart != null && checkWord != null && checkStart >= start && checkStart < offset) {
+                        addStyle(SpanStyle(color = palette.accentInk), checkStart - start, checkStart - start + checkWord.length)
+                    }
+                }
+                Text(text = text, style = style)
+            }
         }
     }
-    SelectionContainer {
-        Text(
-            text = text,
-            style = TextStyle(fontFamily = ZZFonts.mono, fontSize = size, fontWeight = ZZType.WeightMedium, color = palette.ink),
-            modifier = modifier.semantics { contentDescription = canonical },
-        )
+}
+
+/** A code split after each hyphen: `zz-copper-sky-zz` is `zz-`, `copper-`, `sky-`, `zz`. */
+internal fun codePieces(canonical: String): List<String> {
+    val pieces = mutableListOf<String>()
+    var start = 0
+    for ((index, char) in canonical.withIndex()) {
+        if (char == '-') {
+            pieces += canonical.substring(start, index + 1)
+            start = index + 1
+        }
     }
+    if (start < canonical.length) pieces += canonical.substring(start)
+    return pieces
 }
 
 /** Text read from a photo or typed, shown as written in the mono font. */

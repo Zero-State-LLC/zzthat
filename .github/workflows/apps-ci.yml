@@ -26,8 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The one instrumented test the android job runs (runtime.md, Testing).
-  ZZ_ANDROID_READ_TEST: com.zer0state.zzthat.read.ReadPipelineInstrumentedTest
+  # The instrumented tests the android job runs (runtime.md, Testing): the
+  # ML Kit read pipeline, and code wrapping at a large text size (T076).
+  ZZ_ANDROID_READ_TEST: com.zer0state.zzthat.read.ReadPipelineInstrumentedTest,com.zer0state.zzthat.ui.CodeTextWrapTest
   # runtime.md, Testing: app tests and snapshots run on this destination.
   ZZ_IOS_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=26.5
   ZZ_XCODE: /Applications/Xcode_26.6.app
@@ -125,7 +126,7 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /usr/local/lib/node_modules /usr/share/swift "$AGENT_TOOLSDIRECTORY/CodeQL"
           df -h /
-      - name: ML Kit read pipeline test on an emulator
+      - name: ML Kit read pipeline and code wrap tests on an emulator
         if: ${{ hashFiles('apps/android/app/build.gradle.kts') != '' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
