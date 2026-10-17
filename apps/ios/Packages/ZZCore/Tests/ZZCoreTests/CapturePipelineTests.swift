@@ -409,6 +409,16 @@ struct CapturePipelineTests {
         #expect(outcome?.result.candidates.first?.regions.count == 2)
     }
 
+    /// zzThis qualification/scoring.md row 3: `raw_text` is payload text
+    /// only, so the hyphens that join it to the marks are trimmed; inner
+    /// hyphens stay.
+    @Test func rawTextDropsTheJoiningHyphens() async throws {
+        let lines = [FixtureAdapter.line("-copper-lantern", 0.9, y: 0.1), FixtureAdapter.line("sky \u{2010}", 0.9, y: 0.6)]
+        let (_, outcome) = try await read(FixtureAdapter(markers: Self.pair, hypotheses: [PayloadHypothesis(lines: lines)]))
+        #expect(outcome?.result.candidates.first?.rawText == "copper-lantern sky")
+        #expect(outcome?.decoded.map(\.canonical) == ["zz-copper-lantern-sky-zz"])
+    }
+
     // MARK: Confirm-only (T102)
 
     @Test func confirmOnlyTurnsCameraAcceptIntoClarifyWithTheFullCode() async throws {

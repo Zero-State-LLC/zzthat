@@ -190,7 +190,8 @@ public struct CapturePipeline: Sendable {
     }
 
     /// One payload hypothesis as evidence: its lines in reading order inside
-    /// the crop, joined with spaces; the lowest line confidence among lines
+    /// the crop, joined with spaces, without the joining hyphens at either
+    /// end; the lowest line confidence among lines
     /// that hold a payload part; and the line regions in source coordinates.
     /// A hypothesis with no text is not a candidate.
     static func textCandidate(id: String, pairId: String, hypothesis: PayloadHypothesis, geometry: ROIGeometry,
@@ -207,7 +208,15 @@ public struct CapturePipeline: Sendable {
         let counted = provenance.filter { !Scalars.split(Scalars.of($0.text), where: Scalars.isSeparator).isEmpty }
         let scores = counted.map(\.confidence)
         let confidence: Double? = scores.isEmpty || scores.contains(where: { $0 == nil }) ? nil : scores.compactMap { $0 }.min()
-        return TextCandidate(candidateId: id, pairId: pairId, rawText: lines.map(\.text).joined(separator: " "),
+        // `raw_text` is payload text only (zzThis qualification/scoring.md
+        // row 3): the hyphens that join the payload to the marks are not part
+        // of it, so they are trimmed at both ends, as on Android.
+        let joined = Scalars.of(lines.map(\.text).joined(separator: " "))
+        let isJoin = { (scalar: Unicode.Scalar) in Scalars.isSeparator(scalar) || Scalars.isDash(scalar) }
+        let rawText = joined.firstIndex(where: { !isJoin($0) }).flatMap { start in
+            joined.lastIndex(where: { !isJoin($0) }).map { Scalars.string(Array(joined[start...$0])) }
+        } ?? ""
+        return TextCandidate(candidateId: id, pairId: pairId, rawText: rawText,
                              confidenceStatus: confidence == nil ? .notAvailable : .available,
                              confidence: confidence, regions: provenance.compactMap(\.region), lines: provenance)
     }
