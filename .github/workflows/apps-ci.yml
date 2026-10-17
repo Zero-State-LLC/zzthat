@@ -61,6 +61,9 @@ jobs:
       - name: iOS third-party notices generator (T087)
         if: ${{ !cancelled() }}
         run: python3 -m unittest discover -s apps/ios/scripts -p "test_*.py" -v
+      - name: verify-ipa.sh tests (T107; the codesign cases need macOS and are skipped here)
+        if: ${{ !cancelled() }}
+        run: python3 -m unittest discover -s scripts -p "test_verify_ipa.py" -v
 
   android:
     runs-on: ubuntu-latest
