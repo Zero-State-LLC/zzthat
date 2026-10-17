@@ -13,4 +13,7 @@ apps/android/local.properties
 # Signing keys are Actions secrets, never files in the tree (T093).
 *.jks
 *.keystore
+# The iOS distribution certificate and profile are Actions secrets too (T107).
+*.p12
+*.mobileprovision
 
