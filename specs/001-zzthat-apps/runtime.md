@@ -282,6 +282,7 @@ The apps are analytics-free.
 | API fixtures for every error row | iOS: a stub transport. Android: the OkHttp test server. |
 | FR-041 with a fake clock | Both |
 | One snapshot per screen state in the table above, light and dark | iOS: swift-snapshot-testing in the Demo configuration, on the destination below. Android: Paparazzi 2.0.0-alpha05.1 on the demo flavor with `DeviceConfig.PIXEL_5`. |
+| Accessibility (T076): names, text size, touch targets, contrast | iOS: `AccessibilityAuditTests` runs Xcode's accessibility audit on each main screen of the Demo build (UI test), `ContrastTests` checks every text and background token pair against 4.5:1 light and dark, and `-ax5` snapshots show the main screens at the largest accessibility text size. Android: `-font200` Paparazzi snapshots of the same screens at twice the text size, and `CodeTextWrapTest` on an emulator checks that a code wraps only after a hyphen. |
 | Kotlin client generation, `:core-api:openApiGenerate`, before any other Android step | `apps-ci.yml`, `android` job |
 | Copy rules on the generated catalogs (T082) | `apps-ci.yml`, `checks` job |
 | No analytics dependency | `apps-ci.yml`, `checks` job, a check of the package manifests |

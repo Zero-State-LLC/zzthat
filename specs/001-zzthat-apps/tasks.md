@@ -104,7 +104,7 @@ Done when: the fake-clock tests pass on both platforms.
 - [ ] T072 No location and no microphone permission (FR-013, FR-014).
 - [ ] T074 The Report sheet with the four reasons and every screen state.
 - [ ] T075 Analytics-free manifests (runtime.md, Privacy).
-- [ ] T076 Accessibility from runtime.md.
+- [ ] T076 Accessibility from runtime.md. Automated checks are in place (runtime.md, Testing): the iOS audit, token contrast, and large-text snapshots on both platforms; Android codes now wrap only after a hyphen. Still open: a VoiceOver and TalkBack pass on a device (names, focus order), and whether Google's sign-in button clips its label at a large text size on a device (Paparazzi does not scale that view).
 - [ ] T077 Catalogs generated from `copy.json` only: `Localizable.xcstrings`, `InfoPlist.xcstrings`, and `strings.xml`. No sentence in a layout file (FR-042).
 - [ ] T082 The string check on every generated catalog, `InfoPlist.xcstrings` included: no em dash, and the demo and check word terms of FR-030 (SC-7).
 
