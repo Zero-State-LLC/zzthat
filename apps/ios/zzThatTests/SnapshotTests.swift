@@ -96,7 +96,8 @@ struct SnapshotTests {
     /// confirm and Delete confirm): the title, the body, the destructive
     /// action, and Cancel, which is the default. A system alert renders only
     /// on screen, so it is presented in a window over its Demo screen and the
-    /// window is captured.
+    /// window is captured. The screen is hidden behind the alert, so the glass
+    /// samples a flat color (#75).
     @Test(arguments: ["revoke-confirm-demo", "delete-confirm-demo"])
     func confirmDialog(_ name: String) async throws {
         let revoke = name.hasPrefix("revoke")
@@ -120,6 +121,12 @@ struct SnapshotTests {
             alert.addAction(UIAlertAction(title: CopyKey.commonCancel.text, style: .cancel))
             host.present(alert, animated: false)
             try await Task.sleep(for: .seconds(1))
+            // #75: the alert's glass samples what is behind it and renders
+            // differently from Mac to Mac. With the screen hidden, it samples
+            // one flat color, so the image is the same everywhere.
+            host.view.isHidden = true
+            window.backgroundColor = style == .dark ? .black : .white
+            try await Task.sleep(for: .milliseconds(300))
             let format = UIGraphicsImageRendererFormat()
             format.scale = 1
             let image = UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
