@@ -145,6 +145,16 @@ class PairingTest {
         assertNull(result.soleCompletePair)
     }
 
+    /** A lone mark with words on both sides: a partial candidate, reported as the replay script reads it. */
+    @Test
+    fun aMarkBetweenWordsIsAPartialFiducial() {
+        val result = Page.detect(Page.line("see zz here"))
+        val partial = result.visualCandidates.single() as VisualCandidate.Partial
+        assertEquals(MarkerRole.UNKNOWN, partial.marker.role)
+        assertEquals(listOf(ReasonCodes.PARTIAL_FIDUCIAL), result.reasonCodes)
+        assertEquals(Band.RETRY, CaptureConfig.DEFAULT.bandFor(ReasonCodes.PARTIAL_FIDUCIAL))
+    }
+
     @Test
     fun aLoneMarkIsABareCandidate() {
         val result = Page.detect(Page.line("zz"))

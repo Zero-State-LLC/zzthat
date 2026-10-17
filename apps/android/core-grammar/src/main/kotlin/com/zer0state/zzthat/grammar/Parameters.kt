@@ -38,8 +38,15 @@ object ReasonCodes {
     /** A closing marker with no opening marker on its baseline. */
     const val MISSING_OPENING_FIDUCIAL = "missing-opening-fiducial"
 
-    /** An unpaired marker with words beside it whose side cannot be told (zzThis decision-band-mapping `missing-marker`). */
+    /** The zzThis decision-band-mapping `missing-marker` capture issue. */
     const val MISSING_MARKER = "missing-marker"
+
+    /**
+     * An unpaired marker with words beside it whose side cannot be told. The
+     * pinned zzThis ocr-qualification-decoder-replay.mjs reads this code, like
+     * the two missing-fiducial codes, as the missing-marker capture issue.
+     */
+    const val PARTIAL_FIDUCIAL = "partial-fiducial"
 
     /** A lone `zz` with no words (zzThis decision-band-mapping `bare-mark`). */
     const val BARE_MARK = "bare-mark"
@@ -141,6 +148,7 @@ data class CaptureConfig(
          */
         val DEFAULT_REASON_BANDS: Map<String, Band> = mapOf(
             ReasonCodes.MISSING_MARKER to Band.RETRY,
+            ReasonCodes.PARTIAL_FIDUCIAL to Band.RETRY,
             "cutoff-marker" to Band.RETRY,
             "blur" to Band.RETRY,
             "glare" to Band.RETRY,

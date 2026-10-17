@@ -293,7 +293,7 @@ object MarkerPairing {
                 marker.role == MarkerRole.OPENING -> ReasonCodes.MISSING_CLOSING_FIDUCIAL
                 marker.role == MarkerRole.CLOSING -> ReasonCodes.MISSING_OPENING_FIDUCIAL
                 marker.aloneOnLine -> ReasonCodes.BARE_MARK
-                else -> ReasonCodes.MISSING_MARKER
+                else -> ReasonCodes.PARTIAL_FIDUCIAL
             }
             visual += if (reason == ReasonCodes.BARE_MARK) VisualCandidate.Bare(marker) else VisualCandidate.Partial(marker)
             candidateReasons[marker.detectionId] = reason
