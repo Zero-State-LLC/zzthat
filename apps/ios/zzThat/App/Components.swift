@@ -188,7 +188,17 @@ enum FieldLimits {
 struct PhotoBoxes: View {
     @Environment(\.colorScheme) private var scheme
     let image: UIImage
-    let candidates: [ReadCandidate]
+    /// One list of normalized boxes per candidate, numbered in order.
+    let groups: [[CGRect]]
+
+    init(image: UIImage, groups: [[CGRect]]) {
+        self.image = image
+        self.groups = groups
+    }
+
+    init(image: UIImage, candidates: [ReadCandidate]) {
+        self.init(image: image, groups: candidates.map(\.boxes))
+    }
 
     var body: some View {
         let palette = Palette(scheme)
@@ -197,8 +207,8 @@ struct PhotoBoxes: View {
             .aspectRatio(contentMode: .fit)
             .overlay {
                 GeometryReader { proxy in
-                    ForEach(Array(candidates.enumerated()), id: \.offset) { offset, candidate in
-                        ForEach(Array(candidate.boxes.enumerated()), id: \.offset) { boxIndex, box in
+                    ForEach(Array(groups.enumerated()), id: \.offset) { offset, boxes in
+                        ForEach(Array(boxes.enumerated()), id: \.offset) { boxIndex, box in
                             let rect = CGRect(x: box.minX * proxy.size.width, y: box.minY * proxy.size.height,
                                               width: box.width * proxy.size.width, height: box.height * proxy.size.height)
                             Rectangle()
@@ -220,6 +230,33 @@ struct PhotoBoxes: View {
             .clipShape(RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
             .overlay(RoundedRectangle(cornerRadius: ZZRadius.radiusChip)
                 .strokeBorder(palette.rule, lineWidth: ZZSpace.ruleHair))
+            .accessibilityHidden(true)
+    }
+}
+
+/// One part of a photo, in memory, scaled to a row's height: how a box is
+/// shown before its payload is read. Nothing is cropped or saved; the view
+/// draws the same photo through a window.
+struct PhotoRegion: View {
+    let image: UIImage
+    /// Normalized over the photo, origin at the top left.
+    let region: CGRect
+    var height: CGFloat = 44
+
+    var body: some View {
+        let padded = region.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        let size = image.size
+        let scale = padded.height > 0 ? height / (padded.height * size.height) : 1
+        let width = min(padded.width * size.width * scale, 240)
+        Color.clear
+            .frame(width: width, height: height)
+            .overlay(alignment: .topLeading) {
+                Image(uiImage: image)
+                    .resizable()
+                    .frame(width: size.width * scale, height: size.height * scale)
+                    .offset(x: -padded.minX * size.width * scale, y: -padded.minY * size.height * scale)
+            }
+            .clipped()
             .accessibilityHidden(true)
     }
 }

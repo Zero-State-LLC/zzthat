@@ -2,56 +2,67 @@ import Foundation
 import Testing
 @testable import ZZCore
 
-/// tasks.md T022: the shared band rows, then one test per band trigger in
-/// zzThis spec 004 (Decision bands and Prototype band values).
+/// tasks.md T022 and T102: the zzThis spec 004 `capture_band` vector rows
+/// at the pin, which Android's `:core-grammar` tests also run, then one test
+/// per band trigger in zzThis spec 004 (Decision bands and Prototype band
+/// values).
 @Suite("Bands")
 struct BandTests {
-    struct SharedRow: Decodable, CustomTestStringConvertible, Sendable {
-        struct Item: Decodable, Sendable {
-            let token: String
-            let line: Int
-            let confidence: Double
-        }
+    static let captureBand = Row.list(Vectors.section("capture_band")["rows"] as? [[String: Any]] ?? [])
 
-        let name: String
-        let canonical: String
-        let rows: [Item]
-        let band: String
-
-        var testDescription: String { name }
+    /// The camera rows of the band table, without confirm-only mode.
+    static var cameraTableRows: [Row] {
+        captureBand.filter { $0.fields["source"] as? String == "camera" && $0.fields["confirm_only"] == nil }
     }
-
-    static let shared: [SharedRow] = {
-        struct File: Decodable { let shared: [SharedRow] }
-        guard let url = Bundle.module.url(forResource: "Fixtures/band-rows", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let file = try? JSONDecoder().decode(File.self, from: data) else { return [] }
-        return file.shared
-    }()
 
     static func fixture7() throws -> WordList {
         let words = try #require(Vectors.section("check_word")["wordlist"] as? [String])
         return try WordList(version: "fixture-7", words: words)
     }
 
-    @Test func sharedRowsAreLoaded() {
-        #expect(Self.shared.count == 3)
+    @Test func captureBandRowsAreLoaded() {
+        #expect(Self.captureBand.count >= 24)
+        #expect(Self.captureBand.contains { $0.fields["confirm_only"] as? Bool == true })
     }
 
-    @Test(arguments: shared)
-    func sharedRow(_ row: SharedRow) throws {
+    /// A row without `confirm_only` runs the band table; a `confirm_only:
+    /// true` row also runs confirm-only mode (spec 004 FR-023).
+    @Test(arguments: captureBand)
+    func captureBandRow(_ row: Row) throws {
         let list = try Self.fixture7()
-        guard case .success(let code) = Grammar.parse(row.canonical) else {
-            Issue.record("\(row.canonical) does not parse")
-            return
+        let confirmOnly = row.fields["confirm_only"] as? Bool ?? false
+        var configuration = CaptureConfiguration.current
+        configuration.confirmOnly = confirmOnly
+        let source = try #require(row.fields["source"] as? String)
+        let decision: BandDecision
+        if source == "typed" {
+            let input = try #require(row.fields["input"] as? String)
+            let band: Band
+            switch ReadPipeline(classifyList: list, checkList: list).readTyped(input) {
+            case .success(let candidate): band = candidate.band
+            case .failure: band = .abstain
+            }
+            decision = BandDecision(band, "typed")
+        } else {
+            let canonical = try #require(row.fields["canonical"] as? String)
+            guard case .success(let code) = Grammar.parse(canonical) else {
+                Issue.record("\(canonical) does not parse")
+                return
+            }
+            let codeClass = Classifier.classify(code, wordlist: list.words)
+            let check = CheckWord.verify(code, list: list)
+            let items = try #require(row.fields["rows"] as? [[String: Any]])
+            let rows = try items.map {
+                BandRow(token: try #require($0["token"] as? String), lineIndex: try #require($0["line"] as? Int),
+                        lineConfidence: try #require($0["confidence"] as? Double))
+            }
+            let band = Bands.band(candidate: .code(code), codeClass: codeClass, check: check, rows: rows, source: .camera)
+            decision = BandDecision(band, "table")
         }
-        let codeClass = Classifier.classify(code, wordlist: list.words)
-        let check = CheckWord.verify(code, list: list)
-        #expect(codeClass == .word)
-        #expect(check == .ok)
-        let rows = row.rows.map { BandRow(token: $0.token, lineIndex: $0.line, lineConfidence: $0.confidence) }
-        let band = Bands.band(candidate: .code(code), codeClass: codeClass, check: check, rows: rows, source: .camera)
-        #expect(band.rawValue == row.band)
+        let result = confirmOnly
+            ? Bands.applyConfirmOnly(decision, source: source == "typed" ? .typed : .camera, configuration: configuration)
+            : decision
+        #expect(result.band.rawValue == row.fields["band"] as? String, "\(row.fields["name"] ?? "")")
     }
 
     // MARK: Camera triggers, through the whole pipeline

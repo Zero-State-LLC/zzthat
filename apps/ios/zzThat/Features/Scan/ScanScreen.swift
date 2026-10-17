@@ -6,6 +6,9 @@ import ZZDesign
 /// What the Scan screen shows (runtime.md, Screens: Scan and Pick).
 struct ScanScreenState {
     var photo: UIImage?
+    /// The boxes to pick from before any payload is read (FR-052).
+    var visual: [VisualCandidate] = []
+    /// The picked pair's readings, once it is read.
     var candidates: [ReadCandidate] = []
     var reading = false
     var message: CopyKey?
@@ -15,21 +18,29 @@ struct ScanScreenState {
 
 /// Scan (design/UX.md, Scan with the camera): one still photo, a box on it
 /// for each candidate, and a list in reading order. Typing is always one tap
-/// away. Several candidates wait for a tap (FR-026); nothing is picked for
-/// the person.
+/// away. The boxes come from the zz marks before any payload is read; several
+/// wait for a tap (FR-026, FR-052), and nothing is picked for the person.
+/// Once a pair is read, its readings replace the boxes.
 struct ScanScreen: View {
     let state: ScanScreenState
     @Binding var pickerItem: PhotosPickerItem?
     var onTakePhoto: () -> Void = {}
     var onTypeInstead: () -> Void = {}
+    var onSelectBox: (VisualCandidate) -> Void = { _ in }
     var onSelect: (ReadCandidate) -> Void = { _ in }
 
     var body: some View {
         Screen(demo: state.demo, loading: state.reading) {
             if let photo = state.photo {
-                PhotoBoxes(image: photo, candidates: state.candidates)
+                if state.candidates.isEmpty {
+                    PhotoBoxes(image: photo, groups: state.visual.map { [$0.outline] })
+                } else {
+                    PhotoBoxes(image: photo, candidates: state.candidates)
+                }
                 if !state.candidates.isEmpty {
                     CandidateList(candidates: state.candidates, onSelect: onSelect)
+                } else if !state.visual.isEmpty {
+                    BoxList(photo: photo, candidates: state.visual, onSelect: onSelectBox)
                 }
                 if let message = state.message { Message(key: message) }
                 if !state.reading {
@@ -118,6 +129,70 @@ struct CandidateList: View {
             .background(palette.panel, in: RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
             .overlay(RoundedRectangle(cornerRadius: ZZRadius.radiusChip).strokeBorder(palette.rule, lineWidth: ZZSpace.ruleHair))
         }
+    }
+}
+
+/// Pick, before any payload is read: every box in reading order, numbered
+/// like its box on the photo, each shown as its own part of the photo.
+struct BoxList: View {
+    @Environment(\.colorScheme) private var scheme
+    let photo: UIImage
+    let candidates: [VisualCandidate]
+    let onSelect: (VisualCandidate) -> Void
+
+    var body: some View {
+        let palette = Palette(scheme)
+        VStack(alignment: .leading, spacing: ZZSpace.spaceXs) {
+            Text(.scanPickOne)
+                .textRole(.title)
+                .accessibilityAddTraits(.isHeader)
+            VStack(spacing: 0) {
+                ForEach(Array(candidates.enumerated()), id: \.offset) { offset, candidate in
+                    Button { onSelect(candidate) } label: {
+                        BoxRow(number: offset + 1, photo: photo, candidate: candidate)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("scan.candidate.\(offset + 1)")
+                    if offset < candidates.count - 1 { Divider().overlay(palette.rule) }
+                }
+            }
+            .background(palette.panel, in: RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
+            .overlay(RoundedRectangle(cornerRadius: ZZRadius.radiusChip).strokeBorder(palette.rule, lineWidth: ZZSpace.ruleHair))
+        }
+    }
+}
+
+struct BoxRow: View {
+    @Environment(\.colorScheme) private var scheme
+    let number: Int
+    let photo: UIImage
+    let candidate: VisualCandidate
+
+    var body: some View {
+        let palette = Palette(scheme)
+        HStack(alignment: .center, spacing: ZZSpace.spaceXs) {
+            Text(verbatim: "\(number)")
+                .zzFont(.mono, ZZTextSize.textXs, weight: .semibold)
+                .foregroundStyle(palette.onAccent)
+                .padding(.horizontal, ZZSpace.space2xs)
+                .background(palette.accent, in: RoundedRectangle(cornerRadius: ZZRadius.radiusChip))
+            VStack(alignment: .leading, spacing: ZZSpace.space3xs) {
+                PhotoRegion(image: photo, region: candidate.outline)
+                switch candidate.kind {
+                case .complete: EmptyView()
+                case .partial: Text(.scanPartial).textRole(.caption)
+                case .bare: Text(.scanBare).textRole(.caption)
+                }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .foregroundStyle(palette.ink3)
+                .accessibilityHidden(true)
+        }
+        .padding(ZZSpace.spaceSm)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 
