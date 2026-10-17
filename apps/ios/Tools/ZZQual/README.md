@@ -45,3 +45,14 @@ Camera bands are confirm-only until a PASS receipt, so a correct reading shows `
 - **Output:** `adapter-results.json`, valid against zzThis `adapter-result.schema.json`. `candidate_bundle_sha256` is the RFC 8785 hash of the bundle.
 - **Scoring:** `npm run qual:ocr` in zzThis scores the output, with the other inputs that `specs/004-capture/qualification/local-runner.md` lists.
 - **The manifest needs more than the code per photo:** each sample also needs its fiducial boxes, ROI polygons, case kind, stress tags, writer group, and split.
+
+## Android
+
+`scripts/qual-android.sh` runs the same two modes with the shipped ML Kit pipeline on a connected device or emulator, through `QualHarnessTest`. It takes the same `truth.csv`, manifest, candidate bundle, and device matrix:
+
+```sh
+scripts/qual-android.sh quick ~/zz-photos ~/zz-photos/truth.csv fixture-7
+scripts/qual-android.sh run ~/zz-photos manifest.json candidate-bundle.json device-matrix.json <entry> adapter-results.json fixture-7
+```
+
+The photos go only to the demo debug app's private folder on that device, and the script deletes them when it ends.
