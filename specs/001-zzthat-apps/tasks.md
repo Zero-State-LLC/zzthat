@@ -140,6 +140,7 @@ Accepted by Danny on 2026-10-09 (zzThis D-2026-10-10-25). The zzThis backlog ids
 - [x] T098 [RM-115] Saved (FR-050): Save and Remove from Saved on Resolve, the Saved list from My codes signed in or out, and Clear saved codes on Account; device only, canonical codes only, no thumbnail. Cleared by account deletion and by `account.clear_saved`. `account.unhide_all` does not clear it. zzThis D-2026-10-11-01 row 17. #65.
 - [x] T099 [RM-113] The suggested-word picker on the minted code (FR-017): the pick help, Get different words up to the cap, and Keep these words, which closes the picker locally. No code string is sent. zzThis D-2026-10-11-01 option C.
 - [ ] T100 [RM-121] "Early release" in the listing and the app, and no zzThis name or host on any zzThat surface (D-2026-10-11-06, -07). The store drafts are done; the Local and Demo privacy link still points at a zzThis host until the policy host is decided (D-2026-10-11-09).
+- [x] T107 [zzThis #183 row 6, new, like RM-106] A `release-ios` job, run by hand only and behind the `app-store-release` environment, signs a Release `.ipa` with Danny's distribution certificate and App Store profile from Actions secrets, checks it with `scripts/verify-ipa.sh`, and keeps the `.ipa` and the dSYMs as workflow artifacts. It uploads nothing to App Store Connect; Danny uploads and submits. No certificate, profile, or password in the tree.
 
 ## Later, not in the first release
 
