@@ -487,19 +487,26 @@ struct CapturePipelineTests {
         check(try #require(outcome).decoded, "decoded")
     }
 
-    /// The T022 shared rows, now through the evidence path: line confidences
-    /// in a TextCandidate, one band out, before confirm-only mode.
-    @Test(arguments: BandTests.shared)
-    func sharedRowsThroughTheEvidence(_ row: BandTests.SharedRow) async throws {
-        let byLine = Dictionary(grouping: row.rows, by: \.line)
+    /// The `capture_band` camera rows of the band table, now through the
+    /// evidence path: line confidences in a TextCandidate, one band out,
+    /// before confirm-only mode, which the shipped setting then applies.
+    @Test(arguments: BandTests.cameraTableRows)
+    func captureBandRowsThroughTheEvidence(_ row: Row) async throws {
+        let items = try #require(row.fields["rows"] as? [[String: Any]])
+        let words = try items.map {
+            (token: try #require($0["token"] as? String), line: try #require($0["line"] as? Int),
+             confidence: try #require($0["confidence"] as? Double))
+        }
+        let byLine = Dictionary(grouping: words, by: \.line)
         let lines = byLine.keys.sorted().map { index in
             FixtureAdapter.line(byLine[index]!.map(\.token).joined(separator: " "),
                                 byLine[index]!.map(\.confidence).min(), y: 0.1 + Double(index) * 0.4)
         }
+        let band = try #require(row.fields["band"] as? String)
         let (_, outcome) = try await read(FixtureAdapter(markers: Self.pair, hypotheses: [PayloadHypothesis(lines: lines)]))
         let decoded = try #require(outcome?.decoded.first)
-        #expect(decoded.canonical == row.canonical)
-        #expect(decoded.baseBand.rawValue == row.band)
-        #expect(decoded.band == (row.band == "accept" ? .clarify : decoded.baseBand))
+        #expect(decoded.canonical == row.fields["canonical"] as? String)
+        #expect(decoded.baseBand.rawValue == band)
+        #expect(decoded.band == (band == "accept" ? .clarify : decoded.baseBand))
     }
 }
