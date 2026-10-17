@@ -36,9 +36,16 @@ public struct ReadCandidate: Sendable, Hashable, Identifiable {
     public let kind: ScanCandidateKind
     public let codeClass: CodeClass?
     public let check: CheckResult?
+    /// The band the app acts on: after confirm-only mode for a camera read.
     public let band: Band
     public let rows: [BandRow]
     public let boxes: [CGRect]
+    /// The spec 004 table's band before confirm-only mode, and its rule.
+    public var baseBand: Band = .abstain
+    public var reason: String = ""
+    /// For a camera read: the pair and the text hypothesis it came from.
+    public var pairId: String?
+    public var textCandidateId: String?
 
     public var canonical: String? {
         if case .code(let code) = kind { return code.canonical }
@@ -116,35 +123,57 @@ public struct ReadPipeline: Sendable {
         }
     }
 
+    /// The classifier and the local check word for a candidate (steps 4
+    /// and 5). The check runs only with the list whose version matches the
+    /// server's (FR-044).
+    func classifyAndCheck(_ kind: ScanCandidateKind) -> (CodeClass?, CheckResult?) {
+        guard case .code(let code) = kind else { return (nil, nil) }
+        let codeClass = Classifier.classify(code, wordlist: classifyList?.words ?? [])
+        var check: CheckResult?
+        if codeClass == .word, let checkList, code.words.allSatisfy({ checkList.index(of: $0) != nil }) {
+            check = CheckWord.verify(code, list: checkList)
+        }
+        return (codeClass, check)
+    }
+
+    /// Bands a typed candidate, or a candidate of the whole-photo text path
+    /// (`read(lines:)`), with the spec 004 table and no confirm-only mode.
+    /// Scan reads the camera through `CapturePipeline` instead; the text path
+    /// stays for write check, which compares a reading with the minted code
+    /// and resolves nothing.
     func evaluate(_ kind: ScanCandidateKind, id: Int, rows: [BandRow], boxes: [CGRect],
                   source: ReadSource) -> ReadCandidate {
-        var codeClass: CodeClass?
-        var check: CheckResult?
-        if case .code(let code) = kind {
-            codeClass = Classifier.classify(code, wordlist: classifyList?.words ?? [])
-            if codeClass == .word, let checkList, code.words.allSatisfy({ checkList.index(of: $0) != nil }) {
-                check = CheckWord.verify(code, list: checkList)
-            }
-        }
-        let band = Bands.band(candidate: kind, codeClass: codeClass, check: check, rows: rows, source: source)
-        return ReadCandidate(id: id, kind: kind, codeClass: codeClass, check: check, band: band,
-                             rows: rows, boxes: boxes)
+        let (codeClass, check) = classifyAndCheck(kind)
+        let confidence = Bands.candidateConfidence(rows).map(ConfidenceEvidence.available) ?? .notAvailable
+        let decision = Bands.decide(BandEvidence(source: source, kind: kind, codeClass: codeClass, check: check,
+                                                 confidence: confidence))
+        var candidate = ReadCandidate(id: id, kind: kind, codeClass: codeClass, check: check, band: decision.band,
+                                      rows: rows, boxes: boxes)
+        candidate.baseBand = decision.band
+        candidate.reason = decision.reason
+        return candidate
     }
 
     /// Step 3: top to bottom, then left to right. Lines whose vertical
     /// centers fall inside one another's height share a row.
     public static func readingOrder(_ lines: [RecognizedLine]) -> [RecognizedLine] {
-        let byTop = lines.sorted { ($0.box.minY, $0.box.minX) < ($1.box.minY, $1.box.minX) }
-        var rows: [[RecognizedLine]] = []
-        for line in byTop {
-            if let last = rows.last?.first,
-               abs(line.box.midY - last.box.midY) < max(min(line.box.height, last.box.height) / 2, 0.0001) {
-                rows[rows.count - 1].append(line)
+        readingOrder(boxes: lines.map(\.box)).map { lines[$0] }
+    }
+
+    /// The same order as indices into `boxes`.
+    static func readingOrder(boxes: [CGRect]) -> [Int] {
+        let byTop = boxes.indices.sorted { (boxes[$0].minY, boxes[$0].minX) < (boxes[$1].minY, boxes[$1].minX) }
+        var rows: [[Int]] = []
+        for index in byTop {
+            let box = boxes[index]
+            if let last = rows.last?.first.map({ boxes[$0] }),
+               abs(box.midY - last.midY) < max(min(box.height, last.height) / 2, 0.0001) {
+                rows[rows.count - 1].append(index)
             } else {
-                rows.append([line])
+                rows.append([index])
             }
         }
-        return rows.flatMap { $0.sorted { $0.box.minX < $1.box.minX } }
+        return rows.flatMap { $0.sorted { boxes[$0].minX < boxes[$1].minX } }
     }
 
     static func boxes(for range: Range<Int>, lines: [RecognizedLine], lineRanges: [Range<Int>]) -> [CGRect] {

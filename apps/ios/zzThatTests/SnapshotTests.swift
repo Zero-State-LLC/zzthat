@@ -117,6 +117,19 @@ struct SnapshotTests {
         return pipeline.read(lines: lines).candidates
     }
 
+    /// The Scan screen after a read, as the Demo build reaches it: the boxes
+    /// from the zz marks and, when one complete pair is the only box, its
+    /// reading. Confirm-only (T102) keeps that reading in Clarify.
+    static func scanState(_ photo: (image: UIImage, lines: [(text: String, box: CGRect)]), message: CopyKey? = nil,
+                          demo: Bool = false) -> ScanScreenState {
+        let pipeline = ReadPipeline(bundled: AppModel.loadBundledLists(),
+                                    serverVersion: DemoAPI.discovery.wordlistVersion)
+        let frame = CaptureFixture.frame(photo)
+        let decoded = frame.visualCandidates.count == 1 ? CaptureFixture.read(photo, pipeline: pipeline).1.decoded : []
+        return ScanScreenState(photo: photo.image, visual: frame.visualCandidates, candidates: decoded,
+                               message: message, demo: demo)
+    }
+
     static let demoRecord = DemoAPI.records["zz-kathy-lost-cat-zz"]!
     static let demoView = ResolvedView(canonical: "zz-kathy-lost-cat-zz", title: demoRecord.title,
                                        body: demoRecord.body, shareText: "zz-kathy-lost-cat-zz")
@@ -195,20 +208,10 @@ struct SnapshotTests {
         Case("scan-loading") { scan(ScanScreenState(photo: fixtureLines.image, reading: true)) },
         Case("scan-empty") { scan(ScanScreenState(photo: noCodeLines.image, message: .scanNoCode)) },
         Case("scan-error") { scan(ScanScreenState(message: .scanCameraOff)) },
-        Case("scan-offline") {
-            scan(ScanScreenState(photo: fixtureLines.image, candidates: candidates(fixtureLines),
-                                 message: .resolveNotOnDevice))
-        },
-        Case("scan-demo") {
-            scan(ScanScreenState(photo: fixtureLines.image, candidates: candidates(fixtureLines), demo: true))
-        },
-        Case("pick-offline") {
-            scan(ScanScreenState(photo: twoCodeLines.image, candidates: candidates(twoCodeLines),
-                                 message: .resolveNotOnDevice))
-        },
-        Case("pick-demo") {
-            scan(ScanScreenState(photo: twoCodeLines.image, candidates: candidates(twoCodeLines), demo: true))
-        },
+        Case("scan-offline") { scan(scanState(fixtureLines, message: .resolveNotOnDevice)) },
+        Case("scan-demo") { scan(scanState(fixtureLines, demo: true)) },
+        Case("pick-offline") { scan(scanState(twoCodeLines, message: .resolveNotOnDevice)) },
+        Case("pick-demo") { scan(scanState(twoCodeLines, demo: true)) },
         Case("clarify-error") {
             ClarifyScreen(state: ClarifyScreenState(parts: ["copper", "maple", "sky"], step: .checkMismatch))
         },

@@ -14,8 +14,7 @@ let package = Package(
         .target(name: "ZZCore"),
         .testTarget(
             name: "ZZCoreTests",
-            dependencies: ["ZZCore"],
-            resources: [.copy("Fixtures")]
+            dependencies: ["ZZCore"]
         ),
     ]
 )

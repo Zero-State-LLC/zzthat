@@ -16,39 +16,45 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 /**
- * tasks.md T022: the shared band rows, one table for both platforms
- * (apps/ios/Packages/ZZCore/Tests/ZZCoreTests/Fixtures/band-rows.json, read in
- * place): (token, line index, line confidence) rows in, one band out.
+ * tasks.md T022 and T102: the zzThis spec 004 `capture_band` rows in
+ * contracts/vectors.json at the pin, which the iOS ZZCore tests also run.
+ * A camera row is (token, line index, line confidence) rows in, one band
+ * out; a typed row is the code as typed.
  */
 @RunWith(Parameterized::class)
-class SharedBandRowTest(@Suppress("unused") private val label: String, private val row: JsonObject) {
+class CaptureBandRowTest(@Suppress("unused") private val label: String, private val row: JsonObject) {
     @Test
     fun row() {
         val list = Vectors.fixture7
-        val code = Grammar.parse(row.string("canonical")!!).codeOrNull()!!
-        val codeClass = Classifier.classify(code, list.words)
-        val check = CheckWord.verify(code, list)
-        assertEquals(CodeClass.Word, codeClass)
-        assertEquals(CheckResult.Ok, check)
-        val rows = (row["rows"] as JsonArray).map {
-            val item = it.jsonObject
-            BandRow(item.string("token")!!, item["line"]!!.jsonPrimitive.int, item["confidence"]!!.jsonPrimitive.double)
-        }
         // A row without `confirm_only` is the spec 004 band table; a
         // `confirm_only: true` row (spec 004 FR-023) runs confirm-only mode.
         val confirmOnly = row["confirm_only"]?.jsonPrimitive?.boolean ?: false
         val config = CaptureConfig.DEFAULT.copy(confirmOnly = confirmOnly)
-        val band = Bands.band(ScanKind.Code(code), codeClass, check, rows, ReadSource.CAMERA, config = config)
-        assertEquals(row.string("band"), band.wire)
+        val band = if (row.string("source") == "typed") {
+            when (val read = ReadPipeline(list, list, config).readTyped(row.string("input")!!)) {
+                is TypedRead.Read -> read.candidate.band
+                is TypedRead.Refused -> Band.ABSTAIN
+            }
+        } else {
+            val code = Grammar.parse(row.string("canonical")!!).codeOrNull()!!
+            val codeClass = Classifier.classify(code, list.words)
+            val check = CheckWord.verify(code, list)
+            val rows = (row["rows"] as JsonArray).map {
+                val item = it.jsonObject
+                BandRow(item.string("token")!!, item["line"]!!.jsonPrimitive.int, item["confidence"]!!.jsonPrimitive.double)
+            }
+            Bands.band(ScanKind.Code(code), codeClass, check, rows, ReadSource.CAMERA, config = config)
+        }
+        assertEquals(row.string("name"), row.string("band"), band.wire)
     }
 
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun rows(): List<Array<Any>> {
-            val shared = (Vectors.read("zz.bandRows").jsonObject["shared"] as JsonArray).map { it.jsonObject }
-            assertEquals("the three shared rows", 3, shared.size)
-            return Vectors.cases(shared) { it.string("name").orEmpty() }
+            val rows = (Vectors.section("capture_band")["rows"] as JsonArray).map { it.jsonObject }
+            assertTrue("the capture_band rows", rows.size >= 24)
+            return Vectors.cases(rows) { it.string("name").orEmpty() }
         }
     }
 }

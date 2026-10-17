@@ -50,12 +50,13 @@ struct ScanRoot: View {
     @State private var showingCamera = false
 
     var body: some View {
-        ScanScreen(state: ScanScreenState(photo: scan.photo, candidates: scan.candidates, reading: scan.reading,
-                                          message: scan.message, demo: app.isDemo,
+        ScanScreen(state: ScanScreenState(photo: scan.photo, visual: scan.visual, candidates: scan.candidates,
+                                          reading: scan.reading, message: scan.message, demo: app.isDemo,
                                           cameraAvailable: CameraPicker.isAvailable),
                    pickerItem: $pickerItem,
                    onTakePhoto: takePhoto,
                    onTypeInstead: { path.append(.type) },
+                   onSelectBox: selectBox,
                    onSelect: select)
             .fullScreenCover(isPresented: $showingCamera) {
                 CameraPicker { image in
@@ -97,6 +98,13 @@ struct ScanRoot: View {
 
     private func read(_ image: UIImage) async {
         if let canonical = await scan.read(image, app: app) { open(canonical) }
+    }
+
+    /// A box picked before any payload is read: only a complete pair is read.
+    private func selectBox(_ candidate: VisualCandidate) {
+        Task {
+            if let canonical = await scan.select(candidate, app: app) { open(canonical) }
+        }
     }
 
     private func select(_ candidate: ReadCandidate) {
