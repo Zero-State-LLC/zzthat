@@ -289,6 +289,33 @@ class InteriorRoiTest {
         }
     }
 
+    /** zzThis specs/004-capture/qualification.md, adapter input: evidence that does not hold fails closed, with no candidates. */
+    @Test
+    fun coordinatesOutsideTheImageAreInvalidEvidence() {
+        val good = Page.detect(Page.line("zz copper lantern sky zz"))
+        val bad = good.fiducials.first().let { it.copy(box = it.box.copy(x = -0.1)) }
+        val out = MarkerPairing.pair(listOf(bad) + good.fiducials.drop(1), Page.IMAGE, CaptureConfig.DEFAULT)
+        assertTrue(out.failedClosed)
+        assertEquals(listOf(ReasonCodes.INVALID_EVIDENCE), out.reasonCodes)
+        assertTrue(out.pairs.isEmpty() && out.visual.isEmpty())
+        assertEquals(Band.ABSTAIN, CaptureConfig.DEFAULT.bandFor(ReasonCodes.INVALID_EVIDENCE))
+    }
+
+    @Test
+    fun aRepeatedDetectionIdIsInvalidEvidence() {
+        val good = Page.detect(Page.line("zz copper lantern sky zz"))
+        val twin = good.fiducials.map { it.copy(detectionId = good.fiducials.first().detectionId) }
+        assertEquals(listOf(ReasonCodes.INVALID_EVIDENCE), MarkerPairing.pair(twin, Page.IMAGE, CaptureConfig.DEFAULT).reasonCodes)
+    }
+
+    @Test
+    fun idsThatDoNotLinkAreInvalidEvidence() {
+        val good = Page.detect(Page.line("zz copper lantern sky zz"))
+        assertEquals(InteriorRoi.Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE), CameraRead.roi(good, "p9", CaptureConfig.DEFAULT))
+        val unlinked = good.copy(fiducials = good.fiducials.map { it.copy(baselineId = "b9") })
+        assertEquals(InteriorRoi.Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE), CameraRead.roi(unlinked, "p1", CaptureConfig.DEFAULT))
+    }
+
     @Test
     fun aTinyInteriorIsUnsafe() {
         val result = Page.detect(Page.line("zz zz"))

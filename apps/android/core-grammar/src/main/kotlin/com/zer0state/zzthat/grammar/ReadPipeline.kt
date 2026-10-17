@@ -10,6 +10,11 @@ data class NormRect(val x: Double, val y: Double, val width: Double, val height:
     val maxY get() = y + height
     val midY get() = y + height / 2
 
+    /** Finite, with area, and inside the image: normalized coordinates are in [0,1], within rounding. */
+    val isValidEvidence: Boolean
+        get() = listOf(x, y, width, height).all { it.isFinite() } && width > 0 && height > 0 &&
+            x >= 0 && y >= 0 && maxX <= 1 + ROUNDING && maxY <= 1 + ROUNDING
+
     fun union(other: NormRect): NormRect {
         val left = minOf(minX, other.minX)
         val top = minOf(minY, other.minY)
@@ -18,6 +23,9 @@ data class NormRect(val x: Double, val y: Double, val width: Double, val height:
 
     companion object {
         val ZERO = NormRect(0.0, 0.0, 0.0, 0.0)
+
+        /** A box that ends on the image edge can sum to just over 1 in floating point. */
+        private const val ROUNDING = 1e-9
     }
 }
 

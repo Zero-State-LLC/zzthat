@@ -316,7 +316,7 @@ fun WriteCheckScreen(
         RoleText(stringResource(R.string.writecheck_on_device), TextRole.SECONDARY)
         state.photo?.let { photo ->
             PhotoBoxes(photo, state.rows.map { it.box })
-            if (state.verdict == null && state.rows.size > 1) CandidateList(state.rows, onSelect)
+            if (state.verdict == null && state.rows.size > 1) CandidateList(state.rows, onSelect, photo)
         }
         when (state.verdict) {
             WriteCheckModel.Verdict.MATCH -> Message(R.string.writecheck_match)

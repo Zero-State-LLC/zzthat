@@ -227,6 +227,12 @@ object MarkerPairing {
 
     fun pair(detected: List<MarkerObservation>, image: PixelSize, config: CaptureConfig): Output {
         if (!config.isValid) return failClosed(detected, ReasonCodes.INVALID_CONFIGURATION)
+        // Every observation must be a box with area inside the image, under its own id.
+        if (image.width <= 0 || image.height <= 0 || detected.any { !it.box.isValidEvidence } ||
+            detected.map { it.detectionId }.toSet().size != detected.size
+        ) {
+            return failClosed(detected, ReasonCodes.INVALID_EVIDENCE)
+        }
         if (detected.size > config.maxMarkers) return failClosed(detected, ReasonCodes.MARKER_LIMIT_EXCEEDED)
         if (detected.isEmpty()) return Output(detected, emptyList(), emptyList(), emptyMap(), listOf(ReasonCodes.NO_FIDUCIAL), failedClosed = false)
         // V1 does not rectify: skew past the limit, or no angle evidence, is unsupported geometry.
@@ -313,9 +319,12 @@ object InteriorRoi {
 
     fun derive(result: RecognitionResult, pairId: String, config: CaptureConfig): Outcome {
         if (!config.isValid) return Outcome.Unsafe(ReasonCodes.INVALID_CONFIGURATION)
-        val pair = result.pair(pairId) ?: return Outcome.Unsafe(ReasonCodes.UNSAFE_ROI)
-        val open = result.marker(pair.openingDetectionId) ?: return Outcome.Unsafe(ReasonCodes.UNSAFE_ROI)
-        val close = result.marker(pair.closingDetectionId) ?: return Outcome.Unsafe(ReasonCodes.UNSAFE_ROI)
+        // The pair is eligible only when both ids name exact detections on
+        // the pair's own baseline (ZZ-OCR-QUAL-001 Recognition stage).
+        val pair = result.pair(pairId) ?: return Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE)
+        val open = result.marker(pair.openingDetectionId) ?: return Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE)
+        val close = result.marker(pair.closingDetectionId) ?: return Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE)
+        if (open.baselineId != pair.baselineId || close.baselineId != pair.baselineId) return Outcome.Unsafe(ReasonCodes.INVALID_EVIDENCE)
         val w = result.image.width.toDouble()
         val h = result.image.height.toDouble()
         val markerHeight = maxOf(open.box.height, close.box.height) * h
