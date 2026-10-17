@@ -6,6 +6,7 @@ import com.zer0state.zzthat.account.signIn
 import com.zer0state.zzthat.app.BuildKind
 import com.zer0state.zzthat.auth.ProviderToken
 import com.zer0state.zzthat.auth.SignInFlow
+import com.zer0state.zzthat.grammar.CaptureConfig
 import com.zer0state.zzthat.grammar.NormRect
 import com.zer0state.zzthat.grammar.ReadPipeline
 import com.zer0state.zzthat.grammar.ReadSource
@@ -79,13 +80,21 @@ class ReadFlowTest {
         assertEquals(ClarifyStep.CheckMismatch, ClarifyLogic.next(listOf("copper", "maple", "sky"), emptySet(), confirmed = true, pipeline))
     }
 
+    /** The spec 004 band table, as a platform with a PASS receipt runs it. */
     @Test
     fun bandsMapToActions() {
-        val pipeline = ReadPipeline(fixture7, fixture7)
-        fun action(text: String, confidence: Double = 0.95): CandidateAction? =
-            pipeline.read(listOf(RecognizedLine(text, confidence, NormRect(0.0, 0.0, 1.0, 0.1)))).candidates.firstOrNull()
+        val pipeline = ReadPipeline(fixture7, fixture7, CaptureConfig.DEFAULT.copy(confirmOnly = false))
+        fun action(text: String, confidence: Double = 0.95, on: ReadPipeline = pipeline): CandidateAction? =
+            on.read(listOf(RecognizedLine(text, confidence, NormRect(0.0, 0.0, 1.0, 0.1)))).candidates.firstOrNull()
                 ?.let { CandidateAction.of(it, ReadSource.CAMERA) }
         assertEquals(CandidateAction.Resolve("zz-copper-lantern-sky-zz"), action("zz-copper-lantern-sky-zz"))
+        // Confirm-only, the default until a PASS receipt (spec 004 FR-023): the same reading asks for a confirm with the full code.
+        assertEquals(
+            CandidateAction.Clarify(ClarifyInput(listOf("copper", "lantern", "sky"), com.zer0state.zzthat.grammar.CodeKind.PLAIN, ReadSource.CAMERA)),
+            action("zz-copper-lantern-sky-zz", on = ReadPipeline(fixture7, fixture7)),
+        )
+        // Typed input is unchanged by confirm-only.
+        assertEquals(CandidateAction.Resolve("zz-copper-lantern-sky-zz"), TypeModel().apply { text = "zz-copper-lantern-sky-zz" }.action(ReadPipeline(fixture7, fixture7)))
         assertEquals(CandidateAction.Message(R.string.scan_partial), action("label zz-copper-lantern"))
         assertEquals(CandidateAction.Message(R.string.scan_retry), action("zz-copper-lantern-sky-zz", 0.4))
         assertEquals(CandidateAction.Message(R.string.scan_wrong_length), action("zz-copper-lantern-zz"))

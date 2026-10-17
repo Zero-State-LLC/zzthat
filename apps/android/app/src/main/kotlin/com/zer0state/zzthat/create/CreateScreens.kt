@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.account.LinkRow
 import com.zer0state.zzthat.design.ZZFonts
-import com.zer0state.zzthat.grammar.ReadCandidate
 import com.zer0state.zzthat.scan.CandidateList
+import com.zer0state.zzthat.scan.ScanRow
 import com.zer0state.zzthat.scan.CaptureButtons
 import com.zer0state.zzthat.ui.ButtonKind
 import com.zer0state.zzthat.ui.ChipShape
@@ -291,7 +291,7 @@ fun CheckWordLabel(word: String) {
 data class WriteCheckScreenState(
     val canonical: String,
     val photo: ImageBitmap? = null,
-    val candidates: List<ReadCandidate> = emptyList(),
+    val rows: List<ScanRow> = emptyList(),
     val reading: Boolean = false,
     val verdict: WriteCheckModel.Verdict? = null,
     @StringRes val message: Int? = null,
@@ -309,14 +309,14 @@ fun WriteCheckScreen(
     state: WriteCheckScreenState,
     onTakePhoto: () -> Unit = {},
     onPickPhoto: () -> Unit = {},
-    onSelect: (ReadCandidate) -> Unit = {},
+    onSelect: (ScanRow) -> Unit = {},
 ) {
     ZZScreen(demo = state.demo, loading = state.reading) {
         CodeText(state.canonical)
         RoleText(stringResource(R.string.writecheck_on_device), TextRole.SECONDARY)
         state.photo?.let { photo ->
-            PhotoBoxes(photo, state.candidates)
-            if (state.verdict == null && state.candidates.size > 1) CandidateList(state.candidates, onSelect)
+            PhotoBoxes(photo, state.rows.map { it.box })
+            if (state.verdict == null && state.rows.size > 1) CandidateList(state.rows, onSelect)
         }
         when (state.verdict) {
             WriteCheckModel.Verdict.MATCH -> Message(R.string.writecheck_match)

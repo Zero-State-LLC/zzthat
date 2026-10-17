@@ -44,9 +44,7 @@ import com.zer0state.zzthat.create.WriteCheckModel
 import com.zer0state.zzthat.create.WriteCheckScreen
 import com.zer0state.zzthat.create.WriteCheckScreenState
 import com.zer0state.zzthat.grammar.NormRect
-import com.zer0state.zzthat.grammar.ReadCandidate
 import com.zer0state.zzthat.grammar.ReadPipeline
-import com.zer0state.zzthat.grammar.RecognizedLine
 import com.zer0state.zzthat.grammar.WordListLoader
 import com.zer0state.zzthat.report.ReportScreen
 import com.zer0state.zzthat.report.ReportState
@@ -59,6 +57,7 @@ import com.zer0state.zzthat.scan.ClarifyScreen
 import com.zer0state.zzthat.scan.ClarifyScreenState
 import com.zer0state.zzthat.scan.ClarifyStep
 import com.zer0state.zzthat.scan.DemoPhoto
+import com.zer0state.zzthat.scan.ScanRow
 import com.zer0state.zzthat.scan.ScanScreen
 import com.zer0state.zzthat.scan.ScanScreenState
 import com.zer0state.zzthat.scan.TypeScreen
@@ -147,11 +146,15 @@ class SnapshotTest {
     private val twoCodes by lazy { DemoPhoto.make(context, listOf("zz-river-falcon-sky-zz", "zz-b2-4-zz")) }
     private val noCode by lazy { DemoPhoto.make(context, listOf("the buzz word")) }
 
-    /** The pipeline as the Demo build runs it: the bundled lists, with the demo server's `wordlist_version` (fixture-7). */
-    private fun candidates(photo: DemoPhoto.Photo): List<ReadCandidate> {
+    /**
+     * The rows as the Demo build shows them: the bundled lists with the demo
+     * server's `wordlist_version` (fixture-7), the default capture
+     * configuration (confirm-only), and the runtime sequence over the lines a
+     * reader with glyph boxes returns for the fixture photo.
+     */
+    private fun rows(photo: DemoPhoto.Photo): List<ScanRow> {
         val lists = WordListLoader.load(File(requireNotNull(System.getProperty("zz.wordlists"))))
-        val lines = photo.lines.map { (text, box) -> RecognizedLine(text, 0.97, box) }
-        return ReadPipeline.of(lists, DemoApi.DISCOVERY.wordlistVersion).read(lines).candidates
+        return CaptureFixtures.rows(photo.lines, photo.image.size, ReadPipeline.of(lists, DemoApi.DISCOVERY.wordlistVersion))
     }
 
     private val demoRecord = DemoApi.RECORDS.getValue("zz-kathy-lost-cat-zz")
@@ -213,13 +216,13 @@ class SnapshotTest {
             Case("scan-empty", scanRoot) { scan(ScanScreenState(photo = noCode.bitmap.asImageBitmap(), message = R.string.scan_no_code, cameraAvailable = true)) },
             Case("scan-error", scanRoot) { scan(ScanScreenState(message = R.string.scan_camera_off, cameraAvailable = true)) },
             Case("scan-offline", scanRoot) {
-                scan(ScanScreenState(fixture.bitmap.asImageBitmap(), candidates(fixture), message = R.string.resolve_not_on_device, cameraAvailable = true))
+                scan(ScanScreenState(fixture.bitmap.asImageBitmap(), rows(fixture), message = R.string.resolve_not_on_device, cameraAvailable = true))
             },
-            Case("scan-demo", scanRoot) { scan(ScanScreenState(fixture.bitmap.asImageBitmap(), candidates(fixture), demo = true)) },
+            Case("scan-demo", scanRoot) { scan(ScanScreenState(fixture.bitmap.asImageBitmap(), rows(fixture), demo = true)) },
             Case("pick-offline", scanRoot) {
-                scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), candidates(twoCodes), message = R.string.resolve_not_on_device, cameraAvailable = true))
+                scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), rows(twoCodes), message = R.string.resolve_not_on_device, cameraAvailable = true))
             },
-            Case("pick-demo", scanRoot) { scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), candidates(twoCodes), demo = true)) },
+            Case("pick-demo", scanRoot) { scan(ScanScreenState(twoCodes.bitmap.asImageBitmap(), rows(twoCodes), demo = true)) },
             Case("clarify-error", clarify) { ClarifyScreen(ClarifyScreenState(listOf("copper", "maple", "sky"), ClarifyStep.CheckMismatch)) },
             Case("clarify-offline", clarify) { ClarifyScreen(ClarifyScreenState(listOf("b2", "smith", "1"), ClarifyStep.Confirm)) },
             Case("clarify-demo", clarify) {
@@ -319,17 +322,17 @@ class SnapshotTest {
             Case("writecheck-empty", writeCheck) { WriteCheckScreen(WriteCheckScreenState(DemoPhoto.CANONICAL, cameraAvailable = true)) },
             Case("writecheck-error", writeCheck) {
                 WriteCheckScreen(
-                    WriteCheckScreenState(demoMint.first, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MISMATCH, cameraAvailable = true),
+                    WriteCheckScreenState(demoMint.first, fixture.bitmap.asImageBitmap(), rows(fixture), verdict = WriteCheckModel.Verdict.MISMATCH, cameraAvailable = true),
                 )
             },
             Case("writecheck-offline", writeCheck) {
                 WriteCheckScreen(
-                    WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MATCH, cameraAvailable = true),
+                    WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), rows(fixture), verdict = WriteCheckModel.Verdict.MATCH, cameraAvailable = true),
                 )
             },
             Case("writecheck-demo", writeCheck) {
                 WriteCheckScreen(
-                    WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), candidates(fixture), verdict = WriteCheckModel.Verdict.MATCH, demo = true),
+                    WriteCheckScreenState(DemoPhoto.CANONICAL, fixture.bitmap.asImageBitmap(), rows(fixture), verdict = WriteCheckModel.Verdict.MATCH, demo = true),
                 )
             },
         ),
