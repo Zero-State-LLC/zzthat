@@ -61,10 +61,10 @@ class DemoFlowTest {
         .config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString("").orEmpty()
 
     /**
-     * The fixture photo, read on the device. One candidate in Accept opens at
-     * once; ML Kit's line confidence for it can sit just under 0.80, and then
-     * the person picks the one row and keeps the reading, the Pick and
-     * Clarify path of the same flow.
+     * The fixture photo, read on the device. Confirm-only is on until a PASS
+     * receipt exists (spec 004 FR-023), so the one row goes to Clarify and the
+     * person keeps the reading. With a receipt, one candidate in Accept opens
+     * at once, and this takes the other branch.
      */
     private fun openFixturePhoto() {
         tap("scan.take_photo")

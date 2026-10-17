@@ -34,7 +34,7 @@ class PipelineTest {
         val candidate = ReadPipeline(list, list).read(lines).candidates.single()
         assertEquals(listOf("copper", "lantern", "sky"), candidate.rows.map { it.token })
         assertEquals(listOf(0, 0, 1), candidate.rows.map { it.lineIndex })
-        assertEquals(0.7, Bands.candidateConfidence(candidate.rows)!!, 0.0)
+        assertEquals(0.7, Bands.candidateConfidence(candidate.rows).valueOrNull!!, 0.0)
         assertEquals(2, candidate.boxes.size)
     }
 
@@ -47,7 +47,7 @@ class PipelineTest {
         val result = ReadPipeline(null, null).read(lines)
         assertEquals(listOf("zz-river-falcon-sky-zz", "zz-b2-4-zz"), result.candidates.map { it.canonical })
         assertEquals(listOf(listOf(top), listOf(bottom)), result.candidates.map { it.boxes })
-        assertEquals(listOf(0.9, 0.6), result.candidates.map { Bands.candidateConfidence(it.rows) })
+        assertEquals(listOf(0.9, 0.6), result.candidates.map { Bands.candidateConfidence(it.rows).valueOrNull })
     }
 
     /** Word boxes from the reader narrow a candidate's box to its own words. */
@@ -70,8 +70,14 @@ class PipelineTest {
         val result = ReadPipeline(list, list).read(listOf(line))
         assertEquals(2, result.candidates.size)
         assertNull(result.autoOpen)
-        val single = ReadPipeline(list, list).read(listOf(RecognizedLine("zz-copper-lantern-sky-zz", 1.0, NormRect.ZERO)))
+        // The spec 004 band table, as a platform with a PASS receipt runs it.
+        val receipt = CaptureConfig.DEFAULT.copy(confirmOnly = false)
+        val single = ReadPipeline(list, list, receipt).read(listOf(RecognizedLine("zz-copper-lantern-sky-zz", 1.0, NormRect.ZERO)))
         assertEquals("zz-copper-lantern-sky-zz", single.autoOpen?.canonical)
+        // Confirm-only (spec 004 FR-023), the default until a PASS receipt: nothing opens without a confirm.
+        val confirmOnly = ReadPipeline(list, list).read(listOf(RecognizedLine("zz-copper-lantern-sky-zz", 1.0, NormRect.ZERO)))
+        assertNull(confirmOnly.autoOpen)
+        assertEquals(listOf(Band.CLARIFY), confirmOnly.candidates.map { it.band })
     }
 
     @Test

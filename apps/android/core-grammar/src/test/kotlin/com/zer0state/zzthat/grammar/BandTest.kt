@@ -2,12 +2,15 @@ package com.zer0state.zzthat.grammar
 
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -31,7 +34,11 @@ class SharedBandRowTest(@Suppress("unused") private val label: String, private v
             val item = it.jsonObject
             BandRow(item.string("token")!!, item["line"]!!.jsonPrimitive.int, item["confidence"]!!.jsonPrimitive.double)
         }
-        val band = Bands.band(ScanKind.Code(code), codeClass, check, rows, ReadSource.CAMERA)
+        // A row without `confirm_only` is the spec 004 band table; a
+        // `confirm_only: true` row (spec 004 FR-023) runs confirm-only mode.
+        val confirmOnly = row["confirm_only"]?.jsonPrimitive?.boolean ?: false
+        val config = CaptureConfig.DEFAULT.copy(confirmOnly = confirmOnly)
+        val band = Bands.band(ScanKind.Code(code), codeClass, check, rows, ReadSource.CAMERA, config = config)
         assertEquals(row.string("band"), band.wire)
     }
 
@@ -50,7 +57,10 @@ class SharedBandRowTest(@Suppress("unused") private val label: String, private v
 class BandTest {
     private val list = Vectors.fixture7
 
-    private fun camera(vararg lines: Pair<String, Double>, pipeline: ReadPipeline = ReadPipeline(list, list)): List<ReadCandidate> {
+    /** The spec 004 band table, as a platform with a PASS receipt runs it. Confirm-only has its own tests below. */
+    private val table = CaptureConfig.DEFAULT.copy(confirmOnly = false)
+
+    private fun camera(vararg lines: Pair<String, Double>, pipeline: ReadPipeline = ReadPipeline(list, list, table)): List<ReadCandidate> {
         val recognized = lines.mapIndexed { offset, (text, confidence) ->
             RecognizedLine(text, confidence, NormRect(0.1, 0.1 + offset * 0.2, 0.8, 0.1))
         }
@@ -135,7 +145,7 @@ class BandTest {
      */
     @Test
     fun cameraWithoutAMatchingListSkipsTheLocalCheck() {
-        val pipeline = ReadPipeline.of(listOf(list), serverVersion = "proto-v0")
+        val pipeline = ReadPipeline.of(listOf(list), serverVersion = "proto-v0", capture = table)
         val found = camera("zz-copper-maple-sky-zz" to 0.95, pipeline = pipeline)
         assertNull(found.first().check)
         assertEquals(CodeClass.Field, found.first().codeClass)
@@ -166,6 +176,57 @@ class BandTest {
         for (text in listOf("zz-copper-lantern-zz", "zz", "(zz)")) {
             assertEquals(text, Band.ABSTAIN, typedBand(text))
         }
+    }
+
+    /** spec 004 FR-023: each camera Accept row again in confirm-only mode is Clarify, with the full canonical code. */
+    @Test
+    fun confirmOnlyTurnsEveryCameraAcceptIntoClarify() {
+        val confirmOnly = ReadPipeline(list, list, CaptureConfig.DEFAULT.copy(confirmOnly = true))
+        val accepted = camera("zz-copper-lantern-sky-zz" to 0.95)
+        assertEquals(listOf(Band.ACCEPT), accepted.map { it.band })
+        val found = camera("zz-copper-lantern-sky-zz" to 0.95, pipeline = confirmOnly)
+        assertEquals(listOf(Band.CLARIFY), found.map { it.band })
+        assertEquals(listOf(true), found.map { it.confirmOnly })
+        assertEquals(listOf("zz-copper-lantern-sky-zz"), found.map { it.canonical })
+        assertEquals("every line at 0.80", listOf(Band.CLARIFY), camera("zz-copper-lantern-sky-zz" to 0.80, pipeline = confirmOnly).map { it.band })
+    }
+
+    /** FR-023: every other camera band, and every typed band, is unchanged. */
+    @Test
+    fun confirmOnlyLeavesTheOtherBandsAlone() {
+        val confirmOnly = ReadPipeline(list, list, CaptureConfig.DEFAULT.copy(confirmOnly = true))
+        val rows = listOf(
+            "zz-copper-lantern-sky-zz" to 0.6,
+            "zz-coper-lantern-sky-zz" to 0.95,
+            "label zz-copper-lantern" to 0.95,
+            "zz-copper-lantern-sky-zz" to 0.4,
+            "zz-#tag-zz" to 0.95,
+            "zz-copper-lantern-zz" to 0.95,
+            "zz" to 0.95,
+        )
+        for (row in rows) {
+            val expected = camera(row).map { it.band }
+            assertEquals(row.first, expected, camera(row, pipeline = confirmOnly).map { it.band })
+            assertTrue(camera(row, pipeline = confirmOnly).none { it.confirmOnly })
+        }
+        for (text in listOf("zz-copper-lantern-sky-zz", "zz-b2-smith-1-zz", "zz-copper-maple-sky-zz", "zz-copper-lantern-zz")) {
+            val typed = (confirmOnly.readTyped(text) as TypedRead.Read).candidate
+            assertEquals(text, typedBand(text), typed.band)
+            assertFalse(typed.confirmOnly)
+        }
+        assertEquals(Band.ACCEPT, (confirmOnly.readTyped("zz-copper-lantern-sky-zz") as TypedRead.Read).candidate.band)
+    }
+
+    /** decision-band-mapping precedence: a field code is Clarify before low confidence is Retry. */
+    @Test
+    fun aFieldCodeClarifiesBeforeLowConfidenceRetries() {
+        assertEquals(listOf(Band.CLARIFY), camera("zz-b2-smith-1-zz" to 0.3).map { it.band })
+    }
+
+    @Test
+    fun aCameraCodeWithoutConfidenceClarifies() {
+        val recognized = listOf(RecognizedLine("zz-copper-lantern-sky-zz", null, NormRect(0.1, 0.1, 0.8, 0.1)))
+        assertEquals(listOf(Band.CLARIFY), ReadPipeline(list, list, table).read(recognized).candidates.map { it.band })
     }
 
     @Test
