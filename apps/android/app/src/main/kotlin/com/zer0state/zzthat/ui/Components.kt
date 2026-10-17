@@ -56,6 +56,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
 import com.zer0state.zzthat.R
 import com.zer0state.zzthat.design.ZZFonts
 import com.zer0state.zzthat.grammar.NormRect
@@ -339,6 +341,27 @@ fun LimitedField(
         )
     }
 }
+
+/**
+ * One candidate's region of the photo, drawn from the photo in memory and
+ * [height] tall (zzThis spec 004 FR-013, FR-020: the person picks the box
+ * they mean). Nothing is cropped to a file. Decorative: the row's number
+ * and caption are what TalkBack reads.
+ */
+@Composable
+fun PhotoRegion(image: ImageBitmap, region: NormRect, height: Dp = MinTouch) {
+    val left = (region.minX.coerceIn(0.0, 1.0) * image.width).toInt()
+    val top = (region.minY.coerceIn(0.0, 1.0) * image.height).toInt()
+    val right = (region.maxX.coerceIn(0.0, 1.0) * image.width).toInt().coerceAtLeast(left + 1).coerceAtMost(image.width)
+    val bottom = (region.maxY.coerceIn(0.0, 1.0) * image.height).toInt().coerceAtLeast(top + 1).coerceAtMost(image.height)
+    val source = IntSize(right - left, bottom - top)
+    val width = minOf(height * (source.width.toFloat() / source.height), PhotoRegionMaxWidth)
+    Canvas(modifier = Modifier.size(width, height).clip(ChipShape)) {
+        drawImage(image, srcOffset = IntOffset(left, top), srcSize = source, dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+    }
+}
+
+private val PhotoRegionMaxWidth = 240.dp
 
 /**
  * The photo with a numbered box around each candidate (design/UX.md, Scan
