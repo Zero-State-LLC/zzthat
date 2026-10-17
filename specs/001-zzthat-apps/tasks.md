@@ -32,7 +32,7 @@ Done when: both apps launch in Demo with the three tabs, the pinned fonts, and t
 - [x] T024 iOS Apple Vision adapter, on device, behind `RecognitionResult`. Done in #86 (refs #77): `VisionRecognitionAdapter` in `ZZCore`; not qualification evidence.
 - [x] T025 Android ML Kit Text Recognition adapter, on device, behind `RecognitionResult`. Done in #85 (refs #77); not qualification evidence.
 - [ ] T026 Android PP-OCR mobile/ONNX prototype adapter for qualification only. Do not make it a shipping dependency until dependency/license/security review and ZZ-OCR-QUAL-001 promotion.
-- [ ] T027 Add the ZZ-OCR-QUAL-001 fixture/result format and harness. The private image corpus is not committed. Every engine uses the same corpus manifest and expected canonical outputs.
+- [ ] T027 Add the ZZ-OCR-QUAL-001 fixture/result format and harness. The private image corpus is not committed. Every engine uses the same corpus manifest and expected canonical outputs. iOS: `apps/ios/Tools/ZZQual` (`zz-qual quick` for photos with their codes, `zz-qual run` for the zzThis `adapter-results.json`), which also reads every complete pair independently (T023c). Android: not yet.
 - [ ] T028 Run qualification and report exact-code accuracy, part/word accuracy, CER, false-valid-decode rate, Accept/Clarify/Retry/Abstain distribution, wrapped/multi-code behavior, latency, and package/runtime footprint. False-valid-decode behavior is the primary safety metric.
 - [ ] T029 Record the Android promotion decision (ML Kit or PP-OCR) with engine/version pin and evidence. Apple Vision must also pass the same product-level qualification; if it does not, stop rather than weaken the decoder or bands.
 
