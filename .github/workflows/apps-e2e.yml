@@ -95,6 +95,17 @@ jobs:
           name: android-e2e-dev-api-log
           path: ${{ runner.temp }}/dev-api.log
           if-no-files-found: ignore
+      # On a failure, the test's own message, stack trace, and device logcat,
+      # which the Gradle log leaves out.
+      - name: Upload the test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-e2e-test-results
+          path: |
+            apps/android/app/build/outputs/androidTest-results/connected
+            apps/android/app/build/reports/androidTests/connected
+          if-no-files-found: ignore
 
   ios:
     if: ${{ (github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'run-e2e') && contains(github.event.pull_request.labels.*.name, 'ios-ci'))) && (github.event.action != 'labeled' || github.event.label.name == 'run-e2e' || github.event.label.name == 'ios-ci') }}
