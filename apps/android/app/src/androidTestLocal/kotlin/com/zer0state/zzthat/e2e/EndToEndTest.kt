@@ -2,6 +2,7 @@ package com.zer0state.zzthat.e2e
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -43,6 +44,22 @@ class EndToEndTest {
         rule.waitForIdle()
     }
 
+    /**
+     * The Terms step before the first create on this device (design/UX.md,
+     * Terms): confirm 18 or older and accept the Terms, when it shows. A fresh
+     * install always shows it, but a slow emulator can take a while to read
+     * the stored acceptance, so this waits as long as every other step.
+     */
+    private fun confirmTermsIfAsked() {
+        try {
+            rule.waitUntil(15_000) { exists("terms.age_confirm") }
+        } catch (error: ComposeTimeoutException) {
+            return
+        }
+        tap("terms.age_confirm")
+        tap("terms.accept")
+    }
+
     private fun back() {
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
@@ -73,6 +90,7 @@ class EndToEndTest {
         // Create a code titled E2E.
         rule.waitUntil(15_000) { exists("create.title") }
         rule.onNodeWithTag("create.title").performTextInput("E2E")
+        confirmTermsIfAsked()
         tap("create.submit")
         // Re-roll until reroll-cap: the button goes away.
         rule.waitUntil(15_000) { exists("minted.reroll") }

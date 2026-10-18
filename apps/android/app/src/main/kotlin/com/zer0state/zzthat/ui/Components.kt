@@ -41,8 +41,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -177,10 +179,12 @@ fun CodeText(canonical: String, checkWord: String? = null, size: TextUnit = ZZTy
     val checkStart = checkWord?.let { canonical.lastIndexOf("-$it-zz") }?.takeIf { it >= 0 }?.plus(1)
     // One piece per part, each with the hyphen after it, so a long code
     // wraps only after a hyphen and no part splits across lines
-    // (runtime.md, Accessibility). Copy and TalkBack get the code as one.
+    // (runtime.md, Accessibility). TalkBack gets the code as one label on
+    // the row itself, not a merge boundary, so a row that holds a code still
+    // reads as one item; the pieces carry no semantics of their own.
     val pieces = codePieces(canonical)
     SelectionContainer {
-        FlowRow(modifier = modifier.semantics(mergeDescendants = true) { contentDescription = canonical }) {
+        FlowRow(modifier = modifier.semantics { contentDescription = canonical }) {
             var offset = 0
             for (piece in pieces) {
                 val start = offset
@@ -191,11 +195,14 @@ fun CodeText(canonical: String, checkWord: String? = null, size: TextUnit = ZZTy
                         addStyle(SpanStyle(color = palette.accentInk), checkStart - start, checkStart - start + checkWord.length)
                     }
                 }
-                Text(text = text, style = style)
+                Text(text = text, style = style, modifier = Modifier.clearAndSetSemantics { testTag = CODE_PIECE_TAG })
             }
         }
     }
 }
+
+/** The test tag of one piece of a [CodeText]. */
+internal const val CODE_PIECE_TAG = "code.piece"
 
 /** A code split after each hyphen: `zz-copper-sky-zz` is `zz-`, `copper-`, `sky-`, `zz`. */
 internal fun codePieces(canonical: String): List<String> {
