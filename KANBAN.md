@@ -19,7 +19,7 @@ Now 4. Blocked 3. Backlog 9. Done 6.
 |---|---|
 | T028 ZZ-OCR-QUAL-001 receipt | No frozen corpus manifest, no private runner, and the upstream evaluate stage does not run the camera. A `zz-qual quick` row is not that receipt. |
 | Phone smoke of the rendered code | `ZZCoreTests` has no host app, so `xcodebuild test` on a paired iPhone cannot run. A Mac `swift test` is not a phone receipt. |
-| Merge of [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) | `main` requires `build`, `checks`, and `android`, plus one independent approval. Admins are not exempt. Head `3a06d5d` is behind `fc18531`. The Codex count-equality finding is unanswered by geometry. |
+| Merge of [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) | `main` requires `build`, `checks`, and `android`, plus one independent approval. Admins are not exempt. Head `926a53d` is rebased onto `fc18531`. The Codex count-equality finding is unanswered by geometry. |
 
 ## Synthetic bench, not a receipt
 
