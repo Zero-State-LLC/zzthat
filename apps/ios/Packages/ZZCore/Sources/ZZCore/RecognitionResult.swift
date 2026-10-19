@@ -78,6 +78,8 @@ public struct FiducialDetection: Sendable, Hashable, Encodable {
     /// payload-word confidence.
     public let score: Double?
     public let box: NormalizedBox
+    public let markerGlyph: MarkerGlyph
+    public let rawToken: String
 
     enum CodingKeys: String, CodingKey {
         case detectionId = "detection_id"
@@ -86,6 +88,20 @@ public struct FiducialDetection: Sendable, Hashable, Encodable {
         case pairId = "pair_id"
         case score
         case box
+        case markerGlyph = "marker_glyph"
+        case rawToken = "raw_token"
+    }
+
+    public init(detectionId: String, baselineId: String?, role: FiducialRole, pairId: String?, score: Double?,
+                box: NormalizedBox, markerGlyph: MarkerGlyph = .exact, rawToken: String = "zz") {
+        self.detectionId = detectionId
+        self.baselineId = baselineId
+        self.role = role
+        self.pairId = pairId
+        self.score = score
+        self.box = box
+        self.markerGlyph = markerGlyph
+        self.rawToken = rawToken
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -96,6 +112,8 @@ public struct FiducialDetection: Sendable, Hashable, Encodable {
         try container.encode(pairId, forKey: .pairId)
         try container.encodeIfPresent(score, forKey: .score)
         try container.encode(box, forKey: .box)
+        try container.encode(markerGlyph, forKey: .markerGlyph)
+        try container.encode(rawToken, forKey: .rawToken)
     }
 }
 
@@ -317,8 +335,9 @@ public struct RecognitionResult: Sendable, Hashable, Encodable {
 
 // MARK: Adapter input and output
 
-/// What a marker detector reports for one terminal zz mark, before pairing.
-/// Geometry only: the detector reports no payload text.
+/// What a marker detector reports for one terminal mark, before pairing.
+/// Geometry only: the detector reports no payload text. A tolerant glyph is
+/// camera evidence (FR-024). It is not written into the code.
 public struct MarkerObservation: Sendable, Hashable {
     /// Top left, top right, bottom right, bottom left of the mark, in
     /// reading direction, normalized over the upright image.
@@ -331,14 +350,19 @@ public struct MarkerObservation: Sendable, Hashable {
     public let inkBefore: Bool
     public let inkAfter: Bool
     public let score: Double?
+    public let glyph: MarkerGlyph
+    /// The case-folded token the engine read. Exact marks record `zz` or `(zz)`.
+    public let rawToken: String
 
     public init(quad: [NormalizedPoint], baselineAngleDegrees: Double, inkBefore: Bool, inkAfter: Bool,
-                score: Double? = nil) {
+                score: Double? = nil, glyph: MarkerGlyph = .exact, rawToken: String = "zz") {
         self.quad = quad
         self.baselineAngleDegrees = baselineAngleDegrees
         self.inkBefore = inkBefore
         self.inkAfter = inkAfter
         self.score = score
+        self.glyph = glyph
+        self.rawToken = rawToken
     }
 
     public var box: NormalizedBox? { NormalizedBox.bounding(quad) }
@@ -405,4 +429,12 @@ public protocol RecognitionAdapter: Sendable {
     func detectMarkers(in image: CaptureImage) async throws -> [MarkerObservation]
     /// Crop and rotate to the ROI, then read only that crop.
     func readPayload(in image: CaptureImage, roi: ROIGeometry) async throws -> [PayloadHypothesis]
+    /// The text already read on the line, strictly between the two marks that
+    /// bound this ROI. Nil when that span is not a one-box-per-character line.
+    /// The crop read stays primary. This is not a marker rewrite.
+    func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis?
+}
+
+extension RecognitionAdapter {
+    public func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis? { nil }
 }

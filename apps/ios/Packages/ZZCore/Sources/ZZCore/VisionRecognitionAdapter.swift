@@ -70,21 +70,35 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
             guard let top = observation.topCandidates(1).first else { continue }
             let scalars = Array(top.string.unicodeScalars).map(Scanner.rule1)
             let tokens = Scanner.tokenize(scalars).filter { !$0.isEmpty }
-            guard tokens.contains(where: \.isMarker) else { continue }
+            let hasMark = tokens.contains { token in
+                token.isMarker || MarkerConfusion.isTolerantWholeToken(Scanner.lowerText(scalars, token.start, token.end))
+            }
+            guard hasMark else { continue }
             let characters = Self.characterBoxes(for: observation, scalars: scalars, rectangles: rectangles)
             let angle = Self.angleDegrees(observation, characters: characters, width: width, height: height)
-            for (index, token) in tokens.enumerated() where token.isMarker {
-                // The zz of a zz@ opener is the mark; what follows the @ is payload.
-                let markEnd = token.isOpener ? token.coreStart + 2 : token.coreEnd
-                guard let quad = Self.quad(token.coreStart..<markEnd, scalars: scalars, characters: characters,
-                                           text: top) else {
-                    // A mark the engine cannot place could hide a competing
-                    // pair, so the whole frame fails closed.
+            for (index, token) in tokens.enumerated() {
+                let glyph: MarkerGlyph
+                let raw: String
+                let range: Range<Int>
+                if token.isMarker {
+                    glyph = .exact
+                    raw = token.isCircled ? "(zz)" : "zz"
+                    let markEnd = token.isOpener ? token.coreStart + 2 : token.coreEnd
+                    range = token.coreStart..<markEnd
+                } else {
+                    let whole = Scanner.lowerText(scalars, token.start, token.end)
+                    guard MarkerConfusion.isTolerantWholeToken(whole) else { continue }
+                    glyph = .tolerant
+                    raw = whole
+                    range = token.start..<token.end
+                }
+                guard let quad = Self.quad(range, scalars: scalars, characters: characters, text: top) else {
                     throw RecognitionFailure.unlocalizedMarker
                 }
                 markers.append(MarkerObservation(quad: quad, baselineAngleDegrees: angle,
                                                  inkBefore: index > 0,
-                                                 inkAfter: index < tokens.count - 1 || token.hasContentAfterAt))
+                                                 inkAfter: index < tokens.count - 1 || token.hasContentAfterAt,
+                                                 glyph: glyph, rawToken: raw))
             }
         }
         return markers
@@ -99,6 +113,67 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
         }
         // Vision gives one top reading per line, so one ROI gives one hypothesis.
         return lines.isEmpty ? [] : [PayloadHypothesis(lines: lines)]
+    }
+
+    /// The payload scalars strictly between the two `zz` marks that bound the
+    /// ROI. One box per non-space scalar is required. A letter-count match is
+    /// not this case, and a missing mark is not inferred.
+    static func payloadSpan(scalars: [Unicode.Scalar], centers: [CGPoint], roi: ROIGeometry) -> String? {
+        let nonSpace = scalars.indices.filter { scalars[$0] != " " }
+        guard centers.count == nonSpace.count, !centers.isEmpty else { return nil }
+        let tokens = Scanner.tokenize(scalars).filter(\.isMarker)
+        guard tokens.count >= 2 else { return nil }
+        let axis = CGPoint(x: cos(roi.angleRadians), y: sin(roi.angleRadians))
+        let normal = CGPoint(x: -axis.y, y: axis.x)
+        func project(_ point: CGPoint) -> Double { point.x * axis.x + point.y * axis.y }
+        func across(_ point: CGPoint) -> Double {
+            (point.x - roi.centerX) * normal.x + (point.y - roi.centerY) * normal.y
+        }
+        let roiStart = project(CGPoint(x: roi.centerX, y: roi.centerY)) - roi.width / 2
+        func center(_ token: Scanner.Token) -> CGPoint? {
+            let ordinals = (token.coreStart..<token.coreEnd).compactMap { nonSpace.firstIndex(of: $0) }
+            guard ordinals.count == token.coreEnd - token.coreStart else { return nil }
+            let points = ordinals.map { centers[$0] }
+            return CGPoint(x: points.map(\.x).reduce(0, +) / Double(points.count),
+                           y: points.map(\.y).reduce(0, +) / Double(points.count))
+        }
+        let placed = tokens.compactMap { token -> (Scanner.Token, Double)? in
+            guard let point = center(token), abs(across(point)) <= roi.height else { return nil }
+            return (token, project(point))
+        }
+        let roiEnd = roiStart + roi.width
+        guard let opening = placed.filter({ $0.1 < roiStart }).max(by: { $0.1 < $1.1 }),
+              let closing = placed.filter({ $0.1 > roiEnd }).min(by: { $0.1 < $1.1 }),
+              opening.0.coreEnd <= closing.0.coreStart else { return nil }
+        let span = Array(scalars[opening.0.coreEnd..<closing.0.coreStart])
+        guard span.contains(where: { $0 != " " && !Scanner.isHyphen($0) }) else { return nil }
+        return String(String.UnicodeScalarView(span))
+    }
+
+    static func lineSpanNow(_ image: CaptureImage, roi: ROIGeometry) throws -> PayloadHypothesis? {
+        let cgImage = try Self.cgImage(image)
+        let (observations, rectangles) = try Self.recognizeWithCharacters(cgImage)
+        let width = Double(image.pixelWidth), height = Double(image.pixelHeight)
+        for observation in observations {
+            guard let top = observation.topCandidates(1).first else { continue }
+            let scalars = Array(top.string.unicodeScalars).map(Scanner.rule1)
+            let nonSpace = scalars.indices.filter { scalars[$0] != " " }
+            let characters = Self.characterBoxes(for: observation, scalars: scalars, rectangles: rectangles)
+            guard let characters, let indexes = Self.boxedScalarIndexes(scalars, boxCount: characters.count),
+                  indexes == nonSpace else { continue }
+            let centers = indexes.map { ordinal -> CGPoint in
+                let box = characters[nonSpace.firstIndex(of: ordinal)!].boundingBox
+                return CGPoint(x: box.midX * width, y: (1 - box.midY) * height)
+            }
+            guard let text = Self.payloadSpan(scalars: scalars, centers: centers, roi: roi) else { continue }
+            return PayloadHypothesis(lines: [PayloadLine(text: text, confidence: Double(top.confidence),
+                                                          cropBox: CGRect(x: 0, y: 0, width: 1, height: 1))])
+        }
+        return nil
+    }
+
+    public func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis? {
+        try await Self.run { try Self.lineSpanNow(image, roi: roi) }
     }
 
     // MARK: Vision
