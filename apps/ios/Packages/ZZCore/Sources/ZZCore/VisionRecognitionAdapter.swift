@@ -70,21 +70,35 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
             guard let top = observation.topCandidates(1).first else { continue }
             let scalars = Array(top.string.unicodeScalars).map(Scanner.rule1)
             let tokens = Scanner.tokenize(scalars).filter { !$0.isEmpty }
-            guard tokens.contains(where: \.isMarker) else { continue }
+            let hasMark = tokens.contains { token in
+                token.isMarker || MarkerConfusion.isTolerantWholeToken(Scanner.lowerText(scalars, token.start, token.end))
+            }
+            guard hasMark else { continue }
             let characters = Self.characterBoxes(for: observation, scalars: scalars, rectangles: rectangles)
             let angle = Self.angleDegrees(observation, characters: characters, width: width, height: height)
-            for (index, token) in tokens.enumerated() where token.isMarker {
-                // The zz of a zz@ opener is the mark; what follows the @ is payload.
-                let markEnd = token.isOpener ? token.coreStart + 2 : token.coreEnd
-                guard let quad = Self.quad(token.coreStart..<markEnd, scalars: scalars, characters: characters,
-                                           text: top) else {
-                    // A mark the engine cannot place could hide a competing
-                    // pair, so the whole frame fails closed.
+            for (index, token) in tokens.enumerated() {
+                let glyph: MarkerGlyph
+                let raw: String
+                let range: Range<Int>
+                if token.isMarker {
+                    glyph = .exact
+                    raw = token.isCircled ? "(zz)" : "zz"
+                    let markEnd = token.isOpener ? token.coreStart + 2 : token.coreEnd
+                    range = token.coreStart..<markEnd
+                } else {
+                    let whole = Scanner.lowerText(scalars, token.start, token.end)
+                    guard MarkerConfusion.isTolerantWholeToken(whole) else { continue }
+                    glyph = .tolerant
+                    raw = whole
+                    range = token.start..<token.end
+                }
+                guard let quad = Self.quad(range, scalars: scalars, characters: characters, text: top) else {
                     throw RecognitionFailure.unlocalizedMarker
                 }
                 markers.append(MarkerObservation(quad: quad, baselineAngleDegrees: angle,
                                                  inkBefore: index > 0,
-                                                 inkAfter: index < tokens.count - 1 || token.hasContentAfterAt))
+                                                 inkAfter: index < tokens.count - 1 || token.hasContentAfterAt,
+                                                 glyph: glyph, rawToken: raw))
             }
         }
         return markers

@@ -120,7 +120,8 @@ public enum MarkerPairing {
             let order = marks.indices.sorted { readingOrderLess(marks[$0].center, marks[$1].center) }
             let fiducials = order.enumerated().map { index, mark in
                 FiducialDetection(detectionId: "\(imageId).f\(index + 1)", baselineId: nil, role: .unknown,
-                                  pairId: nil, score: marks[mark].observation.score, box: marks[mark].box)
+                                  pairId: nil, score: marks[mark].observation.score, box: marks[mark].box,
+                                  markerGlyph: marks[mark].observation.glyph, rawToken: marks[mark].observation.rawToken)
             }
             return failed(.markerLimitExceeded, fiducials)
         }
@@ -151,6 +152,7 @@ public enum MarkerPairing {
             groups.append(members.sorted { dot(marks[$0].center, direction) < dot(marks[$1].center, direction) })
         }
         groups.sort { readingOrderLess(marks[$0[0]].center, marks[$1[0]].center) }
+        groups = groups.map { kept($0, marks: marks) }.filter { !$0.isEmpty }
 
         // Image-scoped ids in reading order.
         var detectionId: [Int: String] = [:]
@@ -182,7 +184,8 @@ public enum MarkerPairing {
         if pairs.count > maxPairs {
             let fiducials = groups.flatMap { $0 }.map { mark in
                 FiducialDetection(detectionId: detectionId[mark]!, baselineId: baselineId[mark], role: .unknown,
-                                  pairId: nil, score: marks[mark].observation.score, box: marks[mark].box)
+                                  pairId: nil, score: marks[mark].observation.score, box: marks[mark].box,
+                                  markerGlyph: marks[mark].observation.glyph, rawToken: marks[mark].observation.rawToken)
             }
             return failed(.pairLimitExceeded, fiducials)
         }
@@ -216,7 +219,8 @@ public enum MarkerPairing {
                 note(code)
                 fiducials.append(FiducialDetection(detectionId: detectionId[mark]!, baselineId: baselineId[mark],
                                                    role: role, pairId: nil, score: observation.score,
-                                                   box: marks[mark].box))
+                                                   box: marks[mark].box, markerGlyph: observation.glyph,
+                                                   rawToken: observation.rawToken))
                 candidates.append(VisualCandidate(id: "\(imageId).c\(candidates.count + 1)", kind: kind,
                                                   detectionIds: [detectionId[mark]!], boxes: [marks[mark].box],
                                                   roi: nil, geometry: nil, reasonCode: code.rawValue))
@@ -227,7 +231,9 @@ public enum MarkerPairing {
                 let role: FiducialRole = mine.count == 1 ? (mine[0].opening == mark ? .opening : .closing) : .unknown
                 fiducials.append(FiducialDetection(detectionId: detectionId[mark]!, baselineId: baselineId[mark],
                                                    role: role, pairId: mine.count == 1 ? mine[0].id : nil,
-                                                   score: marks[mark].observation.score, box: marks[mark].box))
+                                                   score: marks[mark].observation.score, box: marks[mark].box,
+                                                   markerGlyph: marks[mark].observation.glyph,
+                                                   rawToken: marks[mark].observation.rawToken))
             }
             for pair in pairs where pair.baseline == baselineId[group[0]] {
                 let opening = marks[pair.opening], closing = marks[pair.closing]
@@ -308,6 +314,17 @@ public enum MarkerPairing {
             $0.x >= -0.5 && $0.y >= -0.5 && $0.x <= Double(imageWidth) + 0.5 && $0.y <= Double(imageHeight) + 0.5
         }
         return inside ? .success(roi) : .failure(.unsafeROI)
+    }
+
+    /// Exact markers first. A tolerant token is a fiducial only at an outer
+    /// end, and only when this baseline has no exact pair candidate.
+    static func kept(_ group: [Int], marks: [Mark]) -> [Int] {
+        let exacts = group.filter { marks[$0].observation.glyph == .exact }
+        if exacts.count >= 2 { return exacts }
+        guard let first = group.first, let last = group.last else { return group }
+        return group.filter { index in
+            marks[index].observation.glyph == .exact || index == first || index == last
+        }
     }
 
     /// Top to bottom, then left to right; centers within a few pixels share a row.

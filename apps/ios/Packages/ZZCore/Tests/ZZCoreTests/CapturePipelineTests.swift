@@ -477,7 +477,7 @@ struct CapturePipelineTests {
         let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         #expect(Set(object.keys) == ["runtime_outcome", "fiducials", "rois", "candidates", "reason_codes"])
         let fiducial = try #require((object["fiducials"] as? [[String: Any]])?.first)
-        #expect(Set(fiducial.keys) == ["detection_id", "baseline_id", "role", "pair_id", "box"])
+        #expect(Set(fiducial.keys) == ["detection_id", "baseline_id", "role", "pair_id", "box", "marker_glyph", "raw_token"])
         let roi = try #require((object["rois"] as? [[String: Any]])?.first)
         #expect(Set(roi.keys) == ["pair_id", "opening_detection_id", "closing_detection_id", "baseline_id", "polygon",
                                   "orientation_degrees", "rectification_transform", "rectification_succeeded"])
@@ -548,16 +548,21 @@ struct CapturePipelineTests {
         #expect(adapter.lineSpanReads == 0)
     }
 
-    /// A crop that fails the check yields to the line span only when that span passes.
+    /// A failed crop keeps its own hypothesis. A check-passing line span is
+    /// the second hypothesis and goes to Clarify. It does not replace the crop.
     @Test func aFailedCropUsesACheckPassingLineSpan() async throws {
         let adapter = FixtureAdapter(markers: Self.pair, hypotheses: [
             PayloadHypothesis(lines: [FixtureAdapter.line("coper lantern sky", 0.99)]),
         ])
         adapter.lineSpanHypothesis = PayloadHypothesis(lines: [FixtureAdapter.line("copper lantern sky", 0.99)])
         let (_, outcome) = try await read(adapter)
-        let decoded = try #require(outcome?.decoded.first)
-        #expect(decoded.canonical == "zz-copper-lantern-sky-zz")
-        #expect(decoded.check == .ok)
+        let decoded = try #require(outcome?.decoded)
+        #expect(decoded.count == 2)
+        #expect(decoded[0].canonical != "zz-copper-lantern-sky-zz")
+        #expect(decoded[1].canonical == "zz-copper-lantern-sky-zz")
+        #expect(decoded[1].check == .ok)
+        #expect(decoded[1].band == .clarify)
+        #expect(decoded[1].reason == "multiple-hypotheses")
         #expect(adapter.lineSpanReads == 1)
     }
 

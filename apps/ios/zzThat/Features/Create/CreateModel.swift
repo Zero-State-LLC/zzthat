@@ -266,7 +266,9 @@ final class WriteCheckModel {
 
     /// The person picked the candidate their photo shows (spec 004 FR-017).
     func pick(_ candidate: ReadCandidate) {
-        verdict = candidate.canonical == canonical ? .match : .mismatch
+        let checked = CreationCheck.verdict(read: candidate.canonical, minted: canonical,
+                                            tolerantPair: candidate.tolerantPair)
+        verdict = checked == .match ? .match : .mismatch
         message = nil
     }
 

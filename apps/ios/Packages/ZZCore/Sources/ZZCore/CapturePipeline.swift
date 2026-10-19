@@ -114,12 +114,18 @@ public struct CapturePipeline: Sendable {
             }
             let crop = finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: hypotheses)
             // A word-check pass stays. So does a field, handle, or name the crop
-            // actually parsed. A near-word or a failed word check may yield to
-            // the line span, and only when that span itself passes.
+            // actually parsed. The line span is a second hypothesis, never a
+            // replacement, and only when the crop produced a candidate.
             if crop.decoded.contains(where: Self.cropShouldStand) { return crop }
-            guard let span = try? await adapter.lineSpan(in: image, roi: geometry) else { return crop }
-            let fallback = finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: [span])
-            return fallback.decoded.contains(where: { $0.check == .ok }) ? fallback : crop
+            guard !hypotheses.isEmpty, let span = try? await adapter.lineSpan(in: image, roi: geometry) else {
+                return crop
+            }
+            let combined = finish(session.result, pairId: pairId, roi: roi, geometry: geometry,
+                                  hypotheses: hypotheses + [span])
+            guard combined.decoded.count == crop.decoded.count + 1, combined.decoded.last?.check == .ok else {
+                return crop
+            }
+            return combined
         }
     }
 
@@ -270,7 +276,15 @@ extension ReadPipeline {
             let evidence = BandEvidence(source: .camera, kind: kind, hypothesisCount: count, codeClass: codeClass,
                                         check: check, confidence: confidence)
             let base = Bands.decide(evidence, configuration: configuration)
-            let final = Bands.applyConfirmOnly(base, source: .camera, configuration: configuration)
+            var final = Bands.applyConfirmOnly(base, source: .camera, configuration: configuration)
+            let roi = result.rois.first { $0.pairId == text.pairId }
+            let ends = result.fiducials.filter {
+                $0.detectionId == roi?.openingDetectionId || $0.detectionId == roi?.closingDetectionId
+            }
+            let tolerant = ends.contains { $0.markerGlyph == .tolerant }
+            if tolerant && final.band == .accept {
+                final = BandDecision(.clarify, "tolerant-marker")
+            }
             let rows: [BandRow] = text.lines.enumerated().flatMap { lineIndex, line -> [BandRow] in
                 guard let score = line.confidence else { return [] }
                 return Scalars.split(Scalars.of(line.text), where: Scalars.isSeparator).map {
@@ -284,6 +298,7 @@ extension ReadPipeline {
             candidate.reason = final.reason
             candidate.pairId = text.pairId
             candidate.textCandidateId = text.candidateId
+            candidate.tolerantPair = tolerant
             return candidate
         }
     }
