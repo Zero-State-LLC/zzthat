@@ -15,15 +15,15 @@ RecognitionResult
     role: opening | closing
     region
     detection_score: optional
-    marker_glyph: exact | tolerant, with the raw token (zzThis spec 004 FR-024; PENDING P-1)
+    marker_glyph (PIN-GATED, zzThis #189): exact | tolerant, with the raw token (zzThis spec 004 FR-024; PENDING P-1)
   roi / orientation / normalization_transform (crop, rotation angle, scale factor): optional
   candidates: ordered payload list
     raw_text: string
     confidence: optional engine-native meaningful score
     regions / line_provenance: optional
-    engine_rank: integer >= 1 (engine order, immutable)
-    line_id: optional
-  request: max_hypotheses, engine_id, engine_version
+    engine_rank (PIN-GATED, zzThis #189): integer >= 1 (engine order, immutable)
+    line_id (PIN-GATED): optional
+  request (PIN-GATED): max_hypotheses, engine_id, engine_version
   capture_quality: optional
 ```
 
@@ -36,7 +36,7 @@ Vendor SDK objects stop at the adapter. `ZZCore` and `:core-grammar` consume nor
 | iOS | Apple Vision accurate text recognition | Baseline, but release eligibility still requires upstream qualification PASS |
 | Android | Bundled ML Kit Latin text recognition | Qualification candidate |
 | Android | PP-OCR mobile/ONNX prototype | Qualification candidate; cannot become shipping dependency before license/security/package review |
-| Either | cloud OCR or VLM | Not reachable in V1. A future VLM is a v2 tiebreaker among decoder offers only, capped at Clarify; an online VLM is opt-in and off by default (zzThis spec 004 Q18, D-2026-10-19-04) |
+| Either | cloud OCR or VLM | Not reachable in V1. **[PIN-GATED: zzThis #189]** A future VLM is a v2 tiebreaker among decoder offers only, capped at Clarify; an online VLM is opt-in and off by default (zzThis spec 004 Q18, D-2026-10-19-04) |
 | Either | custom zz model | v2 only |
 
 ## Fiducial-first camera contract
