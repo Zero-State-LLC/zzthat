@@ -15,11 +15,15 @@ RecognitionResult
     role: opening | closing
     region
     detection_score: optional
-  roi / orientation / rectification_transform: optional
+    marker_glyph: exact | tolerant, with the raw token (zzThis spec 004 FR-024; PENDING P-1)
+  roi / orientation / normalization_transform (crop, rotation angle, scale factor): optional
   candidates: ordered payload list
     raw_text: string
     confidence: optional engine-native meaningful score
     regions / line_provenance: optional
+    engine_rank: integer >= 1 (engine order, immutable)
+    line_id: optional
+  request: max_hypotheses, engine_id, engine_version
   capture_quality: optional
 ```
 
@@ -32,12 +36,12 @@ Vendor SDK objects stop at the adapter. `ZZCore` and `:core-grammar` consume nor
 | iOS | Apple Vision accurate text recognition | Baseline, but release eligibility still requires upstream qualification PASS |
 | Android | Bundled ML Kit Latin text recognition | Qualification candidate |
 | Android | PP-OCR mobile/ONNX prototype | Qualification candidate; cannot become shipping dependency before license/security/package review |
-| Either | cloud OCR or VLM | Not reachable in v1 |
+| Either | cloud OCR or VLM | Not reachable in V1. A future VLM is a v2 tiebreaker among decoder offers only, capped at Clarify; an online VLM is opt-in and off by default (zzThis spec 004 Q18, D-2026-10-19-04) |
 | Either | custom zz model | v2 only |
 
 ## Fiducial-first camera contract
 
-For camera input, terminal `zz` marks are structural index/fiducial marks as well as literal grammar markers. The app first detects and pairs endpoint regions, uses the pair to localize/orient the code ROI, optionally rectifies that ROI, then recognizes the interior payload. It reconstructs normalized evidence with literal boundary markers before shared grammar runs. Endpoint confidence is not payload-word confidence.
+For camera input, terminal `zz` marks are structural index/fiducial marks as well as literal grammar markers. The app first detects and pairs endpoint regions, uses the pair to localize/orient the code ROI, normalizes that ROI by crop, rotation, and scaling only, then recognizes the interior payload. It reconstructs normalized evidence with literal boundary markers before shared grammar runs. Endpoint confidence is not payload-word confidence.
 
 One/missing/cut endpoint cannot be inferred. Ambiguous pairs remain multiple candidates. Pair selection cannot consult resolver existence, live-code data, or payload wordlist proximity. Typed input bypasses visual fiducial detection and continues to use literal grammar markers.
 
