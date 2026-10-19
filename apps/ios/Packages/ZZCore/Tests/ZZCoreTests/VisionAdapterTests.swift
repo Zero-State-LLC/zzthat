@@ -265,6 +265,21 @@ struct VisionAdapterTests {
         #expect(session.result.fiducials[1].pairId == nil)
     }
 
+    /// A hyphen is a separator. Vision often returns no box for one. Eighteen
+    /// boxes on `ZZ-RIVER-FALCON-SKY-ZZ` (22 non-space scalars, 18 letters)
+    /// line up with the letters. Seventeen matches neither count and stays
+    /// unaligned, so the frame still fails closed.
+    @Test func aHyphenatedLinePlacesMarksWhenHyphensHaveNoBoxes() {
+        let scalars = Array("ZZ-RIVER-FALCON-SKY-ZZ".unicodeScalars)
+        let letters = VisionRecognitionAdapter.boxedScalarIndexes(scalars, boxCount: 18)
+        #expect(letters?.count == 18)
+        #expect(letters?.prefix(2) == [0, 1])
+        let closing = scalars.index(scalars.endIndex, offsetBy: -2)
+        #expect(Array(letters?.suffix(2) ?? []) == [closing, scalars.index(before: scalars.endIndex)])
+        #expect(VisionRecognitionAdapter.boxedScalarIndexes(scalars, boxCount: 22)?.count == 22)
+        #expect(VisionRecognitionAdapter.boxedScalarIndexes(scalars, boxCount: 17) == nil)
+    }
+
     @Test func anUnreadablePhotoFailsTheFrameClosed() async throws {
         let pipeline = try Self.pipeline(VisionRecognitionAdapter())
         let session = await pipeline.detect(imageData: Data("not an image".utf8))
