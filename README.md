@@ -49,6 +49,7 @@ zzThat is in **implementation and verification**. Native iOS and Android source,
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
 - Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. End-to-end orchestration is in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A passing CI run, or a workflow's presence, does not by itself qualify a release.
 - The qualification harness is in the repo (`zz-qual`, `scripts/qual-android.sh`, T027, [#94](https://github.com/Zero-State-LLC/zzthat/pull/94)). A rendered `zz-copper-lantern-sky-zz` is a smoke, not a handwriting result. A truth-file quick run is not the ZZ-OCR-QUAL-001 receipt.
+- A synthetic font bench on a flat white field is recorded in [docs/xtech-emulated/summary.md](docs/xtech-emulated/summary.md). It is not handwriting and not a qualification receipt.
 
 ## Design tokens
 
@@ -67,6 +68,7 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9, then Phases 10 to 13 (whole-system check, store readiness, v1.1) |
 | [`KANBAN.md`](KANBAN.md) | Readable board. It does not move the GitHub project cards. |
+| [`docs/xtech-emulated/summary.md`](docs/xtech-emulated/summary.md) | Synthetic font bench and check-word simulation. Not a qualification receipt. |
 | [`apps/ios`](apps/ios) | SwiftUI app, and the `ZZCore`, `ZZAPI`, and `ZZDesign` packages |
 | [`apps/android`](apps/android) | Jetpack Compose app, and the `core-*` modules |
 | [`apps/store`](apps/store) | Store listing, privacy, and review drafts (Danny submits) |
@@ -134,7 +136,7 @@ Work is tracked as GitHub issues, on the [zzThat board](https://github.com/orgs/
 - [x] Native SwiftUI and Compose app source and platform OCR readers ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22), [#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
 - [x] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
 - [x] Commit-bound app CI is in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml) and [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). iOS CI is label or manual gated.
-- [ ] Device qualification and the ZZ-OCR-QUAL-001 receipt ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26)). A rendered smoke and a truth-file quick run are not that receipt.
+- [ ] Device qualification and the ZZ-OCR-QUAL-001 receipt ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26)). A rendered smoke, a truth-file quick run, and the synthetic font bench are not that receipt.
 - [ ] Staging end-to-end verification with canonical-code-only resolve; no production promotion until evidence is accepted
 
 ### Phase 2: Remaining everyday flows and release gates
