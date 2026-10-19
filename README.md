@@ -153,4 +153,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Run `python3 scripts/lint-specs.py` befo
 
 ## License
 
-No license file is in this repository yet. zzThis is proprietary, all rights reserved. Whether this repo uses that same text is Danny's decision. Do not assume a grant of rights from this README.
+Proprietary, all rights reserved. See [`LICENSE`](LICENSE). No use, copying, modification, or distribution is permitted without prior written permission.
