@@ -11,8 +11,10 @@ final class FixtureAdapter: RecognitionAdapter, @unchecked Sendable {
     let hypotheses: [PayloadHypothesis]
     var failPrepare = false
     var failPayload = false
+    var lineSpanHypothesis: PayloadHypothesis?
     private let lock = NSLock()
     private var reads: [ROIGeometry] = []
+    private var spanReads = 0
 
     static let width = 1000
     static let height = 500
@@ -25,6 +27,7 @@ final class FixtureAdapter: RecognitionAdapter, @unchecked Sendable {
     let engineId = "fixture"
     let engineVersion = "0"
     var payloadReads: [ROIGeometry] { lock.withLock { reads } }
+    var lineSpanReads: Int { lock.withLock { spanReads } }
 
     func prepare(imageData: Data) async throws -> CaptureImage {
         if failPrepare { throw RecognitionFailure.unavailable }
@@ -37,6 +40,11 @@ final class FixtureAdapter: RecognitionAdapter, @unchecked Sendable {
         lock.withLock { reads.append(roi) }
         if failPayload { throw RecognitionFailure.failed }
         return hypotheses
+    }
+
+    func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis? {
+        lock.withLock { spanReads += 1 }
+        return lineSpanHypothesis
     }
 
     /// A mark centered at (x, y) pixels, `size` pixels tall and 1.2 times as
@@ -518,5 +526,50 @@ struct CapturePipelineTests {
         #expect(decoded.canonical == row.fields["canonical"] as? String)
         #expect(decoded.baseBand.rawValue == band)
         #expect(decoded.band == (band == "accept" ? .clarify : decoded.baseBand))
+    }
+
+    /// The crop read stays when it already passes the check. The line span is not consulted.
+    @Test func aPassingCropIsNotReplacedByTheLineSpan() async throws {
+        let adapter = FixtureAdapter(markers: Self.pair, hypotheses: Self.code())
+        adapter.lineSpanHypothesis = PayloadHypothesis(lines: [FixtureAdapter.line("river falcon maple", 0.99)])
+        let (_, outcome) = try await read(adapter)
+        #expect(outcome?.decoded.map(\.canonical) == ["zz-copper-lantern-sky-zz"])
+        #expect(adapter.lineSpanReads == 0)
+    }
+
+    /// A crop that parsed as a field code is not a failed word check. Do not replace it.
+    @Test func aParsedFieldCodeIsNotReplacedByTheLineSpan() async throws {
+        let adapter = FixtureAdapter(markers: Self.pair, hypotheses: [
+            PayloadHypothesis(lines: [FixtureAdapter.line("b2-4", 0.99)]),
+        ])
+        adapter.lineSpanHypothesis = PayloadHypothesis(lines: [FixtureAdapter.line("copper lantern sky", 0.99)])
+        let (_, outcome) = try await read(adapter)
+        #expect(outcome?.decoded.map(\.canonical) == ["zz-b2-4-zz"])
+        #expect(adapter.lineSpanReads == 0)
+    }
+
+    /// A crop that fails the check yields to the line span only when that span passes.
+    @Test func aFailedCropUsesACheckPassingLineSpan() async throws {
+        let adapter = FixtureAdapter(markers: Self.pair, hypotheses: [
+            PayloadHypothesis(lines: [FixtureAdapter.line("coper lantern sky", 0.99)]),
+        ])
+        adapter.lineSpanHypothesis = PayloadHypothesis(lines: [FixtureAdapter.line("copper lantern sky", 0.99)])
+        let (_, outcome) = try await read(adapter)
+        let decoded = try #require(outcome?.decoded.first)
+        #expect(decoded.canonical == "zz-copper-lantern-sky-zz")
+        #expect(decoded.check == .ok)
+        #expect(adapter.lineSpanReads == 1)
+    }
+
+    /// A line span that also fails the check does not replace the crop miss.
+    @Test func aFailedLineSpanLeavesTheCropMiss() async throws {
+        let adapter = FixtureAdapter(markers: Self.pair, hypotheses: [
+            PayloadHypothesis(lines: [FixtureAdapter.line("coper lantern sky", 0.99)]),
+        ])
+        adapter.lineSpanHypothesis = PayloadHypothesis(lines: [FixtureAdapter.line("ayslexia notalist word", 0.99)])
+        let (_, outcome) = try await read(adapter)
+        #expect(outcome?.decoded.first?.canonical != "zz-copper-lantern-sky-zz")
+        #expect(outcome?.decoded.first?.check != .ok)
+        #expect(adapter.lineSpanReads == 1)
     }
 }
