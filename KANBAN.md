@@ -1,6 +1,6 @@
 # zzThat board
 
-Readable copy of the work state on 2026-10-18. The live board is the [zzThat project](https://github.com/orgs/Zero-State-LLC/projects/25). This file does not move those cards. Counts below were checked against `gh issue list` on that date.
+Readable copy of the work state on 2026-10-18. Open issues were listed again the same evening: still 12 open, the same set. The live board is the [zzThat project](https://github.com/orgs/Zero-State-LLC/projects/25). This file does not move those cards.
 
 Now 4. Blocked 3. Backlog 9. Done 6.
 
@@ -19,7 +19,11 @@ Now 4. Blocked 3. Backlog 9. Done 6.
 |---|---|
 | T028 ZZ-OCR-QUAL-001 receipt | No frozen corpus manifest, no private runner, and the upstream evaluate stage does not run the camera. A `zz-qual quick` row is not that receipt. |
 | Phone smoke of the rendered code | `ZZCoreTests` has no host app, so `xcodebuild test` on a paired iPhone cannot run. A Mac `swift test` is not a phone receipt. |
-| Merge of [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) | `main` requires `build`, `checks`, and `android`, plus one independent approval. Admins are not exempt. The branch is one commit behind `631585d`. |
+| Merge of [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) | `main` requires `build`, `checks`, and `android`, plus one independent approval. Admins are not exempt. Head `3a06d5d` is behind `fc18531`. The Codex count-equality finding is unanswered by geometry. |
+
+## Synthetic bench, not a receipt
+
+Recorded in [docs/xtech-emulated/summary.md](docs/xtech-emulated/summary.md). Font renders on a flat white field, not handwriting. Apple Vision on this Mac, `zz-qual` from `21aeba8`: exact 30/720, wrong-link 0. ML Kit on emulator-5554: exact 0/720, wrong-link 0. Check-word simulation: wrong-link 0/9595. These numbers are not T028.
 
 ## Backlog
 
