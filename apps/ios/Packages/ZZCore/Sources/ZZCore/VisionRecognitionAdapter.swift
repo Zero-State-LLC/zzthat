@@ -123,9 +123,11 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
         return (text.results ?? [], rectangles.results ?? [])
     }
 
-    /// One character box per non-space character of the line, in reading
-    /// order, or nil when the detected characters do not line up one to one
-    /// with the recognized ones.
+    /// One character box per boxed scalar of the line, in reading order, or
+    /// nil when the detected characters do not line up. A hyphen is a
+    /// separator, not marker ink, and Vision often returns no box for one.
+    /// A count that matches neither the non-space scalars nor the letters
+    /// is unaligned, and the frame fails closed.
     static func characterBoxes(for line: VNRecognizedTextObservation, scalars: [Unicode.Scalar],
                                rectangles: [VNTextObservation]) -> [VNRectangleObservation]? {
         let lineBox = line.boundingBox
@@ -137,7 +139,19 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
         let sorted = boxes.sorted {
             ($0.boundingBox.midX * dx + $0.boundingBox.midY * dy) < ($1.boundingBox.midX * dx + $1.boundingBox.midY * dy)
         }
-        return sorted.count == scalars.filter({ $0 != " " }).count ? sorted : nil
+        return boxedScalarIndexes(scalars, boxCount: sorted.count) == nil ? nil : sorted
+    }
+
+    /// Scalar indexes that own a character box, in reading order. The first
+    /// match is one box per non-space scalar. The second is one box per
+    /// letter, which is the measured case of a hyphenated line whose hyphens
+    /// have no boxes. Any other count is unaligned.
+    static func boxedScalarIndexes(_ scalars: [Unicode.Scalar], boxCount: Int) -> [Int]? {
+        let nonSpace = scalars.indices.filter { scalars[$0] != " " }
+        if boxCount == nonSpace.count { return Array(nonSpace) }
+        let letters = nonSpace.filter { !Scanner.isHyphen(scalars[$0]) }
+        if boxCount == letters.count { return Array(letters) }
+        return nil
     }
 
     /// The mark's quad, top left first, normalized over the upright image
@@ -148,9 +162,9 @@ public struct VisionRecognitionAdapter: RecognitionAdapter {
             NormalizedPoint(x: min(max(Double(p.x), 0), 1), y: min(max(1 - Double(p.y), 0), 1))
         }
         if let characters {
-            // The ordinal of each character among the non-space ones.
-            let ordinals = range.map { offset in scalars[..<offset].filter { $0 != " " }.count }
-            guard let first = ordinals.first, let last = ordinals.last, last < characters.count else { return nil }
+            guard let indexes = Self.boxedScalarIndexes(scalars, boxCount: characters.count) else { return nil }
+            let ordinals = range.compactMap { indexes.firstIndex(of: $0) }
+            guard ordinals.count == range.count, let first = ordinals.first, let last = ordinals.last else { return nil }
             let a = characters[first], b = characters[last]
             return [a.topLeft, b.topRight, b.bottomRight, a.bottomLeft].map(point)
         }
