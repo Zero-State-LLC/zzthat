@@ -2,13 +2,12 @@
 
 Readable copy of the work state on 2026-10-18. Open issues were listed again the same evening: still 12 open, the same set. The live board is the [zzThat project](https://github.com/orgs/Zero-State-LLC/projects/25). This file does not move those cards.
 
-Now 4. Blocked 3. Backlog 9. Done 6.
+Now 3. Blocked 2. Backlog 9. Done 7.
 
 ## Now
 
 | Item | Residual |
 |---|---|
-| [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) hyphen-box placement | Open. Not merged. Places a `zz` Vision already read when hyphen boxes are missing. Does not rewrite `22` to `zz`. |
 | [#24](https://github.com/Zero-State-LLC/zzthat/issues/24) TG3 capture | Grammar and both adapters are built. The qualification receipt (T028) and the promotion decision (T029) are not. |
 | [#26](https://github.com/Zero-State-LLC/zzthat/issues/26) TG5 scan | Typed resolve is built. The camera handoff (T040) and a qualification receipt are not. |
 | [#48](https://github.com/Zero-State-LLC/zzthat/issues/48) Vision OCR on the macOS runner | Open bug. A green local `swift test` is not that runner. |
@@ -19,7 +18,6 @@ Now 4. Blocked 3. Backlog 9. Done 6.
 |---|---|
 | T028 ZZ-OCR-QUAL-001 receipt | No frozen corpus manifest, no private runner, and the upstream evaluate stage does not run the camera. A `zz-qual quick` row is not that receipt. |
 | Phone smoke of the rendered code | `ZZCoreTests` has no host app, so `xcodebuild test` on a paired iPhone cannot run. A Mac `swift test` is not a phone receipt. |
-| Merge of [#96](https://github.com/Zero-State-LLC/zzthat/pull/96) | `main` requires `build`, `checks`, and `android`, plus one independent approval. Admins are not exempt. Head `926a53d` is rebased onto `fc18531`. The Codex count-equality finding is unanswered by geometry. |
 
 ## Synthetic bench, not a receipt
 
@@ -47,6 +45,7 @@ Merged or closed completed. Not a release.
 
 | Item | Evidence |
 |---|---|
+| Hyphen-box alignment | [#96](https://github.com/Zero-State-LLC/zzthat/pull/96), merge `bb54882bf67c012cf470d7c365e82d0dec4ec0cd`. Places a `zz` Vision already read when hyphen boxes are missing. Does not rewrite `22` to `zz`. The synthetic bench was scored on `21aeba8`, before this merge. |
 | Qualification harness | [#94](https://github.com/Zero-State-LLC/zzthat/pull/94). `zz-qual` and `scripts/qual-android.sh`. Not a receipt. |
 | End-to-end at the pin | [#95](https://github.com/Zero-State-LLC/zzthat/pull/95), on `main` before the alert-snapshot merge. |
 | Alert snapshots | [#92](https://github.com/Zero-State-LLC/zzthat/pull/92), `main` at `631585d`. |
