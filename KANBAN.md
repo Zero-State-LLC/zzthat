@@ -4,6 +4,16 @@ Readable copy of the work state on 2026-10-18. Open issues were listed again the
 
 Now 3. Blocked 2. Backlog 9. Done 7.
 
+## Open, not merged
+
+These are not on `main`. Do not cite them as shipped.
+
+| PR | Head | State |
+|---|---|---|
+| [#102](https://github.com/Zero-State-LLC/zzthat/pull/102) | `d4b4cde1063b2d98633624498e5de8c8af801da5` | Review required. Line-span fallback. Not a qualification receipt. Not the 30/720 bench. |
+| [#103](https://github.com/Zero-State-LLC/zzthat/pull/103) | `dd9c65d0a8a3ffbb1e978fa59195e47526f6b16c` | Review required. Spec text waiting on zzThis #189. Prabu P-1 through P-7 are not adopted. |
+| [#100](https://github.com/Zero-State-LLC/zzthat/pull/100) | `2211671f928995263739b07360831acd469e5742` | Behind `main`. Font recommendation, not a decision. |
+
 ## Now
 
 | Item | Residual |
