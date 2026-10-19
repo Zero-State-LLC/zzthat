@@ -32,6 +32,7 @@ This repository holds the governing spec, repo tooling, and native iOS and Andro
 ## Contents
 
 - [Status](#status)
+- [Board](KANBAN.md)
 - [Design tokens](#design-tokens)
 - [Repository atlas](#repository-atlas)
 - [Architecture](#architecture)
@@ -41,12 +42,13 @@ This repository holds the governing spec, repo tooling, and native iOS and Andro
 
 ## Status
 
-zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. On-device text recognition uses Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: recognition qualification, device qualification evidence, measured capture behavior, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The central resolver and authoritative wordlist remain zzThis [ZZTHIS SPEC].
+zzThat is in **implementation and verification**. Native iOS and Android source, shared grammar code, generated API-client plumbing, tests, and app CI are present. On-device text recognition uses Apple Vision on iOS and ML Kit on Android, followed by the pinned grammar/check-word pipeline. The apps are **not release-qualified**: the ZZ-OCR-QUAL-001 receipt, device qualification evidence, staging end-to-end verification, and store readiness remain open. This repo does not claim an accuracy result. The central resolver and authoritative wordlist remain zzThis [ZZTHIS SPEC]. The readable board is [KANBAN.md](KANBAN.md).
 
 - iOS and Android ship together from this repo. The later web client is built in [zzthis](https://github.com/Zero-State-LLC/zzthis), which is also the central server [DANNY 2026-10-04]. The site that repo publishes today is the marketing page for zzThis ([ZQ1](https://github.com/Zero-State-LLC/zzthat/issues/1)). "Try zzThat" links to that page, `https://zero-state-llc.github.io/zzthis/` ([ZQ2](https://github.com/Zero-State-LLC/zzthat/issues/2)).
 - Everyday codes are free public codes. zzThis adopted that scope for v1.1 (D-2026-10-10-21), and Create in the apps mints them ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 - Questions [#1](https://github.com/Zero-State-LLC/zzthat/issues/1) to [#21](https://github.com/Zero-State-LLC/zzthat/issues/21) are decided in [the decisions log](specs/001-zzthat-apps/decisions.md). The apps are native SwiftUI and Jetpack Compose, on iOS 17 and Android 8.
 - Spec lint runs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Native app checks are defined in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml); iOS CI is label/manual gated. End-to-end orchestration is in [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). A passing CI run, or a workflow's presence, does not by itself qualify a release.
+- The qualification harness is in the repo (`zz-qual`, `scripts/qual-android.sh`, T027, [#94](https://github.com/Zero-State-LLC/zzthat/pull/94)). A rendered `zz-copper-lantern-sky-zz` is a smoke, not a handwriting result. A truth-file quick run is not the ZZ-OCR-QUAL-001 receipt.
 
 ## Design tokens
 
@@ -64,6 +66,7 @@ This repo does not publish its own colors, type, spacing, fonts, icons, or sente
 | [`specs/001-zzthat-apps/decisions.md`](specs/001-zzthat-apps/decisions.md) | ZQ1 to ZQ28: ZQ1 to ZQ26 decided 2026-10-04, ZQ27 (CI spend) and ZQ28 (toolchain pins) decided 2026-10-05 by established practice. |
 | [`specs/001-zzthat-apps/plan.md`](specs/001-zzthat-apps/plan.md) | Stack, build order, and risks |
 | [`specs/001-zzthat-apps/tasks.md`](specs/001-zzthat-apps/tasks.md) | Task groups TG1 to TG9, then Phases 10 to 13 (whole-system check, store readiness, v1.1) |
+| [`KANBAN.md`](KANBAN.md) | Readable board. It does not move the GitHub project cards. |
 | [`apps/ios`](apps/ios) | SwiftUI app, and the `ZZCore`, `ZZAPI`, and `ZZDesign` packages |
 | [`apps/android`](apps/android) | Jetpack Compose app, and the `core-*` modules |
 | [`apps/store`](apps/store) | Store listing, privacy, and review drafts (Danny submits) |
@@ -116,7 +119,7 @@ The apps do not cache a source of truth. Only an active reusable public unauthen
 
 ## Roadmap
 
-Work is tracked as GitHub issues and on the [zzThat board](https://github.com/orgs/Zero-State-LLC/projects/25). ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
+Work is tracked as GitHub issues, on the [zzThat board](https://github.com/orgs/Zero-State-LLC/projects/25), and in [KANBAN.md](KANBAN.md). ZQ1 to ZQ21 are decided. Task groups are [#22](https://github.com/Zero-State-LLC/zzthat/issues/22) to [#30](https://github.com/Zero-State-LLC/zzthat/issues/30).
 
 ### Phase 0: Spec and native implementation
 
@@ -130,17 +133,18 @@ Work is tracked as GitHub issues and on the [zzThat board](https://github.com/or
 
 - [x] Native SwiftUI and Compose app source and platform OCR readers ([#22](https://github.com/Zero-State-LLC/zzthat/issues/22), [#24](https://github.com/Zero-State-LLC/zzthat/issues/24))
 - [x] API client generated from the pinned OpenAPI, contract 1 ([#23](https://github.com/Zero-State-LLC/zzthat/issues/23))
-- [ ] Commit-bound iOS and Android CI, device qualification, parity and privacy gates ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26))
+- [x] Commit-bound app CI is in [`.github/workflows/apps-ci.yml`](.github/workflows/apps-ci.yml) and [`.github/workflows/apps-e2e.yml`](.github/workflows/apps-e2e.yml). iOS CI is label or manual gated.
+- [ ] Device qualification and the ZZ-OCR-QUAL-001 receipt ([#24](https://github.com/Zero-State-LLC/zzthat/issues/24), [#26](https://github.com/Zero-State-LLC/zzthat/issues/26)). A rendered smoke and a truth-file quick run are not that receipt.
 - [ ] Staging end-to-end verification with canonical-code-only resolve; no production promotion until evidence is accepted
 
 ### Phase 2: Remaining everyday flows and release gates
 
 Live mint stays blocked until the zzThis server adds free public codes ([ZQ3](https://github.com/Zero-State-LLC/zzthat/issues/3)). The server chooses the words ([ZQ11](https://github.com/Zero-State-LLC/zzthat/issues/11)).
 
-- [ ] Create a code ([#25](https://github.com/Zero-State-LLC/zzthat/issues/25))
-- [ ] Scan and resolve ([#26](https://github.com/Zero-State-LLC/zzthat/issues/26))
-- [ ] Share and manage ([#27](https://github.com/Zero-State-LLC/zzthat/issues/27))
-- [ ] Offline cache ([#28](https://github.com/Zero-State-LLC/zzthat/issues/28))
+- [x] Create a code ([#25](https://github.com/Zero-State-LLC/zzthat/issues/25), closed completed). Live mint still waits on the server.
+- [ ] Scan and resolve ([#26](https://github.com/Zero-State-LLC/zzthat/issues/26)). Typed resolve is built. The camera handoff and a qualification receipt are not.
+- [x] Share and manage ([#27](https://github.com/Zero-State-LLC/zzthat/issues/27), closed completed)
+- [x] Offline cache ([#28](https://github.com/Zero-State-LLC/zzthat/issues/28), closed completed)
 
 ### Phase 3: Accounts and stores
 
