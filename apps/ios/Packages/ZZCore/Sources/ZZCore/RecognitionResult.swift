@@ -405,4 +405,12 @@ public protocol RecognitionAdapter: Sendable {
     func detectMarkers(in image: CaptureImage) async throws -> [MarkerObservation]
     /// Crop and rotate to the ROI, then read only that crop.
     func readPayload(in image: CaptureImage, roi: ROIGeometry) async throws -> [PayloadHypothesis]
+    /// The text already read on the line, strictly between the two marks that
+    /// bound this ROI. Nil when that span is not a one-box-per-character line.
+    /// The crop read stays primary. This is not a marker rewrite.
+    func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis?
+}
+
+extension RecognitionAdapter {
+    public func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis? { nil }
 }
