@@ -112,7 +112,14 @@ public struct CapturePipeline: Sendable {
                             result: session.result.with(roi: roi.with(rectificationSucceeded: false), candidates: [],
                                                         reasonCodes: [code], runtimeOutcome: .exception))
             }
-            return finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: hypotheses)
+            let crop = finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: hypotheses)
+            // A word-check pass stays. So does a field, handle, or name the crop
+            // actually parsed. A near-word or a failed word check may yield to
+            // the line span, and only when that span itself passes.
+            if crop.decoded.contains(where: Self.cropShouldStand) { return crop }
+            guard let span = try? await adapter.lineSpan(in: image, roi: geometry) else { return crop }
+            let fallback = finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: [span])
+            return fallback.decoded.contains(where: { $0.check == .ok }) ? fallback : crop
         }
     }
 
@@ -159,6 +166,16 @@ public struct CapturePipeline: Sendable {
             return .stop(stop(frame, ReasonCode.unsupportedGeometry.rawValue))
         }
         return .read(pairId: pairId, roi: roi, geometry: geometry)
+    }
+
+    /// A crop reading that must not be replaced by the line span.
+    static func cropShouldStand(_ candidate: ReadCandidate) -> Bool {
+        if candidate.check == .ok { return true }
+        switch candidate.codeClass {
+        case .field, .handle, .name: return true
+        case .word where candidate.check == nil: return true
+        default: return false
+        }
     }
 
     func finish(_ frame: RecognitionResult, pairId: String, roi: ROIDetection, geometry: ROIGeometry,
