@@ -32,6 +32,10 @@ final class CountingAdapter: RecognitionAdapter, @unchecked Sendable {
         lock.withLock { reads.append(roi) }
         return try await base.readPayload(in: image, roi: roi)
     }
+
+    func lineSpan(in image: CaptureImage, roi: ROIGeometry) async throws -> PayloadHypothesis? {
+        try await base.lineSpan(in: image, roi: roi)
+    }
 }
 
 /// tasks.md T024: the Apple Vision adapter behind RecognitionResult, on
@@ -287,6 +291,21 @@ struct VisionAdapterTests {
         #expect(session.result.runtimeOutcome == .exception)
         #expect(pipeline.frameDisposition(session.result)?.band == .abstain)
         #expect(session.result.visualCandidates.isEmpty)
+    }
+
+    /// The span is the text between the two marks that bound the ROI, not the whole line.
+    @Test func theLineSpanIsBetweenTheMarksThatBoundTheROI() {
+        let text = Array("zz-copper-lantern-sky-zz zz-river-falcon-maple-zz".unicodeScalars)
+        let nonSpace = text.indices.filter { text[$0] != " " }
+        let centers = nonSpace.enumerated().map { CGPoint(x: 20 + Double($0.offset) * 12, y: 100) }
+        let roi = ROIGeometry(centerX: 20 + 12 * 8, centerY: 100, width: 12 * 14, height: 40,
+                              angleRadians: 0, imageWidth: 1400, imageHeight: 360)
+        let span = VisionRecognitionAdapter.payloadSpan(scalars: text, centers: centers, roi: roi)
+        #expect(span == "-copper-lantern-sky-")
+        let offBaseline = centers.map { CGPoint(x: $0.x, y: $0.y + 250) }
+        #expect(VisionRecognitionAdapter.payloadSpan(scalars: text, centers: offBaseline, roi: roi) == nil)
+        let mismatched = Array(centers.dropLast())
+        #expect(VisionRecognitionAdapter.payloadSpan(scalars: text, centers: mismatched, roi: roi) == nil)
     }
 }
 #endif

@@ -112,7 +112,20 @@ public struct CapturePipeline: Sendable {
                             result: session.result.with(roi: roi.with(rectificationSucceeded: false), candidates: [],
                                                         reasonCodes: [code], runtimeOutcome: .exception))
             }
-            return finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: hypotheses)
+            let crop = finish(session.result, pairId: pairId, roi: roi, geometry: geometry, hypotheses: hypotheses)
+            // A word-check pass stays. So does a field, handle, or name the crop
+            // actually parsed. The line span is a second hypothesis, never a
+            // replacement, and only when the crop produced a candidate.
+            if crop.decoded.contains(where: Self.cropShouldStand) { return crop }
+            guard !hypotheses.isEmpty, let span = try? await adapter.lineSpan(in: image, roi: geometry) else {
+                return crop
+            }
+            let combined = finish(session.result, pairId: pairId, roi: roi, geometry: geometry,
+                                  hypotheses: hypotheses + [span])
+            guard combined.decoded.count == crop.decoded.count + 1, combined.decoded.last?.check == .ok else {
+                return crop
+            }
+            return combined
         }
     }
 
@@ -159,6 +172,16 @@ public struct CapturePipeline: Sendable {
             return .stop(stop(frame, ReasonCode.unsupportedGeometry.rawValue))
         }
         return .read(pairId: pairId, roi: roi, geometry: geometry)
+    }
+
+    /// A crop reading that must not be replaced by the line span.
+    static func cropShouldStand(_ candidate: ReadCandidate) -> Bool {
+        if candidate.check == .ok { return true }
+        switch candidate.codeClass {
+        case .field, .handle, .name: return true
+        case .word where candidate.check == nil: return true
+        default: return false
+        }
     }
 
     func finish(_ frame: RecognitionResult, pairId: String, roi: ROIDetection, geometry: ROIGeometry,
@@ -253,7 +276,15 @@ extension ReadPipeline {
             let evidence = BandEvidence(source: .camera, kind: kind, hypothesisCount: count, codeClass: codeClass,
                                         check: check, confidence: confidence)
             let base = Bands.decide(evidence, configuration: configuration)
-            let final = Bands.applyConfirmOnly(base, source: .camera, configuration: configuration)
+            var final = Bands.applyConfirmOnly(base, source: .camera, configuration: configuration)
+            let roi = result.rois.first { $0.pairId == text.pairId }
+            let ends = result.fiducials.filter {
+                $0.detectionId == roi?.openingDetectionId || $0.detectionId == roi?.closingDetectionId
+            }
+            let tolerant = ends.contains { $0.markerGlyph == .tolerant }
+            if tolerant && final.band == .accept {
+                final = BandDecision(.clarify, "tolerant-marker")
+            }
             let rows: [BandRow] = text.lines.enumerated().flatMap { lineIndex, line -> [BandRow] in
                 guard let score = line.confidence else { return [] }
                 return Scalars.split(Scalars.of(line.text), where: Scalars.isSeparator).map {
@@ -267,6 +298,7 @@ extension ReadPipeline {
             candidate.reason = final.reason
             candidate.pairId = text.pairId
             candidate.textCandidateId = text.candidateId
+            candidate.tolerantPair = tolerant
             return candidate
         }
     }
