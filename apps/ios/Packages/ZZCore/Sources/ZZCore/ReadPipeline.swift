@@ -46,6 +46,8 @@ public struct ReadCandidate: Sendable, Hashable, Identifiable {
     /// For a camera read: the pair and the text hypothesis it came from.
     public var pairId: String?
     public var textCandidateId: String?
+    /// True when either endpoint of this camera pair was a tolerant glyph.
+    public var tolerantPair: Bool = false
 
     public var canonical: String? {
         if case .code(let code) = kind { return code.canonical }
